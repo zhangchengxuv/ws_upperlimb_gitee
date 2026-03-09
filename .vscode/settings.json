@@ -1,0 +1,13 @@
+{
+    "configurations": [
+        {
+            "name": "ROS2",
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+            "compilerPath": "/usr/bin/gcc",
+            "cppStandard": "c++17",
+            "cStandard": "gnu11",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}
