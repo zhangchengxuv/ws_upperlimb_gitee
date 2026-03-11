@@ -17,10 +17,10 @@ using namespace std::chrono_literals;
 // ===================== 电机状态缓存结构体 =====================
 struct MotorStateCache
 {
-    std::array<double, 20> position{};   // 关节位置（可换算成角度）
-    std::array<double, 20> velocity{};   // 关节速度
-    std::array<double, 20> torque{};     // 关节扭矩
-    std::array<bool, 20> enabled{};      // 轴是否使能
+    std::array<double, 20> position{}; // 关节位置（可换算成角度）
+    std::array<double, 20> velocity{}; // 关节速度
+    std::array<double, 20> torque{};   // 关节扭矩
+    std::array<bool, 20> enabled{};    // 轴是否使能
 };
 
 // 3. 自定义节点类
@@ -47,9 +47,9 @@ public:
         running_.store(true);
 
         state_read_thread_ = std::thread(&ControlAlgorithmNode::stateReadLoop, this);
+        RCLCPP_INFO(this->get_logger(), "状态采集线程已启动");
         control_thread_ = std::thread(&ControlAlgorithmNode::controlLoop, this);
-
-        RCLCPP_INFO(this->get_logger(), "高频状态采集线程和控制线程已启动");
+        RCLCPP_INFO(this->get_logger(), "控制线程已启动");
     }
 
     ~ControlAlgorithmNode() override
@@ -95,18 +95,13 @@ private:
             MotorStateCache local_state;
 
             // ===== 在这里读取 20 轴位置、速度、扭矩 =====
-            // 下面是骨架示例，你把真实固高接口补进去
 
             for (std::size_t i = 0; i < AXIS_NUM; ++i)
             {
                 const int axis = axis_ids_[i];
 
                 // ---------------- 位置 ----------------
-                // TODO: 替换为你的真实读取接口
-                // 例如：
-                // int32_t enc_pos = 0;
-                // short rtn = GTN_GetEcatEncPos(core_id_, axis, &enc_pos);
-                // if (rtn == 0) { local_state.position[i] = enc_pos; }
+                // TODO: 读取接口
 
                 // 这里先写成占位
                 local_state.position[i] = 0.0;
@@ -157,6 +152,10 @@ private:
             {
                 std::this_thread::sleep_for(period - elapsed);
             }
+            else
+            {
+                RCLCPP_WARN(this->get_logger(), "状态采集循环超时");
+            }
         }
     }
 
@@ -168,6 +167,7 @@ private:
 
         while (running_.load())
         {
+            // 记录周期开始时间
             auto cycle_start = std::chrono::steady_clock::now();
 
             // 没有收到状态前不做控制
@@ -218,11 +218,18 @@ private:
                 break;
             }
 
+            // 记录本次循环结束时间
             auto cycle_end = std::chrono::steady_clock::now();
+            // 如果控制算法执行时间超过周期时间，这里不等待，直接进入下一周期
             auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(cycle_end - cycle_start);
+            // 如果执行时间小于周期时间，补足等待
             if (elapsed < period)
             {
                 std::this_thread::sleep_for(period - elapsed);
+            }
+            else
+            {
+                RCLCPP_WARN(this->get_logger(), "控制循环超时");
             }
         }
     }
@@ -296,8 +303,8 @@ private:
     rclcpp::Publisher<upperlimb_robot::msg::RobotState>::SharedPtr robot_state_pub_;
 
     // ===================== 线程 =====================
-    std::thread state_read_thread_;   // 高频状态采集线程
-    std::thread control_thread_;      // 高频控制线程
+    std::thread state_read_thread_; // 高频状态采集线程
+    std::thread control_thread_;    // 高频控制线程
 
     // ===================== 线程控制 =====================
     std::atomic<bool> running_{false};
