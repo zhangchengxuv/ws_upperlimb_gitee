@@ -1,4 +1,3 @@
-No EtherCAT slave connected,run in offline
 EtherCAT: 1 master waiting for devices.
 EtherCAT 0: expect 0 slave(s),actual  24 slave(s)
 EtherCAT 0: 24 slave(s) responding
@@ -29,7 +28,7 @@ EtherCAT 0-20: Slave alias is 0
 EtherCAT 0-21: Slave alias is 0
 EtherCAT 0-22: Slave alias is 0
 EtherCAT 0-23: Slave alias is 0
-EtherCAT 0: Bus scanning completed in 348 ms.
+EtherCAT 0: Bus scanning completed in 368 ms.
 EtherCAT 0: Config each slave SDO config info ...
 EtherCAT 0: Config each slave PDO sync info ...
 EtherCAT 0: Registering PDO entries...
@@ -51,8 +50,8 @@ EtherCAT WARNING 0-3: Currently mapped PDO entries: 0x6030:00/16 0x6030:01/32 0x
 EtherCAT 0-4: Now in OP. Finished configuration.
 EtherCAT 0-5: Now in OP. Finished configuration.
 EtherCAT 0-6: Now in OP. Finished configuration.
-EtherCAT 0-7: Now in OP. Finished configuration.
 EtherCAT 0-8: Now in OP. Finished configuration.
+EtherCAT 0-7: Now in OP. Finished configuration.
 EtherCAT 0-9: Now in OP. Finished configuration.
 EtherCAT 0-10: Now in OP. Finished configuration.
 EtherCAT 0-11: Now in OP. Finished configuration.
