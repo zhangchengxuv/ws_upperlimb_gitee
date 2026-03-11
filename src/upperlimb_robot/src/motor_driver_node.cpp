@@ -1,11 +1,15 @@
 #include "rclcpp/rclcpp.hpp"
+#include "ament_index_cpp/get_package_share_directory.hpp"
 #include "upperlimb_robot/msg/system_state.hpp"
 #include "upperlimb_robot/gxn.h"
 
 #include <array>
 #include <chrono>
 #include <cstdint>
+#include <csignal>
+#include <cstdio>
 #include <memory>
+#include <string>
 
 using namespace std::chrono_literals;
 
@@ -19,11 +23,9 @@ public:
     system_pub_ =
         this->create_publisher<upperlimb_robot::msg::SystemState>("system_state", 10);
 
-    // 定时发布系统状态，避免订阅节点错过
     state_timer_ = this->create_wall_timer(
         500ms, std::bind(&MotorDriverNode::publish_state, this));
 
-    // 初始化控制器
     if (!init_controller())
     {
       RCLCPP_ERROR(this->get_logger(), "控制器初始化失败");
@@ -33,7 +35,6 @@ public:
     controller_init_ = true;
     publish_state();
 
-    // 初始化电机
     if (!init_motors())
     {
       RCLCPP_ERROR(this->get_logger(), "电机初始化失败");
@@ -50,35 +51,60 @@ public:
 
   ~MotorDriverNode() override
   {
-    RCLCPP_INFO(this->get_logger(), "正在安全关闭机器人系统...");
+    shutdown_hardware();
+  }
 
-    stop_all_axes();
+  void shutdown_hardware()
+  {
+    if (shutdown_done_)
+    {
+      return;
+    }
+    shutdown_done_ = true;
+
+    fprintf(stderr, "正在安全关闭机器人系统...\n");
+    fflush(stderr);
+
+    const bool axes_ok = stop_all_axes_raw();
+
+    if (axes_ok)
+    {
+      fprintf(stderr, "所有电机已安全关闭。\n");
+    }
+    else
+    {
+      fprintf(stderr, "部分电机关闭失败，请检查上面的错误信息。\n");
+    }
+    fflush(stderr);
 
     if (ecat_started_)
     {
       const short rtn = GTN_TerminateEcatComm(core_id_);
-      if (rtn != 0)
+      if (rtn == 0)
       {
-        RCLCPP_ERROR(this->get_logger(),
-                     "EtherCAT通信关闭失败，错误码=%d", rtn);
+        fprintf(stderr, "EtherCAT通信已关闭。\n");
       }
       else
       {
-        RCLCPP_INFO(this->get_logger(), "EtherCAT通信已关闭");
+        fprintf(stderr, "EtherCAT通信关闭失败，错误码=%d\n", rtn);
       }
+      fflush(stderr);
+      ecat_started_ = false;
     }
 
     if (controller_opened_)
     {
       const short rtn = GTN_Close();
-      if (rtn != 0)
+      if (rtn == 0)
       {
-        RCLCPP_ERROR(this->get_logger(), "控制器关闭失败，错误码=%d", rtn);
+        fprintf(stderr, "控制器已关闭。\n");
       }
       else
       {
-        RCLCPP_INFO(this->get_logger(), "控制器已关闭");
+        fprintf(stderr, "控制器关闭失败，错误码=%d\n", rtn);
       }
+      fflush(stderr);
+      controller_opened_ = false;
     }
   }
 
@@ -92,6 +118,36 @@ private:
       return false;
     }
     controller_opened_ = true;
+    RCLCPP_INFO(this->get_logger(), "GTN_Open 成功");
+
+    std::string config_path;
+    try
+    {
+      const std::string pkg_share =
+          ament_index_cpp::get_package_share_directory("upperlimb_robot");
+      config_path = pkg_share + "/config/Gecat.eni";
+    }
+    catch (const std::exception &e)
+    {
+      RCLCPP_ERROR(this->get_logger(), "获取包配置目录失败: %s", e.what());
+      return false;
+    }
+
+    RCLCPP_INFO(
+        this->get_logger(),
+        "准备加载 EtherCAT 配置文件: %s",
+        config_path.c_str());
+
+    rtn = GTN_LoadConfig(core_id_, const_cast<char *>(config_path.c_str()));
+    if (rtn != 0)
+    {
+      RCLCPP_ERROR(
+          this->get_logger(),
+          "GTN_LoadConfig 加载配置文件失败，错误码=%d, 路径=%s",
+          rtn, config_path.c_str());
+      return false;
+    }
+    RCLCPP_INFO(this->get_logger(), "GTN_LoadConfig 成功");
 
     rtn = GTN_InitEcatComm(core_id_);
     if (rtn != 0)
@@ -120,7 +176,6 @@ private:
 
       rclcpp::sleep_for(50ms);
       retry++;
-
     } while (retry < max_retry);
 
     if (ready != 1)
@@ -153,44 +208,49 @@ private:
       rtn = GTN_GetEcatEncPos(core_id_, axis, &enc_pos_[i]);
       if (rtn != 0)
       {
-        RCLCPP_ERROR(this->get_logger(),
-                     "读取轴%d编码器位置失败，错误码=%d",
-                     axis, rtn);
+        RCLCPP_ERROR(
+            this->get_logger(),
+            "读取轴%d编码器位置失败，错误码=%d",
+            axis, rtn);
         return false;
       }
 
       rtn = GTN_SetPrfPos(core_id_, axis, enc_pos_[i]);
       if (rtn != 0)
       {
-        RCLCPP_ERROR(this->get_logger(),
-                     "设置轴%d规划位置失败，错误码=%d",
-                     axis, rtn);
+        RCLCPP_ERROR(
+            this->get_logger(),
+            "设置轴%d规划位置失败，错误码=%d",
+            axis, rtn);
         return false;
       }
 
       rtn = GTN_SetEncPos(core_id_, axis, enc_pos_[i]);
       if (rtn != 0)
       {
-        RCLCPP_ERROR(this->get_logger(),
-                     "设置轴%d编码器位置失败，错误码=%d",
-                     axis, rtn);
+        RCLCPP_ERROR(
+            this->get_logger(),
+            "设置轴%d编码器位置失败，错误码=%d",
+            axis, rtn);
         return false;
       }
 
       rtn = GTN_AxisOn(core_id_, axis);
       if (rtn != 0)
       {
-        RCLCPP_ERROR(this->get_logger(),
-                     "轴%d使能失败，错误码=%d",
-                     axis, rtn);
+        RCLCPP_ERROR(
+            this->get_logger(),
+            "轴%d使能失败，错误码=%d",
+            axis, rtn);
         return false;
       }
 
       axis_enabled_[i] = true;
 
-      RCLCPP_INFO(this->get_logger(),
-                  "轴%d初始化完成，编码器位置=%d",
-                  axis, enc_pos_[i]);
+      RCLCPP_INFO(
+          this->get_logger(),
+          "轴%d初始化完成，编码器位置=%d",
+          axis, enc_pos_[i]);
     }
 
     return true;
@@ -206,12 +266,15 @@ private:
     system_pub_->publish(msg);
   }
 
-  void stop_all_axes()
+  bool stop_all_axes_raw()
   {
     if (!controller_opened_)
     {
-      return;
+      return true;
     }
+
+    bool all_ok = true;
+    int failed_axes = 0;
 
     for (std::size_t i = 0; i < AXIS_NUM; ++i)
     {
@@ -224,20 +287,22 @@ private:
 
       const uint32_t mask = (1u << (axis - 1));
 
-      short rtn = GTN_Stop(core_id_, static_cast<short>(mask), 0);
-      if (rtn != 0)
+      short rtn_stop = GTN_Stop(core_id_, static_cast<short>(mask), 0);
+      if (rtn_stop != 0)
       {
-        RCLCPP_ERROR(this->get_logger(),
-                     "停止轴%d失败，错误码=%d",
-                     axis, rtn);
+        fprintf(stderr, "停止轴%d失败，错误码=%d\n", axis, rtn_stop);
+        fflush(stderr);
+        all_ok = false;
+        failed_axes++;
       }
 
-      rtn = GTN_AxisOff(core_id_, axis);
-      if (rtn != 0)
+      short rtn_off = GTN_AxisOff(core_id_, axis);
+      if (rtn_off != 0)
       {
-        RCLCPP_ERROR(this->get_logger(),
-                     "关闭轴%d使能失败，错误码=%d",
-                     axis, rtn);
+        fprintf(stderr, "关闭轴%d使能失败，错误码=%d\n", axis, rtn_off);
+        fflush(stderr);
+        all_ok = false;
+        failed_axes++;
       }
       else
       {
@@ -245,67 +310,73 @@ private:
       }
     }
 
-    RCLCPP_INFO(this->get_logger(), "所有电机已关闭使能");
+    if (!all_ok)
+    {
+      fprintf(stderr, "共有 %d 个轴关闭过程出现错误。\n", failed_axes);
+      fflush(stderr);
+    }
+
+    return all_ok;
   }
 
 private:
   rclcpp::Publisher<upperlimb_robot::msg::SystemState>::SharedPtr system_pub_;
   rclcpp::TimerBase::SharedPtr state_timer_;
 
-  // 电机关节是否初始化完成
   bool joint_init_ = false;
-
-  // 控制器是否初始化完成
   bool controller_init_ = false;
-
-  // 整个系统是否准备就绪（控制器 + 电机初始化成功）
   bool system_ready_ = false;
 
-  // -控制器运行状态 
-
-  // 控制器是否已经成功打开（GTN_Open）
   bool controller_opened_ = false;
-
-  // EtherCAT通信是否已经启动
   bool ecat_started_ = false;
+  bool shutdown_done_ = false;
 
-  // -控制器参数 
-
-  // 控制器核心ID（固高控制器一般为1）
   int core_id_ = 1;
 
-  // -机器人轴配置 
-
-  // 机器人总轴数
   static constexpr std::size_t AXIS_NUM = 20;
 
-  // 每个轴在控制器中的ID编号
-  // 对应 EtherCAT 从站电机轴编号
   std::array<int, AXIS_NUM> axis_ids_ = {
       1, 2, 3, 4, 5,
       6, 7, 8, 9, 10,
       11, 12, 13, 14, 15,
       16, 17, 18, 19, 20};
 
-  // -电机运行数据
-
-  // 编码器当前位置（单位：编码器脉冲）
-  // 用于初始化规划位置，使当前位置作为零运动参考
   std::array<int32_t, AXIS_NUM> enc_pos_ = {};
-
-  // 每个轴当前是否已经使能
-  // 用于关闭系统时安全停止电机
   std::array<bool, AXIS_NUM> axis_enabled_ = {};
 };
+
+// ===== 全局节点指针，用于信号退出时安全关闭 =====
+static std::shared_ptr<MotorDriverNode> g_node = nullptr;
+
+void signal_handler(int signum)
+{
+  fprintf(stderr, ">>> signal_handler called, signal=%d\n", signum);
+  fflush(stderr);
+
+  if (g_node)
+  {
+    g_node->shutdown_hardware();
+  }
+
+  rclcpp::shutdown();
+}
 
 int main(int argc, char const *argv[])
 {
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<MotorDriverNode>();
+  std::signal(SIGINT, signal_handler);
+  std::signal(SIGTERM, signal_handler);
 
-  rclcpp::spin(node);
+  g_node = std::make_shared<MotorDriverNode>();
 
-  rclcpp::shutdown();
+  rclcpp::spin(g_node);
+
+  if (g_node)
+  {
+    g_node->shutdown_hardware();
+    g_node.reset();
+  }
+
   return 0;
 }

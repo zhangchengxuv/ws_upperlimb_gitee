@@ -13,5 +13,6 @@
     "files.associations": {
         "*.cpp": "cpp",
         "chrono": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "/home/upperlimb/Documents/zhangchenxu/ws_upperlimb/src/upperlimb_robot"
 }

@@ -12,6 +12,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 
 # ========================================
 # ROS2 Interfaces
@@ -76,6 +77,7 @@ target_compile_features(control_algorithm_node PUBLIC c_std_99 cxx_std_17)
 ament_target_dependencies(motor_driver_node
   rclcpp
   std_msgs
+  ament_index_cpp
 )
 
 ament_target_dependencies(control_algorithm_node
@@ -125,6 +127,21 @@ install(
 install(
   DIRECTORY lib/
   DESTINATION share/${PROJECT_NAME}/lib
+)
+
+install(
+  DIRECTORY config/
+  DESTINATION share/${PROJECT_NAME}/config
+)
+
+install(
+  FILES config/Gecat.eni
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
+  DIRECTORY config/
+  DESTINATION share/${PROJECT_NAME}/config
 )
 
 # ========================================
