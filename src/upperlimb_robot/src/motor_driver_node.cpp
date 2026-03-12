@@ -1,3 +1,17 @@
+// Copyright 2024 Zhang Chenxu
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//     http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//  * 电机驱动节点，负责与控制器通信，读取电机状态，并将状态发布给 control_algorithm_node
+//  * 同时监听系统状态，确保在系统准备就绪后才允许 control_algorithm_node 开始控制
+
 #include "rclcpp/rclcpp.hpp"
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "upperlimb_robot/msg/system_state.hpp"

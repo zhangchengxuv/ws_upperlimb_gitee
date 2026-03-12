@@ -1,7 +1,31 @@
+// Copyright 2024 Zhang Chenxu
+// Licensed under the Apache License, Version 2.0 (the "License");      
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//     http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
+//  * 控制算法节点，负责实现各控制模式的算法逻辑
+//  * 从 motor_driver_node 订阅系统状态，确保在系统准备就绪后才允许控制算法开始运行
+//  * 从 GUI 订阅控制命令，执行对应的控制算法
+//  * 同时向 GUI 发布当前机器人状态（位置、速度、扭矩等）
+
+
+
+
+
+
 // 1. 包含头文件
 #include "rclcpp/rclcpp.hpp"
 #include "upperlimb_robot/msg/control_command.hpp"
 #include "upperlimb_robot/msg/robot_state.hpp"
+#include "upperlimb_robot/msg/system_state.hpp"
+#include "upperlimb_robot/control_algorithms.hpp"
 #include "upperlimb_robot/gxn.h"
 
 #include <array>
@@ -14,14 +38,7 @@
 
 using namespace std::chrono_literals;
 
-// ===================== 电机状态缓存结构体 =====================
-struct MotorStateCache
-{
-    std::array<double, 20> position{}; // 关节位置（可换算成角度）
-    std::array<double, 20> velocity{}; // 关节速度
-    std::array<double, 20> torque{};   // 关节扭矩
-    std::array<bool, 20> enabled{};    // 轴是否使能
-};
+
 
 // 3. 自定义节点类
 class ControlAlgorithmNode : public rclcpp::Node
@@ -38,6 +55,12 @@ public:
                 10,
                 std::bind(&ControlAlgorithmNode::controlCommandCallback, this, std::placeholders::_1));
 
+        system_state_sub_ =
+            this->create_subscription<upperlimb_robot::msg::SystemState>(
+                "system_state",
+                10,
+                std::bind(&ControlAlgorithmNode::systemStateCallback, this, std::placeholders::_1));
+
         robot_state_pub_ =
             this->create_publisher<upperlimb_robot::msg::RobotState>(
                 "robot_state",
@@ -48,6 +71,7 @@ public:
 
         state_read_thread_ = std::thread(&ControlAlgorithmNode::stateReadLoop, this);
         RCLCPP_INFO(this->get_logger(), "状态采集线程已启动");
+
         control_thread_ = std::thread(&ControlAlgorithmNode::controlLoop, this);
         RCLCPP_INFO(this->get_logger(), "控制线程已启动");
     }
@@ -62,13 +86,13 @@ public:
         {
             state_read_thread_.join();
         }
+        RCLCPP_INFO(this->get_logger(), "状态采集线程已安全退出");
 
         if (control_thread_.joinable())
         {
             control_thread_.join();
         }
-
-        RCLCPP_INFO(this->get_logger(), "控制算法节点已安全退出");
+        RCLCPP_INFO(this->get_logger(), "控制算法线程已安全退出");
     }
 
 private:
@@ -76,10 +100,23 @@ private:
     void controlCommandCallback(const upperlimb_robot::msg::ControlCommand::SharedPtr msg)
     {
         // 假设 ControlCommand.msg 中有字段：int32 command
-        // 如果你的字段名不是 command，请改成你自己的字段名
         current_mode_.store(msg->command);
 
         RCLCPP_INFO(this->get_logger(), "收到控制命令：%d", msg->command);
+    }
+
+    // ===================== 系统状态回调 =====================
+    void systemStateCallback(const upperlimb_robot::msg::SystemState::SharedPtr msg)
+    {
+        // 缓存系统状态
+        joint_init_.store(msg->joint_init);
+        controller_init_.store(msg->controller_init);
+        system_ready_.store(msg->system_ready);
+
+        if (msg->system_ready)
+        {
+            RCLCPP_INFO(this->get_logger(), "系统初始化完成，允许启动控制算法");
+        }
     }
 
     // ===================== 高频状态采集线程 =====================
@@ -95,37 +132,25 @@ private:
             MotorStateCache local_state;
 
             // ===== 在这里读取 20 轴位置、速度、扭矩 =====
-
             for (std::size_t i = 0; i < AXIS_NUM; ++i)
             {
                 const int axis = axis_ids_[i];
+                (void)axis;
 
                 // ---------------- 位置 ----------------
-                // TODO: 读取接口
-
-                // 这里先写成占位
+                // TODO: 替换为真实读取接口
                 local_state.position[i] = 0.0;
 
                 // ---------------- 速度 ----------------
-                // TODO: 替换为你的真实读取接口
-                // 例如：
-                // double vel = 0.0;
-                // short rtn = GTN_GetEncVel(core_id_, axis, &vel);
-                // if (rtn == 0) { local_state.velocity[i] = vel; }
-
+                // TODO: 替换为真实读取接口
                 local_state.velocity[i] = 0.0;
 
                 // ---------------- 扭矩 ----------------
-                // TODO: 替换为你的真实读取接口
-                // 例如：
-                // short torque_raw = 0;
-                // short rtn = GTN_GetEcatAxisAtlTorque(core_id_, axis, &torque_raw);
-                // if (rtn == 0) { local_state.torque[i] = static_cast<double>(torque_raw); }
-
+                // TODO: 替换为真实读取接口
                 local_state.torque[i] = 0.0;
 
                 // ---------------- 使能状态 ----------------
-                // TODO: 这里后面可以接你的轴使能状态
+                // TODO: 替换为真实状态
                 local_state.enabled[i] = true;
             }
 
@@ -148,6 +173,7 @@ private:
             // 周期等待
             auto cycle_end = std::chrono::steady_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(cycle_end - cycle_start);
+
             if (elapsed < period)
             {
                 std::this_thread::sleep_for(period - elapsed);
@@ -167,26 +193,39 @@ private:
 
         while (running_.load())
         {
-            // 记录周期开始时间
             auto cycle_start = std::chrono::steady_clock::now();
 
-            // 没有收到状态前不做控制
-            if (!state_ready_.load())
+            // 1. 系统未初始化完成，不允许进入控制
+            if (!system_ready_.load())
             {
                 std::this_thread::sleep_for(period);
+                RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000, "未初始化完成，控制等待中");
                 continue;
             }
 
+            // 2. 没有收到状态前不做控制
+            if (!state_ready_.load())
+            {
+                std::this_thread::sleep_for(period);
+                RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000, "未收到GUI指令，控制等待中");
+                continue;
+            }
+
+            // local_state 是本次循环使用的局部状态变量
+            // 用于存储当前读取到的所有电机信息（位置、速度、扭矩、使能状态）
+
+            // MotorStateCache local_state;
+            // local_state.position[i] = ...
+            // local_state.velocity[i] = ...
+            // local_state.torque[i]   = ...
             MotorStateCache local_state;
             {
                 std::lock_guard<std::mutex> lock(state_mutex_);
                 local_state = latest_motor_state_;
             }
 
-            // 当前控制模式
             const int mode = current_mode_.load();
 
-            // switch-case 模式切换
             switch (mode)
             {
             case 0:
@@ -218,11 +257,9 @@ private:
                 break;
             }
 
-            // 记录本次循环结束时间
             auto cycle_end = std::chrono::steady_clock::now();
-            // 如果控制算法执行时间超过周期时间，这里不等待，直接进入下一周期
             auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(cycle_end - cycle_start);
-            // 如果执行时间小于周期时间，补足等待
+
             if (elapsed < period)
             {
                 std::this_thread::sleep_for(period - elapsed);
@@ -239,6 +276,7 @@ private:
     {
         upperlimb_robot::msg::RobotState msg;
 
+        // 假设 RobotState.msg 中有以下字段：
         // float64[] position
         // float64[] velocity
         // float64[] torque
@@ -250,56 +288,10 @@ private:
 
         robot_state_pub_->publish(msg);
     }
-
-    // ===================== 各控制模式骨架 =====================
-
-    void runIdle(const MotorStateCache &state)
-    {
-        (void)state;
-        // TODO:
-        // 待机 / 不输出控制 / 保持安全状态
-    }
-
-    void runPassiveTraining(const MotorStateCache &state)
-    {
-        (void)state;
-        // TODO:
-        // 被动训练控制算法
-        // 例如：轨迹规划 + 位置控制
-    }
-
-    void runZeroForceMode(const MotorStateCache &state)
-    {
-        (void)state;
-        // TODO:
-        // 零力模式控制算法
-        // 例如：导纳 / 阻抗 / 力矩控制
-    }
-
-    void runBilateralMode(const MotorStateCache &state)
-    {
-        (void)state;
-        // TODO:
-        // 双侧协同控制
-    }
-
-    void runSlidingModeControl(const MotorStateCache &state)
-    {
-        (void)state;
-        // TODO:
-        // 滑模控制
-    }
-
-    void runLeftPresetPosition(const MotorStateCache &state)
-    {
-        (void)state;
-        // TODO:
-        // 左侧回归预设位置
-    }
-
 private:
     // ===================== ROS2 通信 =====================
     rclcpp::Subscription<upperlimb_robot::msg::ControlCommand>::SharedPtr control_command_sub_;
+    rclcpp::Subscription<upperlimb_robot::msg::SystemState>::SharedPtr system_state_sub_;
     rclcpp::Publisher<upperlimb_robot::msg::RobotState>::SharedPtr robot_state_pub_;
 
     // ===================== 线程 =====================
@@ -309,6 +301,11 @@ private:
     // ===================== 线程控制 =====================
     std::atomic<bool> running_{false};
     std::atomic<bool> state_ready_{false};
+
+    // 系统初始化状态
+    std::atomic<bool> joint_init_{false};
+    std::atomic<bool> controller_init_{false};
+    std::atomic<bool> system_ready_{false};
 
     // 当前模式，通过 control_command 控制
     std::atomic<int> current_mode_{0};

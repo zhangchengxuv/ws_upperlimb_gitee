@@ -50,6 +50,7 @@ add_executable(motor_driver_node
 
 add_executable(control_algorithm_node
   src/control_algorithm_node.cpp
+  src/control_algorithms.cpp
 )
 
 # ========================================
