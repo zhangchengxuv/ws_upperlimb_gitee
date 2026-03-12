@@ -1,5 +1,5 @@
 // Copyright 2024 Zhang Chenxu
-// Licensed under the Apache License, Version 2.0 (the "License");      
+// Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //     http://www.apache.org/licenses/LICENSE-2.0
@@ -9,16 +9,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 //  * 控制算法节点，负责实现各控制模式的算法逻辑
 //  * 从 motor_driver_node 订阅系统状态，确保在系统准备就绪后才允许控制算法开始运行
 //  * 从 GUI 订阅控制命令，执行对应的控制算法
 //  * 同时向 GUI 发布当前机器人状态（位置、速度、扭矩等）
-
-
-
-
-
 
 // 1. 包含头文件
 #include "rclcpp/rclcpp.hpp"
@@ -37,8 +31,6 @@
 #include <thread>
 
 using namespace std::chrono_literals;
-
-
 
 // 3. 自定义节点类
 class ControlAlgorithmNode : public rclcpp::Node
@@ -129,31 +121,70 @@ private:
         {
             auto cycle_start = std::chrono::steady_clock::now();
 
+            // local_state 是本次循环使用的局部状态变量
+            // 用于存储当前读取到的所有电机信息（位置、速度、扭矩、使能状态）
             MotorStateCache local_state;
 
             // ===== 在这里读取 20 轴位置、速度、扭矩 =====
             for (std::size_t i = 0; i < AXIS_NUM; ++i)
             {
                 const int axis = axis_ids_[i];
-                (void)axis;
 
-                // ---------------- 位置 ----------------
-                // TODO: 替换为真实读取接口
-                local_state.position[i] = 0.0;
+                short rtn = 0;
+                int32_t sts = 0;
+                int32_t enc_pos = 0;
+                double vel = 0.0;
+                short torque_raw = 0;
+                
+                // ---------------- 读取轴状态 ----------------
+                rtn = GTN_GetSts(core_id_, axis, &sts);
+                if (rtn != 0)
+                {
+                    RCLCPP_WARN(this->get_logger(),
+                                "读取轴%d状态失败，错误码=%d", axis, rtn);
+                }
 
-                // ---------------- 速度 ----------------
-                // TODO: 替换为真实读取接口
-                local_state.velocity[i] = 0.0;
+                // ---------------- 读取编码器位置 ----------------
+                rtn = GTN_GetEcatEncPos(core_id_, axis, &enc_pos);
+                if (rtn != 0)
+                {
+                    RCLCPP_WARN(this->get_logger(),
+                                "读取轴%d位置失败，错误码=%d", axis, rtn);
+                }
+                else
+                {
+                    local_state.position[i] = static_cast<double>(enc_pos);
+                }
 
-                // ---------------- 扭矩 ----------------
-                // TODO: 替换为真实读取接口
-                local_state.torque[i] = 0.0;
+                // ---------------- 读取扭矩 ----------------
+                rtn = GTN_GetEcatAxisAtlTorque(core_id_, axis, &torque_raw);
+                if (rtn != 0)
+                {
+                    RCLCPP_WARN(this->get_logger(),
+                                "读取轴%d扭矩失败，错误码=%d", axis, rtn);
+                }
+                else
+                {
+                    local_state.torque[i] = static_cast<double>(torque_raw);
+                }
 
-                // ---------------- 使能状态 ----------------
-                // TODO: 替换为真实状态
-                local_state.enabled[i] = true;
+                // ---------------- 读取编码器速度 ----------------
+                rtn = GTN_GetEncVel(core_id_, axis, &vel);
+                if (rtn != 0)
+                {
+                    RCLCPP_WARN(this->get_logger(),
+                                "读取轴%d速度失败，错误码=%d", axis, rtn);
+                }
+                else
+                {
+                    local_state.velocity[i] = vel;
+                }
+
+                // ---------------- 判断轴是否使能 ----------------
+                // 这里先做简化：只要状态字非0，就认为轴在线/有效
+                // 可以根据固高状态字具体bit位再细化
+                local_state.enabled[i] = (sts != 0);
             }
-
             // 用互斥锁更新共享状态
             {
                 std::lock_guard<std::mutex> lock(state_mutex_);
@@ -288,6 +319,7 @@ private:
 
         robot_state_pub_->publish(msg);
     }
+
 private:
     // ===================== ROS2 通信 =====================
     rclcpp::Subscription<upperlimb_robot::msg::ControlCommand>::SharedPtr control_command_sub_;

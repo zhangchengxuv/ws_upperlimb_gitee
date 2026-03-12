@@ -16,6 +16,17 @@
 
 // ===================== 各控制模式实现 =====================
 
+void runLeftPresetPosition(const MotorStateCache &state)
+{
+    (void)state;
+    // TODO: 左侧回归预设位置
+}
+
+void runRightPresetPosition(const MotorStateCache &state)
+{
+    (void)state;
+    // TODO: 右侧回归预设位置
+}
 void runIdle(const MotorStateCache &state)
 {
     (void)state;
@@ -46,8 +57,3 @@ void runSlidingModeControl(const MotorStateCache &state)
     // TODO: 滑模控制
 }
 
-void runLeftPresetPosition(const MotorStateCache &state)
-{
-    (void)state;
-    // TODO: 左侧回归预设位置
-}
