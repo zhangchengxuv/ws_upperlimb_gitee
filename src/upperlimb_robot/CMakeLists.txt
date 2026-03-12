@@ -44,47 +44,35 @@ set(GOOGOLTECH_LIBS
 # ========================================
 # Executables
 # ========================================
-add_executable(motor_driver_node
-  src/motor_driver_node.cpp
-)
-
-add_executable(control_algorithm_node
-  src/control_algorithm_node.cpp
+add_executable(robot_control_node
+  src/robot_control_node.cpp
   src/control_algorithms.cpp
 )
+
 
 # ========================================
 # Include directories
 # ========================================
-target_include_directories(motor_driver_node PUBLIC
+target_include_directories(robot_control_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
 
-target_include_directories(control_algorithm_node PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-)
 
 # ========================================
 # Compile features
 # ========================================
-target_compile_features(motor_driver_node PUBLIC c_std_99 cxx_std_17)
-target_compile_features(control_algorithm_node PUBLIC c_std_99 cxx_std_17)
+target_compile_features(robot_control_node PUBLIC c_std_99 cxx_std_17)
 
 # ========================================
 # Ament dependencies
 # ========================================
-ament_target_dependencies(motor_driver_node
+ament_target_dependencies(robot_control_node
   rclcpp
   std_msgs
   ament_index_cpp
 )
 
-ament_target_dependencies(control_algorithm_node
-  rclcpp
-  std_msgs
-)
 
 # ========================================
 # ROSIDL type support
@@ -96,22 +84,17 @@ rosidl_get_typesupport_target(cpp_typesupport_target
 # ========================================
 # Link libraries
 # ========================================
-target_link_libraries(motor_driver_node
+target_link_libraries(robot_control_node
   "${cpp_typesupport_target}"
   ${GOOGOLTECH_LIBS}
 )
 
-target_link_libraries(control_algorithm_node
-  "${cpp_typesupport_target}"
-  ${GOOGOLTECH_LIBS}
-)
 
 # ========================================
 # Install
 # ========================================
 install(TARGETS
-  motor_driver_node
-  control_algorithm_node
+  robot_control_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
