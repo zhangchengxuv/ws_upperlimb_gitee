@@ -1,31 +1,48 @@
 // Copyright 2024 Zhang Chenxu
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//     http://www.apache.org/licenses/LICENSE-2.0
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Licensed under the Apache License, Version 2.0
 
-//  * 电机驱动节点，负责与控制器通信，读取电机状态，并将状态发布给 control_algorithm_node
-//  * 同时监听系统状态，确保在系统准备就绪后才允许 control_algorithm_node 开始控制
+// 电机驱动节点：
+// 1. 与固高控制器通信
+// 2. 初始化 EtherCAT 和 20 个电机轴
+// 3. 周期读取电机位置、速度、扭矩、使能状态
+// 4. 发布 system_state 给控制算法节点
+// 5. 发布 robot_state 给 GUI 和控制算法节点
+// 6. 支持安全关闭
 
 #include "rclcpp/rclcpp.hpp"
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "upperlimb_robot/msg/system_state.hpp"
+#include "upperlimb_robot/msg/robot_state.hpp"
 #include "upperlimb_robot/gxn.h"
 
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <csignal>
 #include <cstdio>
 #include <memory>
+#include <mutex>
 #include <string>
+#include <thread>
 
 using namespace std::chrono_literals;
+
+// ===================== 电机状态缓存结构体 =====================
+struct MotorStateCache
+{
+  // 关节位置（当前先直接存编码器脉冲值，后面可换算成角度）
+  std::array<double, 20> position{};
+
+  // 关节速度
+  std::array<double, 20> velocity{};
+
+  // 关节扭矩
+  std::array<double, 20> torque{};
+
+  // 轴是否使能
+  std::array<bool, 20> enabled{};
+};
 
 class MotorDriverNode : public rclcpp::Node
 {
@@ -34,12 +51,19 @@ public:
   {
     RCLCPP_INFO(this->get_logger(), "电机驱动节点启动");
 
+    // 发布系统状态
     system_pub_ =
         this->create_publisher<upperlimb_robot::msg::SystemState>("system_state", 10);
 
+    // 发布机器人状态（给 GUI 和控制算法）
+    robot_state_pub_ =
+        this->create_publisher<upperlimb_robot::msg::RobotState>("robot_state", 10);
+
+    // 定时发布 system_state
     state_timer_ = this->create_wall_timer(
         500ms, std::bind(&MotorDriverNode::publish_state, this));
 
+    // 初始化控制器
     if (!init_controller())
     {
       RCLCPP_ERROR(this->get_logger(), "控制器初始化失败");
@@ -49,6 +73,7 @@ public:
     controller_init_ = true;
     publish_state();
 
+    // 初始化电机
     if (!init_motors())
     {
       RCLCPP_ERROR(this->get_logger(), "电机初始化失败");
@@ -61,6 +86,11 @@ public:
     publish_state();
 
     RCLCPP_INFO(this->get_logger(), "电机初始化完成，系统准备就绪");
+
+    // 启动状态采集线程
+    running_.store(true);
+    state_read_thread_ = std::thread(&MotorDriverNode::stateReadLoop, this);
+    RCLCPP_INFO(this->get_logger(), "状态采集线程已启动");
   }
 
   ~MotorDriverNode() override
@@ -75,6 +105,13 @@ public:
       return;
     }
     shutdown_done_ = true;
+
+    // 先停线程
+    running_.store(false);
+    if (state_read_thread_.joinable())
+    {
+      state_read_thread_.join();
+    }
 
     fprintf(stderr, "正在安全关闭机器人系统...\n");
     fflush(stderr);
@@ -123,6 +160,7 @@ public:
   }
 
 private:
+  // ===================== 控制器初始化 =====================
   bool init_controller()
   {
     short rtn = GTN_Open();
@@ -147,18 +185,14 @@ private:
       return false;
     }
 
-    RCLCPP_INFO(
-        this->get_logger(),
-        "准备加载 EtherCAT 配置文件: %s",
-        config_path.c_str());
+    RCLCPP_INFO(this->get_logger(), "准备加载 EtherCAT 配置文件: %s", config_path.c_str());
 
     rtn = GTN_LoadConfig(core_id_, const_cast<char *>(config_path.c_str()));
     if (rtn != 0)
     {
-      RCLCPP_ERROR(
-          this->get_logger(),
-          "GTN_LoadConfig 加载配置文件失败，错误码=%d, 路径=%s",
-          rtn, config_path.c_str());
+      RCLCPP_ERROR(this->get_logger(),
+                   "GTN_LoadConfig 加载配置文件失败，错误码=%d, 路径=%s",
+                   rtn, config_path.c_str());
       return false;
     }
     RCLCPP_INFO(this->get_logger(), "GTN_LoadConfig 成功");
@@ -211,6 +245,7 @@ private:
     return true;
   }
 
+  // ===================== 电机初始化 =====================
   bool init_motors()
   {
     short rtn = 0;
@@ -222,54 +257,50 @@ private:
       rtn = GTN_GetEcatEncPos(core_id_, axis, &enc_pos_[i]);
       if (rtn != 0)
       {
-        RCLCPP_ERROR(
-            this->get_logger(),
-            "读取轴%d编码器位置失败，错误码=%d",
-            axis, rtn);
+        RCLCPP_ERROR(this->get_logger(),
+                     "读取轴%d编码器位置失败，错误码=%d",
+                     axis, rtn);
         return false;
       }
 
       rtn = GTN_SetPrfPos(core_id_, axis, enc_pos_[i]);
       if (rtn != 0)
       {
-        RCLCPP_ERROR(
-            this->get_logger(),
-            "设置轴%d规划位置失败，错误码=%d",
-            axis, rtn);
+        RCLCPP_ERROR(this->get_logger(),
+                     "设置轴%d规划位置失败，错误码=%d",
+                     axis, rtn);
         return false;
       }
 
       rtn = GTN_SetEncPos(core_id_, axis, enc_pos_[i]);
       if (rtn != 0)
       {
-        RCLCPP_ERROR(
-            this->get_logger(),
-            "设置轴%d编码器位置失败，错误码=%d",
-            axis, rtn);
+        RCLCPP_ERROR(this->get_logger(),
+                     "设置轴%d编码器位置失败，错误码=%d",
+                     axis, rtn);
         return false;
       }
 
       rtn = GTN_AxisOn(core_id_, axis);
       if (rtn != 0)
       {
-        RCLCPP_ERROR(
-            this->get_logger(),
-            "轴%d使能失败，错误码=%d",
-            axis, rtn);
+        RCLCPP_ERROR(this->get_logger(),
+                     "轴%d使能失败，错误码=%d",
+                     axis, rtn);
         return false;
       }
 
       axis_enabled_[i] = true;
 
-      RCLCPP_INFO(
-          this->get_logger(),
-          "轴%d初始化完成，编码器位置=%d",
-          axis, enc_pos_[i]);
+      RCLCPP_INFO(this->get_logger(),
+                  "轴%d初始化完成，编码器位置=%d",
+                  axis, enc_pos_[i]);
     }
 
     return true;
   }
 
+  // ===================== 发布 system_state =====================
   void publish_state()
   {
     upperlimb_robot::msg::SystemState msg;
@@ -280,6 +311,119 @@ private:
     system_pub_->publish(msg);
   }
 
+  // ===================== 发布 robot_state =====================
+  void publishRobotState(const MotorStateCache &state)
+  {
+    upperlimb_robot::msg::RobotState msg;
+
+    msg.position.assign(state.position.begin(), state.position.end());
+    msg.velocity.assign(state.velocity.begin(), state.velocity.end());
+    msg.torque.assign(state.torque.begin(), state.torque.end());
+    msg.enabled.assign(state.enabled.begin(), state.enabled.end());
+
+    robot_state_pub_->publish(msg);
+  }
+
+  // ===================== 高频状态采集线程 =====================
+  void stateReadLoop()
+  {
+    // 50HZ
+    constexpr auto period = std::chrono::microseconds(20000);
+
+    while (running_.load())
+    {
+      auto cycle_start = std::chrono::steady_clock::now();
+
+      // 本周期局部缓存
+      MotorStateCache local_state;
+
+      for (std::size_t i = 0; i < AXIS_NUM; ++i)
+      {
+        const int axis = axis_ids_[i];
+
+        short rtn = 0;
+        int32_t sts = 0;
+        int32_t enc_pos = 0;
+        double vel = 0.0;
+        short torque_raw = 0;
+
+        // 读取轴状态
+        rtn = GTN_GetSts(core_id_, axis, &sts);
+        if (rtn != 0)
+        {
+          RCLCPP_WARN(this->get_logger(), "读取轴%d状态失败，错误码=%d", axis, rtn);
+        }
+
+        // 读取编码器位置
+        rtn = GTN_GetEcatEncPos(core_id_, axis, &enc_pos);
+        if (rtn != 0)
+        {
+          RCLCPP_WARN(this->get_logger(), "读取轴%d位置失败，错误码=%d", axis, rtn);
+        }
+        else
+        {
+          local_state.position[i] = static_cast<double>(enc_pos);
+        }
+
+        // 读取扭矩
+        rtn = GTN_GetEcatAxisAtlTorque(core_id_, axis, &torque_raw);
+        if (rtn != 0)
+        {
+          RCLCPP_WARN(this->get_logger(), "读取轴%d扭矩失败，错误码=%d", axis, rtn);
+        }
+        else
+        {
+          local_state.torque[i] = static_cast<double>(torque_raw);
+        }
+
+        // 读取速度
+        rtn = GTN_GetEncVel(core_id_, axis, &vel);
+        if (rtn != 0)
+        {
+          RCLCPP_WARN(this->get_logger(), "读取轴%d速度失败，错误码=%d", axis, rtn);
+        }
+        else
+        {
+          local_state.velocity[i] = vel;
+        }
+
+        // 使能状态
+        local_state.enabled[i] = (sts != 0);
+      }
+
+      // 更新共享缓存
+      {
+        std::lock_guard<std::mutex> lock(state_mutex_);
+        latest_motor_state_ = local_state;
+        state_ready_.store(true);
+      }
+
+      // 低频发布给 GUI，例如 500Hz 采样，50Hz 发布
+      publish_divider_count_++;
+      if (publish_divider_count_ >= publish_divider_)
+      {
+        publish_divider_count_ = 0;
+        publishRobotState(local_state);
+      }
+
+      auto cycle_end = std::chrono::steady_clock::now();
+      auto elapsed =
+          std::chrono::duration_cast<std::chrono::microseconds>(cycle_end - cycle_start);
+
+      if (elapsed < period)
+      {
+        std::this_thread::sleep_for(period - elapsed);
+      }
+      else
+      {
+        RCLCPP_WARN(this->get_logger(),
+                    "状态采集循环超时，耗时=%ld us，目标周期=%ld us",
+                    elapsed.count(), period.count());
+      }
+    }
+  }
+
+  // ===================== 停止所有轴 =====================
   bool stop_all_axes_raw()
   {
     if (!controller_opened_)
@@ -334,9 +478,12 @@ private:
   }
 
 private:
+  // ===================== ROS通信 =====================
   rclcpp::Publisher<upperlimb_robot::msg::SystemState>::SharedPtr system_pub_;
+  rclcpp::Publisher<upperlimb_robot::msg::RobotState>::SharedPtr robot_state_pub_;
   rclcpp::TimerBase::SharedPtr state_timer_;
 
+  // ===================== 系统状态 =====================
   bool joint_init_ = false;
   bool controller_init_ = false;
   bool system_ready_ = false;
@@ -345,10 +492,24 @@ private:
   bool ecat_started_ = false;
   bool shutdown_done_ = false;
 
+  // ===================== 线程控制 =====================
+  std::atomic<bool> running_{false};
+  std::atomic<bool> state_ready_{false};
+  std::thread state_read_thread_;
+
+  // ===================== 共享状态缓存 =====================
+  std::mutex state_mutex_;
+  MotorStateCache latest_motor_state_;
+
+  // ===================== 发布分频 =====================
+  int publish_divider_ = 1; 
+  int publish_divider_count_ = 0;
+
+  // ===================== 控制器参数 =====================
   int core_id_ = 1;
 
+  // ===================== 轴配置 =====================
   static constexpr std::size_t AXIS_NUM = 20;
-
   std::array<int, AXIS_NUM> axis_ids_ = {
       1, 2, 3, 4, 5,
       6, 7, 8, 9, 10,
