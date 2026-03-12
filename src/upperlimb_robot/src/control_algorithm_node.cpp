@@ -53,16 +53,9 @@ public:
                 10,
                 std::bind(&ControlAlgorithmNode::systemStateCallback, this, std::placeholders::_1));
 
-        robot_state_pub_ =
-            this->create_publisher<upperlimb_robot::msg::RobotState>(
-                "robot_state",
-                10);
 
         // ===================== 启动线程 =====================
         running_.store(true);
-
-        state_read_thread_ = std::thread(&ControlAlgorithmNode::stateReadLoop, this);
-        RCLCPP_INFO(this->get_logger(), "状态采集线程已启动");
 
         control_thread_ = std::thread(&ControlAlgorithmNode::controlLoop, this);
         RCLCPP_INFO(this->get_logger(), "控制线程已启动");
@@ -74,10 +67,6 @@ public:
 
         running_.store(false);
 
-        if (state_read_thread_.joinable())
-        {
-            state_read_thread_.join();
-        }
         RCLCPP_INFO(this->get_logger(), "状态采集线程已安全退出");
 
         if (control_thread_.joinable())
@@ -108,111 +97,6 @@ private:
         if (msg->system_ready)
         {
             RCLCPP_INFO(this->get_logger(), "系统初始化完成，允许启动控制算法");
-        }
-    }
-
-    // ===================== 高频状态采集线程 =====================
-    void stateReadLoop()
-    {
-        // 目标采样周期：2ms（500Hz）
-        constexpr auto period = std::chrono::microseconds(2000);
-
-        while (running_.load())
-        {
-            auto cycle_start = std::chrono::steady_clock::now();
-
-            // local_state 是本次循环使用的局部状态变量
-            // 用于存储当前读取到的所有电机信息（位置、速度、扭矩、使能状态）
-            MotorStateCache local_state;
-
-            // ===== 在这里读取 20 轴位置、速度、扭矩 =====
-            for (std::size_t i = 0; i < AXIS_NUM; ++i)
-            {
-                const int axis = axis_ids_[i];
-
-                short rtn = 0;
-                int32_t sts = 0;
-                int32_t enc_pos = 0;
-                double vel = 0.0;
-                short torque_raw = 0;
-                
-                // ---------------- 读取轴状态 ----------------
-                rtn = GTN_GetSts(core_id_, axis, &sts);
-                if (rtn != 0)
-                {
-                    RCLCPP_WARN(this->get_logger(),
-                                "读取轴%d状态失败，错误码=%d", axis, rtn);
-                }
-
-                // ---------------- 读取编码器位置 ----------------
-                rtn = GTN_GetEcatEncPos(core_id_, axis, &enc_pos);
-                if (rtn != 0)
-                {
-                    RCLCPP_WARN(this->get_logger(),
-                                "读取轴%d位置失败，错误码=%d", axis, rtn);
-                }
-                else
-                {
-                    local_state.position[i] = static_cast<double>(enc_pos);
-                }
-
-                // ---------------- 读取扭矩 ----------------
-                rtn = GTN_GetEcatAxisAtlTorque(core_id_, axis, &torque_raw);
-                if (rtn != 0)
-                {
-                    RCLCPP_WARN(this->get_logger(),
-                                "读取轴%d扭矩失败，错误码=%d", axis, rtn);
-                }
-                else
-                {
-                    local_state.torque[i] = static_cast<double>(torque_raw);
-                }
-
-                // ---------------- 读取编码器速度 ----------------
-                rtn = GTN_GetEncVel(core_id_, axis, &vel);
-                if (rtn != 0)
-                {
-                    RCLCPP_WARN(this->get_logger(),
-                                "读取轴%d速度失败，错误码=%d", axis, rtn);
-                }
-                else
-                {
-                    local_state.velocity[i] = vel;
-                }
-
-                // ---------------- 判断轴是否使能 ----------------
-                // 这里先做简化：只要状态字非0，就认为轴在线/有效
-                // 可以根据固高状态字具体bit位再细化
-                local_state.enabled[i] = (sts != 0);
-            }
-            // 用互斥锁更新共享状态
-            {
-                std::lock_guard<std::mutex> lock(state_mutex_);
-                latest_motor_state_ = local_state;
-                state_ready_.store(true);
-            }
-
-            // ===== 低频向 GUI 发布 RobotState =====
-            // 采样 500Hz，发布 50Hz：每 10 次发 1 次
-            publish_divider_count_++;
-            if (publish_divider_count_ >= publish_divider_)
-            {
-                publish_divider_count_ = 0;
-                publishRobotState(local_state);
-            }
-
-            // 周期等待
-            auto cycle_end = std::chrono::steady_clock::now();
-            auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(cycle_end - cycle_start);
-
-            if (elapsed < period)
-            {
-                std::this_thread::sleep_for(period - elapsed);
-            }
-            else
-            {
-                RCLCPP_WARN(this->get_logger(), "状态采集循环超时");
-            }
         }
     }
 
@@ -302,32 +186,13 @@ private:
         }
     }
 
-    // ===================== 发布 RobotState 给 GUI =====================
-    void publishRobotState(const MotorStateCache &state)
-    {
-        upperlimb_robot::msg::RobotState msg;
-
-        // 假设 RobotState.msg 中有以下字段：
-        // float64[] position
-        // float64[] velocity
-        // float64[] torque
-        // bool[] enabled
-        msg.position.assign(state.position.begin(), state.position.end());
-        msg.velocity.assign(state.velocity.begin(), state.velocity.end());
-        msg.torque.assign(state.torque.begin(), state.torque.end());
-        msg.enabled.assign(state.enabled.begin(), state.enabled.end());
-
-        robot_state_pub_->publish(msg);
-    }
 
 private:
     // ===================== ROS2 通信 =====================
     rclcpp::Subscription<upperlimb_robot::msg::ControlCommand>::SharedPtr control_command_sub_;
     rclcpp::Subscription<upperlimb_robot::msg::SystemState>::SharedPtr system_state_sub_;
-    rclcpp::Publisher<upperlimb_robot::msg::RobotState>::SharedPtr robot_state_pub_;
 
     // ===================== 线程 =====================
-    std::thread state_read_thread_; // 高频状态采集线程
     std::thread control_thread_;    // 高频控制线程
 
     // ===================== 线程控制 =====================

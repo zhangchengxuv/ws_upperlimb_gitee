@@ -15,6 +15,7 @@
 #include "upperlimb_robot/msg/robot_state.hpp"
 #include "upperlimb_robot/gxn.h"
 
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -42,6 +43,15 @@ struct MotorStateCache
 
   // 轴是否使能
   std::array<bool, 20> enabled{};
+};
+
+// ===================== 性能统计结构体 =====================
+struct PerfStats
+{
+  uint64_t cycle_count = 0;        // 周期数
+  uint64_t timeout_count = 0;      // 超时次数
+  int64_t total_cycle_time_us = 0; // 总耗时，用于计算平均值
+  int64_t max_cycle_time_us = 0;   // 最大耗时
 };
 
 class MotorDriverNode : public rclcpp::Node
@@ -87,10 +97,14 @@ public:
 
     RCLCPP_INFO(this->get_logger(), "电机初始化完成，系统准备就绪");
 
-    // 启动状态采集线程
+    // 启动线程
     running_.store(true);
+
     state_read_thread_ = std::thread(&MotorDriverNode::stateReadLoop, this);
     RCLCPP_INFO(this->get_logger(), "状态采集线程已启动");
+
+    publish_thread_ = std::thread(&MotorDriverNode::publishLoop, this);
+    RCLCPP_INFO(this->get_logger(), "状态发布线程已启动");
   }
 
   ~MotorDriverNode() override
@@ -108,9 +122,15 @@ public:
 
     // 先停线程
     running_.store(false);
+
     if (state_read_thread_.joinable())
     {
       state_read_thread_.join();
+    }
+
+    if (publish_thread_.joinable())
+    {
+      publish_thread_.join();
     }
 
     fprintf(stderr, "正在安全关闭机器人系统...\n");
@@ -324,11 +344,44 @@ private:
     robot_state_pub_->publish(msg);
   }
 
+  // ===================== 状态发布线程 =====================
+  void publishLoop()
+  {
+    // 发布频率：50Hz
+    constexpr auto publish_period = std::chrono::microseconds(20000);
+
+    while (running_.load())
+    {
+      auto cycle_start = std::chrono::steady_clock::now();
+
+      if (state_ready_.load())
+      {
+        MotorStateCache snapshot;
+        {
+          std::lock_guard<std::mutex> lock(state_mutex_);
+          snapshot = latest_motor_state_;
+        }
+
+        publishRobotState(snapshot);
+      }
+
+      auto cycle_end = std::chrono::steady_clock::now();
+      auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(cycle_end - cycle_start);
+
+      if (elapsed < publish_period)
+      {
+        std::this_thread::sleep_for(publish_period - elapsed);
+      }
+    }
+  }
+
   // ===================== 高频状态采集线程 =====================
   void stateReadLoop()
   {
-    // 50HZ
+    // 采集频率：50Hz
     constexpr auto period = std::chrono::microseconds(20000);
+
+    auto last_perf_log_time = std::chrono::steady_clock::now();
 
     while (running_.load())
     {
@@ -347,18 +400,29 @@ private:
         double vel = 0.0;
         short torque_raw = 0;
 
-        // 读取轴状态
-        rtn = GTN_GetSts(core_id_, axis, &sts);
-        if (rtn != 0)
+        // ---------------- 读取轴状态（降频） ----------------
+        GTN_GetSts_count_++;
+        if (GTN_GetSts_count_ >= GTN_GetSts_)
         {
-          RCLCPP_WARN(this->get_logger(), "读取轴%d状态失败，错误码=%d", axis, rtn);
+          GTN_GetSts_count_ = 0;
+          rtn = GTN_GetSts(core_id_, axis, &sts);
+          if (rtn != 0)
+          {
+            // 不在高频线程里频繁打印，统计错误次数即可
+            read_sts_error_count_++;
+          }
+        }
+        else
+        {
+          // 非状态读取周期，沿用上一轮状态
+          sts = axis_last_sts_[i];
         }
 
         // 读取编码器位置
         rtn = GTN_GetEcatEncPos(core_id_, axis, &enc_pos);
         if (rtn != 0)
         {
-          RCLCPP_WARN(this->get_logger(), "读取轴%d位置失败，错误码=%d", axis, rtn);
+          read_pos_error_count_++;
         }
         else
         {
@@ -369,7 +433,7 @@ private:
         rtn = GTN_GetEcatAxisAtlTorque(core_id_, axis, &torque_raw);
         if (rtn != 0)
         {
-          RCLCPP_WARN(this->get_logger(), "读取轴%d扭矩失败，错误码=%d", axis, rtn);
+          read_torque_error_count_++;
         }
         else
         {
@@ -380,12 +444,15 @@ private:
         rtn = GTN_GetEncVel(core_id_, axis, &vel);
         if (rtn != 0)
         {
-          RCLCPP_WARN(this->get_logger(), "读取轴%d速度失败，错误码=%d", axis, rtn);
+          read_vel_error_count_++;
         }
         else
         {
           local_state.velocity[i] = vel;
         }
+
+        // 保存最新状态
+        axis_last_sts_[i] = sts;
 
         // 使能状态
         local_state.enabled[i] = (sts != 0);
@@ -398,27 +465,75 @@ private:
         state_ready_.store(true);
       }
 
-      // 低频发布给 GUI，例如 500Hz 采样，50Hz 发布
-      publish_divider_count_++;
-      if (publish_divider_count_ >= publish_divider_)
-      {
-        publish_divider_count_ = 0;
-        publishRobotState(local_state);
-      }
-
       auto cycle_end = std::chrono::steady_clock::now();
       auto elapsed =
           std::chrono::duration_cast<std::chrono::microseconds>(cycle_end - cycle_start);
+      const auto elapsed_us = static_cast<int64_t>(elapsed.count());
+
+      // 性能统计
+      perf_stats_.cycle_count++;
+      perf_stats_.total_cycle_time_us += elapsed_us;
+      perf_stats_.max_cycle_time_us =
+          std::max(perf_stats_.max_cycle_time_us, elapsed_us);
+
+      if (elapsed >= period)
+      {
+        perf_stats_.timeout_count++;
+      }
+
+      // 每秒打印一次性能统计，限制高频日志输出
+      const auto now = std::chrono::steady_clock::now();
+      if (now - last_perf_log_time >= 1s)
+      {
+        const uint64_t cycle_count = perf_stats_.cycle_count;
+        const uint64_t timeout_count = perf_stats_.timeout_count;
+        const int64_t avg_cycle_us =
+            (cycle_count > 0) ? (perf_stats_.total_cycle_time_us / static_cast<int64_t>(cycle_count)) : 0;
+        const int64_t max_cycle_us = perf_stats_.max_cycle_time_us;
+
+        if (timeout_count > 0)
+        {
+          RCLCPP_WARN(
+              this->get_logger(),
+              "[性能统计] 过去1秒: 周期数=%lu, 平均耗时=%ld us, 最大耗时=%ld us, 超时次数=%lu, "
+              "位置读取错误=%lu, 速度读取错误=%lu, 扭矩读取错误=%lu, 状态读取错误=%lu",
+              cycle_count,
+              avg_cycle_us,
+              max_cycle_us,
+              timeout_count,
+              read_pos_error_count_,
+              read_vel_error_count_,
+              read_torque_error_count_,
+              read_sts_error_count_);
+        }
+        else
+        {
+          RCLCPP_INFO(
+              this->get_logger(),
+              "[性能统计] 过去1秒: 周期数=%lu, 平均耗时=%ld us, 最大耗时=%ld us, 超时次数=%lu, "
+              "位置读取错误=%lu, 速度读取错误=%lu, 扭矩读取错误=%lu, 状态读取错误=%lu",
+              cycle_count,
+              avg_cycle_us,
+              max_cycle_us,
+              timeout_count,
+              read_pos_error_count_,
+              read_vel_error_count_,
+              read_torque_error_count_,
+              read_sts_error_count_);
+        }
+
+        // 统计量清零，进入下一秒统计窗口
+        perf_stats_ = PerfStats{};
+        read_pos_error_count_ = 0;
+        read_vel_error_count_ = 0;
+        read_torque_error_count_ = 0;
+        read_sts_error_count_ = 0;
+        last_perf_log_time = now;
+      }
 
       if (elapsed < period)
       {
         std::this_thread::sleep_for(period - elapsed);
-      }
-      else
-      {
-        RCLCPP_WARN(this->get_logger(),
-                    "状态采集循环超时，耗时=%ld us，目标周期=%ld us",
-                    elapsed.count(), period.count());
       }
     }
   }
@@ -496,14 +611,25 @@ private:
   std::atomic<bool> running_{false};
   std::atomic<bool> state_ready_{false};
   std::thread state_read_thread_;
+  std::thread publish_thread_;
 
   // ===================== 共享状态缓存 =====================
   std::mutex state_mutex_;
   MotorStateCache latest_motor_state_;
 
-  // ===================== 发布分频 =====================
-  int publish_divider_ = 1; 
-  int publish_divider_count_ = 0;
+  // ===================== 性能统计 =====================
+  PerfStats perf_stats_;
+
+  // ===================== 错误计数 =====================
+  uint64_t read_pos_error_count_ = 0;
+  uint64_t read_vel_error_count_ = 0;
+  uint64_t read_torque_error_count_ = 0;
+  uint64_t read_sts_error_count_ = 0;
+
+  // ===================== 分频/状态缓存 =====================
+  int GTN_GetSts_ = 10;
+  int GTN_GetSts_count_ = 0;
+  std::array<int32_t, 20> axis_last_sts_ = {};
 
   // ===================== 控制器参数 =====================
   int core_id_ = 1;
