@@ -5,12 +5,12 @@ namespace upperlimb_robot
 
 namespace
 {
-// 直接沿用你旧代码里的脉冲比和左侧预设位写法
+// ===================== 脉冲比 =====================
 constexpr double PerAngle00 = 524288.0 / 360.0;
 constexpr double PerAngle01 = 262144.0 / 360.0;
 constexpr double PerAngle02 = 2048.0 / 360.0;
 
-// 竖直零位（你旧代码里的 SZO）
+// ===================== 竖直零位（SZO） =====================
 constexpr double SZO10 = 249.46;
 constexpr double SZO20 = 12172.4808;
 constexpr double SZO30 = -12.1935;
@@ -20,47 +20,34 @@ constexpr double SZO60 = -728.71;
 constexpr double SZO70 = -119.21;
 constexpr double SZO90 = -23.2018;
 constexpr double SZO100 = -833.12;
-} // namespace
+}  // namespace
 
-void runIdle(const MotorStateCache &state, ControlOutputCache &output)
+void runIdle(const MotorStateCache & state, ControlOutputCache & output)
 {
   (void)state;
+  output = ControlOutputCache{};
   output.valid = false;
 }
 
-void runActiveMode(const MotorStateCache &state, ControlOutputCache &output)
+void runActiveMode(const MotorStateCache & state, ControlOutputCache & output)
 {
-  // =============================
-  // 主动模式框架
-  // 这里先不写具体算法，只留入口
-  //
-  // 后续你可以在这里做：
-  // 1. 读取当前关节角 / 速度
-  // 2. 读取交互力 / 扭矩 / 传感器信息
-  // 3. 判断患者主动运动方向
-  // 4. 生成 assist-as-needed / admittance / impedance 等输出
-  // 5. 填充 output
-  // =============================
   (void)state;
 
-  // 暂时不下发任何控制
+  // 主动模式暂时只保留框架，不下发控制
+  output = ControlOutputCache{};
   output.valid = false;
 }
 
-void runLeftPresetPosition(const MotorStateCache &state, ControlOutputCache &output)
+void runLeftPresetPosition(const MotorStateCache & state, ControlOutputCache & output)
 {
   (void)state;
 
-  // 先清空
+  // 先清空输出
   output = ControlOutputCache{};
   output.valid = true;
 
-  // 这里只控制左侧 9 个轴：
+  // 只控制左侧 9 个轴：
   // 11 12 13 14 15 16 17 19 20
-  //
-  // 对应你旧代码里的：
-  // 更改位置左侧1~7、9、10
-  //
   // 数组下标 = 轴号 - 1
 
   // axis 11
@@ -136,4 +123,4 @@ void runLeftPresetPosition(const MotorStateCache &state, ControlOutputCache &out
   output.target_smooth_time[19] = 25;
 }
 
-} // namespace upperlimb_robot
+}  // namespace upperlimb_robot

@@ -13,6 +13,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <csignal>
 #include <cstdio>
 #include <cstdint>
@@ -151,7 +152,6 @@ private:
   void controlCommandCallback(const upperlimb_robot::msg::ControlCommand::SharedPtr msg)
   {
     current_mode_.store(msg->command);
-
     RCLCPP_INFO(this->get_logger(), "收到控制命令=%d", msg->command);
   }
 
@@ -419,6 +419,7 @@ private:
       }
       else
       {
+        timeout_count++;
         if (timeout_count % 100 == 0)
         {
           double actual_hz = 1000000.0 / static_cast<double>(elapsed.count());
@@ -462,12 +463,10 @@ private:
         local_state = latest_motor_state_;
       }
 
-      // const int mode = current_mode_.load();
+      const int mode = current_mode_.load();
 
-      const int mode = 7;
-
-
-      upperlimb_robot::ControlOutputCache output = computeControlOutput(mode, local_state);
+      upperlimb_robot::ControlOutputCache output =
+          computeControlOutput(mode, local_state);
 
       if (output.valid)
       {
@@ -484,6 +483,7 @@ private:
       }
       else
       {
+        timeout_count++;
         if (timeout_count % 100 == 0)
         {
           double actual_hz = 1000000.0 / static_cast<double>(elapsed.count());
@@ -501,7 +501,7 @@ private:
 
   upperlimb_robot::ControlOutputCache computeControlOutput(int mode, const upperlimb_robot::MotorStateCache &state)
   {
-    upperlimb_robot::ControlOutputCache output;
+    upperlimb_robot::ControlOutputCache output{};
 
     switch (mode)
     {
@@ -527,64 +527,85 @@ private:
 
   void applyControlOutput(const upperlimb_robot::ControlOutputCache &output)
   {
+    uint32_t update_mask = 0;
+
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
     {
       const int axis = axis_ids_[i];
 
-      if (output.use_position[i])
+      if (!output.use_position[i])
       {
-        short rtn = 0;
-
-        TTrapPrm trap;
-        trap.acc = output.target_acc[i];
-        trap.dec = output.target_dec[i];
-        trap.smoothTime = output.target_smooth_time[i];
-        trap.velStart = 0;
-
-        rtn = GTN_PrfTrap(core_id_, axis);
-        if (rtn != 0)
-        {
-          RCLCPP_ERROR(this->get_logger(), "GTN_PrfTrap 轴%d失败，错误码=%d", axis, rtn);
-          continue;
-        }
-
-        rtn = GTN_SetTrapPrm(core_id_, axis, &trap);
-        if (rtn != 0)
-        {
-          RCLCPP_ERROR(this->get_logger(), "GTN_SetTrapPrm 轴%d失败，错误码=%d", axis, rtn);
-          continue;
-        }
-
-        rtn = GTN_SetVel(core_id_, axis, output.target_velocity[i]);
-        if (rtn != 0)
-        {
-          RCLCPP_ERROR(this->get_logger(), "GTN_SetVel 轴%d失败，错误码=%d", axis, rtn);
-          continue;
-        }
-
-        rtn = GTN_SetPos(core_id_, axis, static_cast<int32_t>(output.target_position[i]));
-        if (rtn != 0)
-        {
-          RCLCPP_ERROR(this->get_logger(), "GTN_SetPos 轴%d失败，错误码=%d", axis, rtn);
-          continue;
-        }
-
-        rtn = GTN_Update(core_id_, static_cast<short>(1u << (axis - 1)));
-        if (rtn != 0)
-        {
-          RCLCPP_ERROR(this->get_logger(), "GTN_Update 轴%d失败，错误码=%d", axis, rtn);
-          continue;
-        }
+        command_sent_[i] = false;
+        continue;
       }
 
-      if (output.use_velocity[i])
+      const double target = output.target_position[i];
+
+      // 目标没有明显变化时，不重复下发
+      if (command_sent_[i] &&
+          std::abs(target - last_target_position_[i]) < position_epsilon_)
       {
-        // 速度控制预留
+        continue;
       }
 
-      if (output.use_torque[i])
+      short rtn = 0;
+
+      TTrapPrm trap{};
+      trap.acc = output.target_acc[i];
+      trap.dec = output.target_dec[i];
+      trap.smoothTime = output.target_smooth_time[i];
+      trap.velStart = 0;
+
+      rtn = GTN_PrfTrap(core_id_, axis);
+      if (rtn != 0)
       {
-        // 力矩控制预留
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "GTN_PrfTrap 轴%d失败，错误码=%d", axis, rtn);
+        continue;
+      }
+
+      rtn = GTN_SetTrapPrm(core_id_, axis, &trap);
+      if (rtn != 0)
+      {
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "GTN_SetTrapPrm 轴%d失败，错误码=%d", axis, rtn);
+        continue;
+      }
+
+      rtn = GTN_SetVel(core_id_, axis, output.target_velocity[i]);
+      if (rtn != 0)
+      {
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "GTN_SetVel 轴%d失败，错误码=%d", axis, rtn);
+        continue;
+      }
+
+      rtn = GTN_SetPos(core_id_, axis, static_cast<int32_t>(target));
+      if (rtn != 0)
+      {
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "GTN_SetPos 轴%d失败，错误码=%d", axis, rtn);
+        continue;
+      }
+
+      update_mask |= (1u << (axis - 1));
+      last_target_position_[i] = target;
+      command_sent_[i] = true;
+    }
+
+    if (update_mask != 0)
+    {
+      short rtn = GTN_Update(core_id_, static_cast<short>(update_mask));
+      if (rtn != 0)
+      {
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "GTN_Update 失败，mask=0x%x，错误码=%d",
+            update_mask, rtn);
       }
     }
   }
@@ -662,18 +683,17 @@ private:
 
   std::atomic<int> current_mode_{0};
 
-  // 频率（Hz）
+  // 调试频率
   std::atomic<int> state_hz_{200};  // 状态采集频率
-  std::atomic<int> control_hz_{50}; // 控制频率
+  std::atomic<int> control_hz_{100}; // 控制频率
 
-  // GTN_GetSts 分频读取
-  int status_read_divider_ = 20; // 每 n 次状态采集读 1 次状态字
+  int status_read_divider_ = 20;
   int status_read_divider_count_ = 0;
 
   std::mutex state_mutex_;
   upperlimb_robot::MotorStateCache latest_motor_state_;
 
-  int publish_divider_ = 10; // 每 n 次状态采集发布 1 次 robot_state
+  int publish_divider_ = 10;
   int publish_divider_count_ = 0;
 
   int core_id_ = 1;
@@ -686,6 +706,11 @@ private:
 
   std::array<int32_t, upperlimb_robot::AXIS_NUM> enc_pos_{};
   std::array<bool, upperlimb_robot::AXIS_NUM> axis_enabled_{};
+
+  // 只在目标变化时下发命令
+  std::array<double, upperlimb_robot::AXIS_NUM> last_target_position_{};
+  std::array<bool, upperlimb_robot::AXIS_NUM> command_sent_{};
+  double position_epsilon_ = 1.0;
 };
 
 static std::shared_ptr<RobotControlNode> g_node = nullptr;
