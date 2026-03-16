@@ -12,9 +12,12 @@ static constexpr std::size_t AXIS_NUM = 20;
 // ===================== 控制模式定义 =====================
 enum ControlMode : int
 {
+  // 左侧回归预设位置
+  MODE_LEFT_PRESET_POSITION = 1,
+  // 空闲模式
   MODE_IDLE = 0,
-  MODE_ACTIVE = 2,
-  MODE_LEFT_PRESET_POSITION = 7
+  MODE_ACTIVE = 2
+  
 };
 
 // ===================== 电机状态缓存 =====================
