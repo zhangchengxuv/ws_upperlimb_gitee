@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>pinocchio_kin_demo</name>
+  <version>0.0.1</version>
+  <description>ROS 2 + Pinocchio 正运动学、雅可比与 RViz 显示示例</description>
+
+  <maintainer email="zhangchenxuv@gmail.com">zhangchenxu</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>pinocchio</depend>
+  <depend>ament_index_cpp</depend>
+
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

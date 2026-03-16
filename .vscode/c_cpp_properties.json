@@ -11,7 +11,8 @@
                 "${workspaceFolder}/build/**",
                 "${workspaceFolder}/install/**",
                 "${workspaceFolder}/src/upperlimb_robot/include/upperlimb_robot",
-                "${workspaceFolder}/src/upperlimb_robot/include"
+                "${workspaceFolder}/src/upperlimb_robot/include",
+                "/usr/include/eigen3"
             ],
             "name": "ROS",
             "intelliSenseMode": "gcc-x64",
