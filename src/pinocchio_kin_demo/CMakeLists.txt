@@ -12,6 +12,9 @@ find_package(pinocchio REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 
+# =========================
+# fk_rviz_node
+# =========================
 add_executable(fk_rviz_node src/fk_rviz_node.cpp)
 
 target_include_directories(fk_rviz_node PUBLIC
@@ -29,8 +32,29 @@ target_link_libraries(fk_rviz_node
   pinocchio::pinocchio
 )
 
+# =========================
+# ik_rviz_node
+# =========================
+add_executable(ik_rviz_node src/ik_rviz_node.cpp)
+
+target_include_directories(ik_rviz_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+ament_target_dependencies(ik_rviz_node
+  rclcpp
+  sensor_msgs
+  ament_index_cpp
+)
+
+target_link_libraries(ik_rviz_node
+  pinocchio::pinocchio
+)
+
 install(TARGETS
   fk_rviz_node
+  ik_rviz_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

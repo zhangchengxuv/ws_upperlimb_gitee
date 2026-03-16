@@ -12,7 +12,10 @@
                 "${workspaceFolder}/install/**",
                 "${workspaceFolder}/src/upperlimb_robot/include/upperlimb_robot",
                 "${workspaceFolder}/src/upperlimb_robot/include",
-                "/usr/include/eigen3"
+                "/usr/include/eigen3",
+                "/usr/include/x86_64-linux-gnu/qt5/QtWidgets",
+                "/usr/include/x86_64-linux-gnu/qt5",
+                "/usr/include/x86_64-linux-gnu/qt5/QtCore"
             ],
             "name": "ROS",
             "intelliSenseMode": "gcc-x64",

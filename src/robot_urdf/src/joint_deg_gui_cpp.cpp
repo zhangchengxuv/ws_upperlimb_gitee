@@ -102,7 +102,7 @@ public:
     main_layout->addWidget(group_box);
 
     setCentralWidget(central);
-    setWindowTitle("Joint Degree GUI");
+    setWindowTitle("角度控制 GUI");
 
     connect(center_button, &QPushButton::clicked, this, [this]() {
       for (size_t i = 0; i < sliders_.size(); ++i) {
