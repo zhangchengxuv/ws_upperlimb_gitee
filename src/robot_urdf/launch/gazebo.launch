@@ -10,7 +10,7 @@
     name="spawn_model"
     pkg="gazebo_ros"
     type="spawn_model"
-    args="-file $(find 左臂装配体.SLDASM)/urdf/左臂装配体.SLDASM.urdf -urdf -model 左臂装配体.SLDASM"
+    args="-file $(find 左臂装配体（改起始）.SLDASM)/urdf/左臂装配体（改起始）.SLDASM.urdf -urdf -model 左臂装配体（改起始）.SLDASM"
     output="screen" />
   <node
     name="fake_joint_calibration"
