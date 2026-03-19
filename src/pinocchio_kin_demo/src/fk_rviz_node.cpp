@@ -55,10 +55,15 @@ public:
       // 3. 关节名称
       // 必须和 URDF 中的可动关节顺序一致
       // ================================
+      // joint_names_ = {
+      //   "joint1", "joint2", "joint3", "joint4", "joint5",
+      //   "joint6", "joint7", "joint8", "joint9", "joint10"
+      // };
       joint_names_ = {
         "joint1", "joint2", "joint3", "joint4", "joint5",
-        "joint6", "joint7", "joint8", "joint9", "joint10"
+        "joint6", "joint7"
       };
+
 
       if (static_cast<int>(joint_names_.size()) != model_.nq)
       {
@@ -70,19 +75,15 @@ public:
 
       // ================================
       // 4. 输入关节角（单位：度）
-      // 你以后只改这里就行
       // ================================
       q_deg_ = {
         0.0,   // joint1
-        10.0,  // joint2
-        -20.0, // joint3
-        15.0,  // joint4
-        30.0,  // joint5
-        -10.0, // joint6
-        25.0,  // joint7
-        -5.0,  // joint8
-        12.0,  // joint9
-        0.0    // joint10
+        0,  // joint2
+        -30.0, // joint3
+        0,  // joint4
+        0,  // joint5
+        -20.0, // joint6
+        -60.0 // joint7
       };
 
       if (static_cast<int>(q_deg_.size()) != model_.nq)
@@ -230,7 +231,7 @@ private:
     // v = J * qdot
     // ================================
     Eigen::VectorXd qdot(model_.nv);
-    qdot << 0.1, 0.2, -0.1, 0.15, 0.05, -0.2, 0.1, 0.05, -0.1, 0.2;
+    qdot << 0.1, 0.2, -0.1, 0.15, 0.05, -0.2, 0.1;
 
     Eigen::VectorXd v_ee = J * qdot;
 

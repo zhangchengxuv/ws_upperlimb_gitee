@@ -2,12 +2,15 @@ from launch import LaunchDescription
 from launch.actions import ExecuteProcess
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
+
 import os
 
 
 def generate_launch_description():
     pkg_share = get_package_share_directory('pinocchio_kin_demo')
+    pkg_path = get_package_share_directory('robot_urdf')
     urdf_path = os.path.join(pkg_share, 'urdf', 'my_robot.urdf')
+    rviz_file = os.path.join(pkg_path, 'rviz', 'urdf.rviz')
 
     with open(urdf_path, 'r', encoding='utf-8') as f:
         robot_description = f.read()
@@ -32,6 +35,7 @@ def generate_launch_description():
             package='rviz2',
             executable='rviz2',
             name='rviz2',
-            output='screen'
+            output='screen',
+            arguments=['-d', rviz_file]
         )
     ])
