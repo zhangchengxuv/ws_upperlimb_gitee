@@ -52,9 +52,30 @@ target_link_libraries(ik_rviz_node
   pinocchio::pinocchio
 )
 
+# =========================
+# ik_jacobian_transpose_node
+# =========================
+add_executable(ik_jacobian_transpose_node src/ik_jacobian_transpose_node.cpp)
+
+target_include_directories(ik_jacobian_transpose_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+ament_target_dependencies(ik_jacobian_transpose_node
+  rclcpp
+  sensor_msgs
+  ament_index_cpp
+)
+
+target_link_libraries(ik_jacobian_transpose_node
+  pinocchio::pinocchio
+)
+
 install(TARGETS
   fk_rviz_node
   ik_rviz_node
+  ik_jacobian_transpose_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
