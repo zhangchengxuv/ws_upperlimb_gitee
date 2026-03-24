@@ -17,6 +17,7 @@
   <!-- 3. 通用依赖（编译+执行） -->
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
   <depend>ament_index_cpp</depend>
 
   <!-- 4. 执行依赖 -->

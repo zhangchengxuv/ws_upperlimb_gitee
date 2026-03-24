@@ -22,6 +22,8 @@
 #include <string>
 #include <thread>
 
+#include "sensor_msgs/msg/joint_state.hpp"
+
 using namespace std::chrono_literals;
 
 class RobotControlNode : public rclcpp::Node
@@ -42,6 +44,9 @@ public:
 
     robot_state_pub_ =
         this->create_publisher<upperlimb_robot::msg::RobotState>("robot_state", 10);
+
+    publisher_ =
+        this->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
 
     state_timer_ = this->create_wall_timer(
         500ms, std::bind(&RobotControlNode::publishSystemState, this));
@@ -315,7 +320,10 @@ private:
     msg.torque.assign(state.torque.begin(), state.torque.end());
     msg.enabled.assign(state.enable.begin(), state.enable.end());
 
+    // 发布自定义的 RobotState 消息
     robot_state_pub_->publish(msg);
+    // 同时发布标准的 JointState 消息，与RViz兼容
+    publisher_->publish(convertToJointStateMsg(state));
   }
 
   void stateReadLoop()
@@ -512,10 +520,11 @@ private:
 
     switch (mode)
     {
+      // 预设位置模式，左臂的预设位置
     case upperlimb_robot::MODE_LEFT_PRESET_POSITION:
       upperlimb_robot::runLeftPresetPosition(state, output);
       break;
-
+      // 预设位置模式，右臂的预设位置
     case upperlimb_robot::MODE_RIGHT_PRESET_POSITION:
       upperlimb_robot::runRightPresetPosition(state, output);
       break;
@@ -728,6 +737,7 @@ private:
   rclcpp::Subscription<upperlimb_robot::msg::ControlCommand>::SharedPtr control_command_sub_;
   rclcpp::Publisher<upperlimb_robot::msg::SystemState>::SharedPtr system_pub_;
   rclcpp::Publisher<upperlimb_robot::msg::RobotState>::SharedPtr robot_state_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr publisher_;
   rclcpp::TimerBase::SharedPtr state_timer_;
 
   bool joint_init_ = false;
@@ -777,6 +787,33 @@ private:
 
   // 单位是 deg，避免目标抖动时重复下发
   double position_epsilon_ = 0.05;
+
+  // convertToJointStateMsg 将 MotorStateCache 转换成 sensor_msgs::msg::JointState 消息
+  sensor_msgs::msg::JointState convertToJointStateMsg(const upperlimb_robot::MotorStateCache &state)
+  {
+    sensor_msgs::msg::JointState msg;
+
+    msg.header.stamp = this->now();
+
+    // 关节名称需要和 URDF / robot_state_publisher 一致
+    msg.name = {
+        "joint1", "joint2", "joint3", "joint4", "joint5",
+        "joint6", "joint7", "joint8", "joint9", "joint10"};
+
+    msg.position.resize(10);
+    msg.velocity.resize(10);
+    msg.effort.resize(10);
+
+    constexpr double deg_to_rad = M_PI / 180.0;
+
+    for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
+    {
+      // 位置：deg -> rad
+      msg.position[i] = state.position[i] * deg_to_rad;
+    }
+
+    return msg;
+  }
 };
 
 static std::shared_ptr<RobotControlNode> g_node = nullptr;

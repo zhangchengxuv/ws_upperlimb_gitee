@@ -10,6 +10,7 @@ endif()
 # ========================================
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(ament_index_cpp REQUIRED)
@@ -69,6 +70,7 @@ target_compile_features(robot_control_node PUBLIC c_std_99 cxx_std_17)
 # ========================================
 ament_target_dependencies(robot_control_node
   rclcpp
+  sensor_msgs
   std_msgs
   ament_index_cpp
 )
