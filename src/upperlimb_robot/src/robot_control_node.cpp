@@ -365,30 +365,36 @@ private:
           local_state.enable[i] = axis_enabled_[i];
         }
 
+        // 位置反馈：pulse -> deg
         rtn = GTN_GetEcatEncPos(core_id_, axis, &enc_pos);
         if (rtn == 0)
         {
-          local_state.position[i] = static_cast<double>(enc_pos);
+          local_state.position[i] =
+              upperlimb_robot::pulseToJointDeg(axis, static_cast<double>(enc_pos));
         }
         else
         {
           local_state.position[i] = 0.0;
         }
 
+        // 力矩反馈：raw -> Nm
         rtn = GTN_GetEcatAxisAtlTorque(core_id_, axis, &torque_raw);
         if (rtn == 0)
         {
-          local_state.torque[i] = static_cast<double>(torque_raw);
+          local_state.torque[i] =
+              upperlimb_robot::torqueRawToNm(axis, static_cast<double>(torque_raw));
         }
         else
         {
           local_state.torque[i] = 0.0;
         }
 
+        // 速度反馈：pulse/ms -> deg/s
         rtn = GTN_GetEncVel(core_id_, axis, &vel, 1);
         if (rtn == 0)
         {
-          local_state.velocity[i] = vel;
+          local_state.velocity[i] =
+              upperlimb_robot::pulsePerMsToJointDegPerSec(axis, vel);
         }
         else
         {
@@ -499,20 +505,21 @@ private:
     }
   }
 
-  upperlimb_robot::ControlOutputCache computeControlOutput(int mode, const upperlimb_robot::MotorStateCache &state)
+  upperlimb_robot::ControlOutputCache computeControlOutput(
+      int mode, const upperlimb_robot::MotorStateCache &state)
   {
     upperlimb_robot::ControlOutputCache output{};
 
     switch (mode)
     {
-      // case 1: 左侧回归预设位置
     case upperlimb_robot::MODE_LEFT_PRESET_POSITION:
       upperlimb_robot::runLeftPresetPosition(state, output);
       break;
-      // case 2: 右侧回归预设位置
+
     case upperlimb_robot::MODE_RIGHT_PRESET_POSITION:
       upperlimb_robot::runRightPresetPosition(state, output);
       break;
+
     case upperlimb_robot::MODE_IDLE:
       upperlimb_robot::runIdle(state, output);
       break;
@@ -529,37 +536,70 @@ private:
     return output;
   }
 
+  // 控制算法输出的关节目标，转换成固高控制器需要的底层参数，并真正下发执行。
   void applyControlOutput(const upperlimb_robot::ControlOutputCache &output)
   {
+    // update_mask 用于记录哪些轴需要同时启动
+    // 每一位(bit)对应一个轴（axis-1）
     uint32_t update_mask = 0;
 
+    // 遍历所有轴（1~20）
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
     {
+      // 实际轴号（1~20）
       const int axis = axis_ids_[i];
 
+      // ===================== 是否需要位置控制 =====================
+      // 如果该轴本轮没有位置控制指令，则跳过
       if (!output.use_position[i])
       {
+        // 标记该轴当前没有发送命令
         command_sent_[i] = false;
         continue;
       }
 
-      const double target = output.target_position[i];
+      // ===================== 物理量 → 控制器单位 =====================
+      // 上层：关节角度（deg）
+      const double target_deg = output.target_position[i];
 
-      // 目标没有明显变化时，不重复下发
+      // 下层：控制器使用脉冲（pulse）
+      // jointDegToPulse 内部包含：
+      //   零位偏置 + 减速比 + 编码器分辨率
+      const double target_pulse =
+          upperlimb_robot::jointDegToPulse(axis, target_deg);
+
+      // ===================== 防止重复下发 =====================
+      // 如果之前已经发过命令，且目标变化很小，则不重复发送
       if (command_sent_[i] &&
-          std::abs(target - last_target_position_[i]) < position_epsilon_)
+          std::abs(target_deg - last_target_position_[i]) < position_epsilon_)
       {
         continue;
       }
 
       short rtn = 0;
 
+      // ===================== 轨迹参数设置 =====================
+      // Trap 轨迹（梯形速度规划）
       TTrapPrm trap{};
-      trap.acc = output.target_acc[i];
-      trap.dec = output.target_dec[i];
+
+      // 加速度：deg/s² → pulse/ms²
+      trap.acc =
+          upperlimb_robot::jointAccelDegPerSec2ToPulsePerMs2(
+              axis, output.target_acc[i]);
+
+      // 减速度：deg/s² → pulse/ms²
+      trap.dec =
+          upperlimb_robot::jointAccelDegPerSec2ToPulsePerMs2(
+              axis, output.target_dec[i]);
+
+      // 平滑时间（ms）
       trap.smoothTime = output.target_smooth_time[i];
+
+      // 起始速度（默认0）
       trap.velStart = 0;
 
+      // ===================== 设置点位模式 =====================
+      // 将该轴设为 Trap（点位）模式
       rtn = GTN_PrfTrap(core_id_, axis);
       if (rtn != 0)
       {
@@ -569,6 +609,7 @@ private:
         continue;
       }
 
+      // ===================== 写入轨迹参数 =====================
       rtn = GTN_SetTrapPrm(core_id_, axis, &trap);
       if (rtn != 0)
       {
@@ -578,7 +619,13 @@ private:
         continue;
       }
 
-      rtn = GTN_SetVel(core_id_, axis, output.target_velocity[i]);
+      // ===================== 设置速度 =====================
+      // deg/s → pulse/ms
+      rtn = GTN_SetVel(
+          core_id_,
+          axis,
+          upperlimb_robot::jointSpeedDegPerSecToPulsePerMs(
+              axis, output.target_velocity[i]));
       if (rtn != 0)
       {
         RCLCPP_ERROR_THROTTLE(
@@ -587,7 +634,9 @@ private:
         continue;
       }
 
-      rtn = GTN_SetPos(core_id_, axis, static_cast<int32_t>(target));
+      // ===================== 设置目标位置 =====================
+      // pulse 为控制器最终执行单位
+      rtn = GTN_SetPos(core_id_, axis, static_cast<int32_t>(target_pulse));
       if (rtn != 0)
       {
         RCLCPP_ERROR_THROTTLE(
@@ -596,11 +645,20 @@ private:
         continue;
       }
 
+      // ===================== 标记该轴需要更新 =====================
+      // axis 从1开始，所以用 (axis - 1)
       update_mask |= (1u << (axis - 1));
-      last_target_position_[i] = target;
+
+      // 记录本次目标（用于防重复发送）
+      last_target_position_[i] = target_deg;
+
+      // 标记该轴已经发送过命令
       command_sent_[i] = true;
     }
 
+    // ===================== 启动运动 =====================
+    // 前面 SetVel / SetPos 只是写参数
+    // GTN_Update 才是真正触发运动
     if (update_mask != 0)
     {
       short rtn = GTN_Update(core_id_, static_cast<short>(update_mask));
@@ -682,16 +740,16 @@ private:
 
   std::atomic<bool> running_{false};
   std::atomic<bool> state_ready_{false};
+
   // 状态采集线程和控制线程
   std::thread state_read_thread_;
-  // 控制线程负责根据当前模式和状态计算控制输出，并下发命令
   std::thread control_thread_;
 
   std::atomic<int> current_mode_{0};
 
   // 调试频率
-  std::atomic<int> state_hz_{200};   // 状态采集频率
-  std::atomic<int> control_hz_{100}; // 控制频率
+  std::atomic<int> state_hz_{200};
+  std::atomic<int> control_hz_{100};
 
   int status_read_divider_ = 20;
   int status_read_divider_count_ = 0;
@@ -713,10 +771,12 @@ private:
   std::array<int32_t, upperlimb_robot::AXIS_NUM> enc_pos_{};
   std::array<bool, upperlimb_robot::AXIS_NUM> axis_enabled_{};
 
-  // 只在目标变化时下发命令
+  // 现在这里保存的是关节角，单位 deg
   std::array<double, upperlimb_robot::AXIS_NUM> last_target_position_{};
   std::array<bool, upperlimb_robot::AXIS_NUM> command_sent_{};
-  double position_epsilon_ = 1.0;
+
+  // 单位是 deg，避免目标抖动时重复下发
+  double position_epsilon_ = 0.05;
 };
 
 static std::shared_ptr<RobotControlNode> g_node = nullptr;
