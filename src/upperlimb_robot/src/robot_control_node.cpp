@@ -505,16 +505,20 @@ private:
 
     switch (mode)
     {
+      // case 1: 左侧回归预设位置
+    case upperlimb_robot::MODE_LEFT_PRESET_POSITION:
+      upperlimb_robot::runLeftPresetPosition(state, output);
+      break;
+      // case 2: 右侧回归预设位置
+    case upperlimb_robot::MODE_RIGHT_PRESET_POSITION:
+      upperlimb_robot::runRightPresetPosition(state, output);
+      break;
     case upperlimb_robot::MODE_IDLE:
       upperlimb_robot::runIdle(state, output);
       break;
 
     case upperlimb_robot::MODE_ACTIVE:
       upperlimb_robot::runActiveMode(state, output);
-      break;
-
-    case upperlimb_robot::MODE_LEFT_PRESET_POSITION:
-      upperlimb_robot::runLeftPresetPosition(state, output);
       break;
 
     default:
@@ -678,13 +682,15 @@ private:
 
   std::atomic<bool> running_{false};
   std::atomic<bool> state_ready_{false};
+  // 状态采集线程和控制线程
   std::thread state_read_thread_;
+  // 控制线程负责根据当前模式和状态计算控制输出，并下发命令
   std::thread control_thread_;
 
   std::atomic<int> current_mode_{0};
 
   // 调试频率
-  std::atomic<int> state_hz_{200};  // 状态采集频率
+  std::atomic<int> state_hz_{200};   // 状态采集频率
   std::atomic<int> control_hz_{100}; // 控制频率
 
   int status_read_divider_ = 20;

@@ -7,48 +7,54 @@
 namespace upperlimb_robot
 {
 
-static constexpr std::size_t AXIS_NUM = 20;
+  static constexpr std::size_t AXIS_NUM = 20;
 
-// ===================== 控制模式定义 =====================
-enum ControlMode : int
-{
+  // ===================== 控制模式定义 =====================
+  enum ControlMode : int
+  {
+    // 左侧回归预设位置
+    MODE_LEFT_PRESET_POSITION = 1,
+    // 右侧回归预设位置
+    MODE_RIGHT_PRESET_POSITION = 2,
+    // 空闲模式
+    MODE_IDLE = 0,
+    MODE_ACTIVE = 3,
+
+  };
+
+  // ===================== 电机状态缓存 =====================
+  struct MotorStateCache
+  {
+    std::array<double, AXIS_NUM> position{};
+    std::array<double, AXIS_NUM> velocity{};
+    std::array<double, AXIS_NUM> torque{};
+    std::array<bool, AXIS_NUM> enable{};
+  };
+
+  // ===================== 控制输出缓存 =====================
+  struct ControlOutputCache
+  {
+    std::array<double, AXIS_NUM> target_position{};
+    std::array<double, AXIS_NUM> target_velocity{};
+    std::array<double, AXIS_NUM> target_torque{};
+
+    std::array<double, AXIS_NUM> target_acc{};
+    std::array<double, AXIS_NUM> target_dec{};
+    std::array<short, AXIS_NUM> target_smooth_time{};
+
+    std::array<bool, AXIS_NUM> use_position{};
+    std::array<bool, AXIS_NUM> use_velocity{};
+    std::array<bool, AXIS_NUM> use_torque{};
+
+    bool valid{false};
+  };
+
   // 左侧回归预设位置
-  MODE_LEFT_PRESET_POSITION = 1,
-  // 空闲模式
-  MODE_IDLE = 0,
-  MODE_ACTIVE = 2
+  void runLeftPresetPosition(const MotorStateCache &state, ControlOutputCache &output);
+  // 右侧回归预设位置
+  void runRightPresetPosition(const MotorStateCache &state, ControlOutputCache &output);
   
-};
+  void runIdle(const MotorStateCache &state, ControlOutputCache &output);
+  void runActiveMode(const MotorStateCache &state, ControlOutputCache &output);
 
-// ===================== 电机状态缓存 =====================
-struct MotorStateCache
-{
-  std::array<double, AXIS_NUM> position{};
-  std::array<double, AXIS_NUM> velocity{};
-  std::array<double, AXIS_NUM> torque{};
-  std::array<bool, AXIS_NUM> enable{};
-};
-
-// ===================== 控制输出缓存 =====================
-struct ControlOutputCache
-{
-  std::array<double, AXIS_NUM> target_position{};
-  std::array<double, AXIS_NUM> target_velocity{};
-  std::array<double, AXIS_NUM> target_torque{};
-
-  std::array<double, AXIS_NUM> target_acc{};
-  std::array<double, AXIS_NUM> target_dec{};
-  std::array<short, AXIS_NUM> target_smooth_time{};
-
-  std::array<bool, AXIS_NUM> use_position{};
-  std::array<bool, AXIS_NUM> use_velocity{};
-  std::array<bool, AXIS_NUM> use_torque{};
-
-  bool valid{false};
-};
-
-void runIdle(const MotorStateCache & state, ControlOutputCache & output);
-void runActiveMode(const MotorStateCache & state, ControlOutputCache & output);
-void runLeftPresetPosition(const MotorStateCache & state, ControlOutputCache & output);
-
-}  // namespace upperlimb_robot
+} // namespace upperlimb_robot
