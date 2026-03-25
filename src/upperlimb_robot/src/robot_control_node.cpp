@@ -17,6 +17,7 @@
 #include <csignal>
 #include <cstdio>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -45,7 +46,7 @@ public:
     robot_state_pub_ =
         this->create_publisher<upperlimb_robot::msg::RobotState>("robot_state", 10);
 
-    publisher_ =
+    joint_state_pub_ =
         this->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
 
     state_timer_ = this->create_wall_timer(
@@ -110,6 +111,7 @@ public:
     fprintf(stderr, "正在安全关闭机器人系统...\n");
     fflush(stderr);
 
+    clearAllTorqueCommands();
     const bool axes_ok = stopAllAxesRaw();
 
     if (axes_ok)
@@ -154,12 +156,24 @@ public:
   }
 
 private:
+  // ===================== 控制命令回调 =====================
+  //
+  // 切换到零力模式时，记录当前传感器读数作为零偏。
+  //
   void controlCommandCallback(const upperlimb_robot::msg::ControlCommand::SharedPtr msg)
   {
     current_mode_.store(msg->command);
+
+    if (msg->command == upperlimb_robot::MODE_ZERO_FORCE)
+    {
+      captureForceSensorBias();
+      RCLCPP_INFO(this->get_logger(), "进入零力模式，已记录六维力零偏");
+    }
+
     RCLCPP_INFO(this->get_logger(), "收到控制命令=%d", msg->command);
   }
 
+  // ===================== 控制器初始化 =====================
   bool initController()
   {
     short rtn = GTN_Open();
@@ -243,6 +257,7 @@ private:
     return true;
   }
 
+  // ===================== 电机初始化 =====================
   bool initMotors()
   {
     short rtn = 0;
@@ -254,54 +269,40 @@ private:
       rtn = GTN_GetEcatEncPos(core_id_, axis, &enc_pos_[i]);
       if (rtn != 0)
       {
-        RCLCPP_ERROR(
-            this->get_logger(),
-            "读取轴%d编码器位置失败，错误码=%d",
-            axis, rtn);
+        RCLCPP_ERROR(this->get_logger(), "读取轴%d编码器位置失败，错误码=%d", axis, rtn);
         return false;
       }
 
       rtn = GTN_SetPrfPos(core_id_, axis, enc_pos_[i]);
       if (rtn != 0)
       {
-        RCLCPP_ERROR(
-            this->get_logger(),
-            "设置轴%d规划位置失败，错误码=%d",
-            axis, rtn);
+        RCLCPP_ERROR(this->get_logger(), "设置轴%d规划位置失败，错误码=%d", axis, rtn);
         return false;
       }
 
       rtn = GTN_SetEncPos(core_id_, axis, enc_pos_[i]);
       if (rtn != 0)
       {
-        RCLCPP_ERROR(
-            this->get_logger(),
-            "设置轴%d编码器位置失败，错误码=%d",
-            axis, rtn);
+        RCLCPP_ERROR(this->get_logger(), "设置轴%d编码器位置失败，错误码=%d", axis, rtn);
         return false;
       }
 
       rtn = GTN_AxisOn(core_id_, axis);
       if (rtn != 0)
       {
-        RCLCPP_ERROR(
-            this->get_logger(),
-            "轴%d使能失败，错误码=%d",
-            axis, rtn);
+        RCLCPP_ERROR(this->get_logger(), "轴%d使能失败，错误码=%d", axis, rtn);
         return false;
       }
 
       axis_enabled_[i] = true;
 
-      RCLCPP_INFO(
-          this->get_logger(),
-          "轴%d初始化完成，编码器位置=%d",
-          axis, enc_pos_[i]);
+      RCLCPP_INFO(this->get_logger(), "轴%d初始化完成，编码器位置=%d", axis, enc_pos_[i]);
     }
 
     return true;
   }
 
+  // ===================== 系统状态发布 =====================
   void publishSystemState()
   {
     upperlimb_robot::msg::SystemState msg;
@@ -311,7 +312,122 @@ private:
     system_pub_->publish(msg);
   }
 
-  void publishRobotState(const upperlimb_robot::MotorStateCache &state)
+  // ===================== 读取 EtherCAT 原始 float 数据 =====================
+  bool readFloatRawData(int offset, double &value)
+  {
+    int raw = 0;
+    const short rtn =
+        GTN_GetEcatRawData(core_id_, offset, 4, reinterpret_cast<unsigned char *>(&raw));
+
+    if (rtn != 0)
+    {
+      value = 0.0;
+      return false;
+    }
+
+    float temp = 0.0f;
+    std::memcpy(&temp, &raw, sizeof(float));
+    value = static_cast<double>(temp);
+    return true;
+  }
+
+  // ===================== 读取单个六维力传感器 =====================
+  bool readSingleForceSensor(int base_offset, upperlimb_robot::ForceSensorData &data)
+  {
+    bool ok = true;
+
+    ok &= readFloatRawData(base_offset + 0, data.fx);
+    ok &= readFloatRawData(base_offset + 4, data.fy);
+    ok &= readFloatRawData(base_offset + 8, data.fz);
+    ok &= readFloatRawData(base_offset + 12, data.mx);
+    ok &= readFloatRawData(base_offset + 16, data.my);
+    ok &= readFloatRawData(base_offset + 20, data.mz);
+
+    return ok;
+  }
+
+  // ===================== 读取全部四个六维力传感器 =====================
+  bool readAllForceSensors(upperlimb_robot::SensorStateCache &sensor_state)
+  {
+    bool ok = true;
+
+    ok &= readSingleForceSensor(8, sensor_state.sensor[upperlimb_robot::SENSOR_RIGHT_HAND]);
+    ok &= readSingleForceSensor(40, sensor_state.sensor[upperlimb_robot::SENSOR_RIGHT_ARM]);
+    ok &= readSingleForceSensor(72, sensor_state.sensor[upperlimb_robot::SENSOR_LEFT_HAND]);
+    ok &= readSingleForceSensor(104, sensor_state.sensor[upperlimb_robot::SENSOR_LEFT_ARM]);
+
+    sensor_state.valid = ok;
+    return ok;
+  }
+
+  // ===================== 记录当前传感器零偏 =====================
+  void captureForceSensorBias()
+  {
+    std::lock_guard<std::mutex> lock(sensor_mutex_);
+    latest_sensor_state_.bias = latest_sensor_state_.sensor;
+  }
+
+  // ===================== 六维力去偏 =====================
+  upperlimb_robot::ForceSensorData subtractBias(
+      const upperlimb_robot::ForceSensorData &raw,
+      const upperlimb_robot::ForceSensorData &bias) const
+  {
+    upperlimb_robot::ForceSensorData out;
+    out.fx = raw.fx - bias.fx;
+    out.fy = raw.fy - bias.fy;
+    out.fz = raw.fz - bias.fz;
+    out.mx = raw.mx - bias.mx;
+    out.my = raw.my - bias.my;
+    out.mz = raw.mz - bias.mz;
+    return out;
+  }
+
+  // ===================== 传感器状态转成 24 维数组 =====================
+  std::array<double, 24> buildForceSensorArray(
+      const upperlimb_robot::SensorStateCache &sensor_state) const
+  {
+    std::array<double, 24> out{};
+
+    const auto right_hand = subtractBias(
+        sensor_state.sensor[upperlimb_robot::SENSOR_RIGHT_HAND],
+        sensor_state.bias[upperlimb_robot::SENSOR_RIGHT_HAND]);
+
+    const auto right_arm = subtractBias(
+        sensor_state.sensor[upperlimb_robot::SENSOR_RIGHT_ARM],
+        sensor_state.bias[upperlimb_robot::SENSOR_RIGHT_ARM]);
+
+    const auto left_hand = subtractBias(
+        sensor_state.sensor[upperlimb_robot::SENSOR_LEFT_HAND],
+        sensor_state.bias[upperlimb_robot::SENSOR_LEFT_HAND]);
+
+    const auto left_arm = subtractBias(
+        sensor_state.sensor[upperlimb_robot::SENSOR_LEFT_ARM],
+        sensor_state.bias[upperlimb_robot::SENSOR_LEFT_ARM]);
+
+    std::size_t idx = 0;
+
+    auto fill_one = [&](const upperlimb_robot::ForceSensorData &s)
+    {
+      out[idx++] = s.fx;
+      out[idx++] = s.fy;
+      out[idx++] = s.fz;
+      out[idx++] = s.mx;
+      out[idx++] = s.my;
+      out[idx++] = s.mz;
+    };
+
+    fill_one(right_hand);
+    fill_one(right_arm);
+    fill_one(left_hand);
+    fill_one(left_arm);
+
+    return out;
+  }
+
+  // ===================== 发布 RobotState =====================
+  void publishRobotState(
+      const upperlimb_robot::MotorStateCache &state,
+      const upperlimb_robot::SensorStateCache &sensor_state)
   {
     upperlimb_robot::msg::RobotState msg;
 
@@ -320,12 +436,14 @@ private:
     msg.torque.assign(state.torque.begin(), state.torque.end());
     msg.enabled.assign(state.enable.begin(), state.enable.end());
 
-    // 发布自定义的 RobotState 消息
+    const auto force_array = buildForceSensorArray(sensor_state);
+    msg.force_sensor.assign(force_array.begin(), force_array.end());
+
     robot_state_pub_->publish(msg);
-    // 同时发布标准的 JointState 消息，与RViz兼容
-    publisher_->publish(convertToJointStateMsg(state));
+    joint_state_pub_->publish(convertToJointStateMsg(state));
   }
 
+  // ===================== 状态采集线程 =====================
   void stateReadLoop()
   {
     std::uint64_t timeout_count = 0;
@@ -337,6 +455,7 @@ private:
       auto cycle_start = std::chrono::steady_clock::now();
 
       upperlimb_robot::MotorStateCache local_state;
+      upperlimb_robot::SensorStateCache local_sensor_state;
 
       const bool do_read_status =
           (++status_read_divider_count_ >= status_read_divider_);
@@ -373,7 +492,6 @@ private:
           local_state.enable[i] = axis_enabled_[i];
         }
 
-        // 位置反馈：pulse -> deg
         rtn = GTN_GetEcatEncPos(core_id_, axis, &enc_pos);
         if (rtn == 0)
         {
@@ -385,7 +503,6 @@ private:
           local_state.position[i] = 0.0;
         }
 
-        // 力矩反馈：raw -> Nm
         rtn = GTN_GetEcatAxisAtlTorque(core_id_, axis, &torque_raw);
         if (rtn == 0)
         {
@@ -397,7 +514,6 @@ private:
           local_state.torque[i] = 0.0;
         }
 
-        // 速度反馈：pulse/ms -> deg/s
         rtn = GTN_GetEncVel(core_id_, axis, &vel, 1);
         if (rtn == 0)
         {
@@ -411,16 +527,29 @@ private:
       }
 
       {
+        std::lock_guard<std::mutex> lock(sensor_mutex_);
+        local_sensor_state.bias = latest_sensor_state_.bias;
+      }
+      readAllForceSensors(local_sensor_state);
+
+      {
         std::lock_guard<std::mutex> lock(state_mutex_);
         latest_motor_state_ = local_state;
         state_ready_.store(true);
+      }
+
+      {
+        std::lock_guard<std::mutex> lock(sensor_mutex_);
+        latest_sensor_state_.sensor = local_sensor_state.sensor;
+        latest_sensor_state_.bias = local_sensor_state.bias;
+        latest_sensor_state_.valid = local_sensor_state.valid;
       }
 
       publish_divider_count_++;
       if (publish_divider_count_ >= publish_divider_)
       {
         publish_divider_count_ = 0;
-        publishRobotState(local_state);
+        publishRobotState(local_state, local_sensor_state);
       }
 
       auto cycle_end = std::chrono::steady_clock::now();
@@ -449,6 +578,7 @@ private:
     }
   }
 
+  // ===================== 控制线程 =====================
   void controlLoop()
   {
     std::uint64_t timeout_count = 0;
@@ -472,19 +602,30 @@ private:
       }
 
       upperlimb_robot::MotorStateCache local_state;
+      upperlimb_robot::SensorStateCache local_sensor_state;
+
       {
         std::lock_guard<std::mutex> lock(state_mutex_);
         local_state = latest_motor_state_;
       }
 
+      {
+        std::lock_guard<std::mutex> lock(sensor_mutex_);
+        local_sensor_state = latest_sensor_state_;
+      }
+
       const int mode = current_mode_.load();
 
       upperlimb_robot::ControlOutputCache output =
-          computeControlOutput(mode, local_state);
+          computeControlOutput(mode, local_state, local_sensor_state);
 
       if (output.valid)
       {
         applyControlOutput(output);
+      }
+      else
+      {
+        clearAllTorqueCommands();
       }
 
       auto cycle_end = std::chrono::steady_clock::now();
@@ -513,30 +654,33 @@ private:
     }
   }
 
+  // ===================== 控制算法总入口 =====================
   upperlimb_robot::ControlOutputCache computeControlOutput(
-      int mode, const upperlimb_robot::MotorStateCache &state)
+      int mode,
+      const upperlimb_robot::MotorStateCache &state,
+      const upperlimb_robot::SensorStateCache &sensor_state)
   {
     upperlimb_robot::ControlOutputCache output{};
 
     switch (mode)
     {
-      // 预设位置模式，左臂的预设位置
     case upperlimb_robot::MODE_LEFT_PRESET_POSITION:
       upperlimb_robot::runLeftPresetPosition(state, output);
       break;
-      // 预设位置模式，右臂的预设位置
+
     case upperlimb_robot::MODE_RIGHT_PRESET_POSITION:
       upperlimb_robot::runRightPresetPosition(state, output);
       break;
 
-    case upperlimb_robot::MODE_IDLE:
-      upperlimb_robot::runIdle(state, output);
+    case upperlimb_robot::MODE_ZERO_FORCE:
+      upperlimb_robot::runZeroForceMode(state, sensor_state, output);
       break;
 
     case upperlimb_robot::MODE_ACTIVE:
-      upperlimb_robot::runActiveMode(state, output);
+      upperlimb_robot::runActiveMode(state, sensor_state, output);
       break;
 
+    case upperlimb_robot::MODE_IDLE:
     default:
       upperlimb_robot::runIdle(state, output);
       break;
@@ -545,40 +689,40 @@ private:
     return output;
   }
 
-  // 控制算法输出的关节目标，转换成固高控制器需要的底层参数，并真正下发执行。
+  // ===================== 执行控制输出 =====================
   void applyControlOutput(const upperlimb_robot::ControlOutputCache &output)
   {
-    // update_mask 用于记录哪些轴需要同时启动
-    // 每一位(bit)对应一个轴（axis-1）
-    uint32_t update_mask = 0;
+    applyPositionOutput(output);
+    applyTorqueOutput(output);
+  }
 
-    // 遍历所有轴（1~20）
+  // ===================== 执行位置输出 =====================
+  //
+  // 如果某轴本轮 use_torque = true，则该轴本轮不执行位置控制。
+  //
+  void applyPositionOutput(const upperlimb_robot::ControlOutputCache &output)
+  {
+    long update_mask = 0;
+
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
     {
-      // 实际轴号（1~20）
       const int axis = axis_ids_[i];
 
-      // ===================== 是否需要位置控制 =====================
-      // 如果该轴本轮没有位置控制指令，则跳过
+      if (output.use_torque[i])
+      {
+        continue;
+      }
+
       if (!output.use_position[i])
       {
-        // 标记该轴当前没有发送命令
         command_sent_[i] = false;
         continue;
       }
 
-      // ===================== 物理量 → 控制器单位 =====================
-      // 上层：关节角度（deg）
       const double target_deg = output.target_position[i];
-
-      // 下层：控制器使用脉冲（pulse）
-      // jointDegToPulse 内部包含：
-      //   零位偏置 + 减速比 + 编码器分辨率
       const double target_pulse =
           upperlimb_robot::jointDegToPulse(axis, target_deg);
 
-      // ===================== 防止重复下发 =====================
-      // 如果之前已经发过命令，且目标变化很小，则不重复发送
       if (command_sent_[i] &&
           std::abs(target_deg - last_target_position_[i]) < position_epsilon_)
       {
@@ -587,28 +731,16 @@ private:
 
       short rtn = 0;
 
-      // ===================== 轨迹参数设置 =====================
-      // Trap 轨迹（梯形速度规划）
       TTrapPrm trap{};
-
-      // 加速度：deg/s² → pulse/ms²
       trap.acc =
           upperlimb_robot::jointAccelDegPerSec2ToPulsePerMs2(
               axis, output.target_acc[i]);
-
-      // 减速度：deg/s² → pulse/ms²
       trap.dec =
           upperlimb_robot::jointAccelDegPerSec2ToPulsePerMs2(
               axis, output.target_dec[i]);
-
-      // 平滑时间（ms）
       trap.smoothTime = output.target_smooth_time[i];
-
-      // 起始速度（默认0）
       trap.velStart = 0;
 
-      // ===================== 设置点位模式 =====================
-      // 将该轴设为 Trap（点位）模式
       rtn = GTN_PrfTrap(core_id_, axis);
       if (rtn != 0)
       {
@@ -618,7 +750,6 @@ private:
         continue;
       }
 
-      // ===================== 写入轨迹参数 =====================
       rtn = GTN_SetTrapPrm(core_id_, axis, &trap);
       if (rtn != 0)
       {
@@ -628,8 +759,6 @@ private:
         continue;
       }
 
-      // ===================== 设置速度 =====================
-      // deg/s → pulse/ms
       rtn = GTN_SetVel(
           core_id_,
           axis,
@@ -643,8 +772,6 @@ private:
         continue;
       }
 
-      // ===================== 设置目标位置 =====================
-      // pulse 为控制器最终执行单位
       rtn = GTN_SetPos(core_id_, axis, static_cast<int32_t>(target_pulse));
       if (rtn != 0)
       {
@@ -654,33 +781,137 @@ private:
         continue;
       }
 
-      // ===================== 标记该轴需要更新 =====================
-      // axis 从1开始，所以用 (axis - 1)
-      update_mask |= (1u << (axis - 1));
-
-      // 记录本次目标（用于防重复发送）
+      update_mask |= (1L << (axis - 1));
       last_target_position_[i] = target_deg;
-
-      // 标记该轴已经发送过命令
       command_sent_[i] = true;
     }
 
-    // ===================== 启动运动 =====================
-    // 前面 SetVel / SetPos 只是写参数
-    // GTN_Update 才是真正触发运动
     if (update_mask != 0)
     {
-      short rtn = GTN_Update(core_id_, static_cast<short>(update_mask));
+      const short rtn = GTN_Update(core_id_, update_mask);
       if (rtn != 0)
       {
         RCLCPP_ERROR_THROTTLE(
             this->get_logger(), *this->get_clock(), 2000,
-            "GTN_Update 失败，mask=0x%x，错误码=%d",
+            "GTN_Update 失败，mask=0x%lx，错误码=%d",
             update_mask, rtn);
       }
     }
   }
 
+  // ===================== 执行扭矩输出 =====================
+  //
+  // 1. 先切 GTN_SetEcatAxisMode(..., 10)
+  // 2. 再 GTN_SetEcatAxisPT(..., raw_torque)
+  // 3. 不用时 GTN_SetEcatAxisPT(..., 0) 清零
+  //
+  void applyTorqueOutput(const upperlimb_robot::ControlOutputCache &output)
+  {
+    for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
+    {
+      const int axis = axis_ids_[i];
+
+      if (!output.use_torque[i])
+      {
+        if (axis_in_torque_mode_[i])
+        {
+          const short rtn_zero = GTN_SetEcatAxisPT(core_id_, axis, 0);
+          if (rtn_zero != 0)
+          {
+            RCLCPP_ERROR_THROTTLE(
+                this->get_logger(), *this->get_clock(), 2000,
+                "GTN_SetEcatAxisPT 清零失败，轴%d，错误码=%d", axis, rtn_zero);
+          }
+        }
+
+        last_target_torque_[i] = 0.0;
+        continue;
+      }
+
+      const double test_raw = upperlimb_robot::torqueNmToRaw(axis, 1.0);
+      if (test_raw == 0.0)
+      {
+        RCLCPP_WARN_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "轴%d 当前没有有效扭矩标定系数，跳过扭矩输出", axis);
+        continue;
+      }
+
+      const double target_torque_nm = output.target_torque[i];
+
+      if (std::abs(target_torque_nm - last_target_torque_[i]) < torque_epsilon_)
+      {
+        continue;
+      }
+
+      if (!axis_in_torque_mode_[i])
+      {
+        short rtn_mode = GTN_SetEcatAxisMode(core_id_, axis, 10);
+        if (rtn_mode != 0)
+        {
+          RCLCPP_ERROR_THROTTLE(
+              this->get_logger(), *this->get_clock(), 2000,
+              "GTN_SetEcatAxisMode 设置扭矩模式失败，轴%d，错误码=%d",
+              axis, rtn_mode);
+          continue;
+        }
+
+        unsigned short mode_value = 0;
+        short rtn_get = GTN_GetEcatAxisMode(core_id_, axis, &mode_value);
+        if (rtn_get != 0)
+        {
+          RCLCPP_WARN_THROTTLE(
+              this->get_logger(), *this->get_clock(), 2000,
+              "GTN_GetEcatAxisMode 读取失败，轴%d，错误码=%d",
+              axis, rtn_get);
+        }
+
+        axis_in_torque_mode_[i] = true;
+      }
+
+      const double torque_raw_double =
+          upperlimb_robot::torqueNmToRaw(axis, target_torque_nm);
+
+      const short torque_raw = static_cast<short>(std::lround(torque_raw_double));
+
+      const short rtn_pt = GTN_SetEcatAxisPT(core_id_, axis, torque_raw);
+      if (rtn_pt != 0)
+      {
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "GTN_SetEcatAxisPT 发送扭矩失败，轴%d，目标扭矩=%.4f Nm，raw=%d，错误码=%d",
+            axis, target_torque_nm, torque_raw, rtn_pt);
+        continue;
+      }
+
+      last_target_torque_[i] = target_torque_nm;
+    }
+  }
+
+  // ===================== 清零全部扭矩命令 =====================
+  void clearAllTorqueCommands()
+  {
+    for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
+    {
+      if (!axis_in_torque_mode_[i])
+      {
+        continue;
+      }
+
+      const int axis = axis_ids_[i];
+      const short rtn = GTN_SetEcatAxisPT(core_id_, axis, 0);
+      if (rtn != 0)
+      {
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "清零扭矩命令失败，轴%d，错误码=%d", axis, rtn);
+      }
+
+      last_target_torque_[i] = 0.0;
+    }
+  }
+
+  // ===================== 停止全部轴 =====================
   bool stopAllAxesRaw()
   {
     if (!controller_opened_)
@@ -701,7 +932,7 @@ private:
       }
 
       short rtn_stop =
-          GTN_Stop(core_id_, static_cast<short>(1u << (axis - 1)), 0);
+          GTN_Stop(core_id_, static_cast<long>(1L << (axis - 1)), 0);
       if (rtn_stop != 0)
       {
         fprintf(stderr, "停止轴%d失败，错误码=%d\n", axis, rtn_stop);
@@ -733,11 +964,38 @@ private:
     return all_ok;
   }
 
+  // ===================== JointState 只保留前 10 个关节 =====================
+  sensor_msgs::msg::JointState convertToJointStateMsg(
+      const upperlimb_robot::MotorStateCache &state)
+  {
+    sensor_msgs::msg::JointState msg;
+    msg.header.stamp = this->now();
+
+    msg.name = {
+        "joint1", "joint2", "joint3", "joint4", "joint5",
+        "joint6", "joint7", "joint8", "joint9", "joint10"};
+
+    msg.position.resize(10);
+    msg.velocity.resize(10);
+    msg.effort.resize(10);
+
+    constexpr double deg_to_rad = M_PI / 180.0;
+
+    for (std::size_t i = 0; i < 10; ++i)
+    {
+      msg.position[i] = state.position[i] * deg_to_rad;
+      msg.velocity[i] = state.velocity[i] * deg_to_rad;
+      msg.effort[i] = state.torque[i];
+    }
+
+    return msg;
+  }
+
 private:
   rclcpp::Subscription<upperlimb_robot::msg::ControlCommand>::SharedPtr control_command_sub_;
   rclcpp::Publisher<upperlimb_robot::msg::SystemState>::SharedPtr system_pub_;
   rclcpp::Publisher<upperlimb_robot::msg::RobotState>::SharedPtr robot_state_pub_;
-  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
   rclcpp::TimerBase::SharedPtr state_timer_;
 
   bool joint_init_ = false;
@@ -751,13 +1009,11 @@ private:
   std::atomic<bool> running_{false};
   std::atomic<bool> state_ready_{false};
 
-  // 状态采集线程和控制线程
   std::thread state_read_thread_;
   std::thread control_thread_;
 
   std::atomic<int> current_mode_{0};
 
-  // 调试频率
   std::atomic<int> state_hz_{200};
   std::atomic<int> control_hz_{100};
 
@@ -766,6 +1022,9 @@ private:
 
   std::mutex state_mutex_;
   upperlimb_robot::MotorStateCache latest_motor_state_;
+
+  std::mutex sensor_mutex_;
+  upperlimb_robot::SensorStateCache latest_sensor_state_;
 
   int publish_divider_ = 10;
   int publish_divider_count_ = 0;
@@ -781,39 +1040,14 @@ private:
   std::array<int32_t, upperlimb_robot::AXIS_NUM> enc_pos_{};
   std::array<bool, upperlimb_robot::AXIS_NUM> axis_enabled_{};
 
-  // 现在这里保存的是关节角，单位 deg
   std::array<double, upperlimb_robot::AXIS_NUM> last_target_position_{};
   std::array<bool, upperlimb_robot::AXIS_NUM> command_sent_{};
 
-  // 单位是 deg，避免目标抖动时重复下发
+  std::array<bool, upperlimb_robot::AXIS_NUM> axis_in_torque_mode_{};
+  std::array<double, upperlimb_robot::AXIS_NUM> last_target_torque_{};
+
   double position_epsilon_ = 0.05;
-
-  // convertToJointStateMsg 将 MotorStateCache 转换成 sensor_msgs::msg::JointState 消息
-  sensor_msgs::msg::JointState convertToJointStateMsg(const upperlimb_robot::MotorStateCache &state)
-  {
-    sensor_msgs::msg::JointState msg;
-
-    msg.header.stamp = this->now();
-
-    // 关节名称需要和 URDF / robot_state_publisher 一致
-    msg.name = {
-        "joint1", "joint2", "joint3", "joint4", "joint5",
-        "joint6", "joint7", "joint8", "joint9", "joint10"};
-
-    msg.position.resize(10);
-    msg.velocity.resize(10);
-    msg.effort.resize(10);
-
-    constexpr double deg_to_rad = M_PI / 180.0;
-
-    for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
-    {
-      // 位置：deg -> rad
-      msg.position[i] = state.position[i] * deg_to_rad;
-    }
-
-    return msg;
-  }
+  double torque_epsilon_ = 0.01;
 };
 
 static std::shared_ptr<RobotControlNode> g_node = nullptr;
