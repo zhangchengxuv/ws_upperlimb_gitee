@@ -21,6 +21,17 @@
 
   <!-- ===== base ===== -->
   <link name="base_link">
+    <inertial>
+      <origin xyz="6.92226091852932E-06 -0.0238445782558473 0.0400185415811058" rpy="0 0 0" />
+      <mass value="2.0518821290605" />
+      <inertia
+        ixx="0.0033819502523036"
+        ixy="-6.94931922672838E-07"
+        ixz="3.13273230530948E-07"
+        iyy="0.0025562496259904"
+        iyz="0.000421721476417986"
+        izz="0.00278965644158957" />
+    </inertial>
     <visual>
       <geometry>
         <mesh filename="package://robot_urdf/meshes/base_link.STL" />
@@ -31,6 +42,17 @@
 
   <!-- ===== link1 ===== -->
   <link name="link1">
+    <inertial>
+      <origin xyz="0.0269401262052741 5.38039642751335E-05 -0.0660125281859969" rpy="0 0 0" />
+      <mass value="1.76165866952677" />
+      <inertia
+        ixx="0.0017501795271766"
+        ixy="-7.55840336410742E-06"
+        ixz="0.000198005777225722"
+        iyy="0.0024051054884993"
+        iyz="6.50219652096249E-06"
+        izz="0.0022439897149415" />
+    </inertial>
     <visual>
       <geometry>
         <mesh filename="package://robot_urdf/meshes/link1.STL" />
@@ -49,6 +71,17 @@
 
   <!-- ===== link2 ===== -->
   <link name="link2">
+    <inertial>
+      <origin xyz="0.151634578312904 -8.90041965362631E-05 -0.0351657438755136" rpy="0 0 0" />
+      <mass value="1.59468357316661" />
+      <inertia
+        ixx="0.00122748215988071"
+        ixy="1.05445508231499E-05"
+        ixz="2.42762234655553E-05"
+        iyy="0.00318848384426838"
+        iyz="-3.04528630023397E-07"
+        izz="0.00343010818845142" />
+    </inertial>
     <visual>
       <geometry>
         <mesh filename="package://robot_urdf/meshes/link2.STL" />
@@ -67,6 +100,17 @@
 
   <!-- ===== link3 ===== -->
   <link name="link3">
+    <inertial>
+      <origin xyz="0.012180710346166 -2.92520324832179E-06 -0.07075437532951" rpy="0 0 0" />
+      <mass value="1.50899705647033" />
+      <inertia
+        ixx="0.00143711695344338"
+        ixy="-1.67872696840416E-06"
+        ixz="0.000133663210207573"
+        iyy="0.00184234966696005"
+        iyz="9.43531767749633E-07"
+        izz="0.00163987162857285" />
+    </inertial>
     <visual>
       <geometry>
         <mesh filename="package://robot_urdf/meshes/link3.STL" />
@@ -85,6 +129,17 @@
 
   <!-- ===== link4 ===== -->
   <link name="link4">
+    <inertial>
+      <origin xyz="0.126329248953276 0.00012705226853052 -0.110942211504875" rpy="0 0 0" />
+      <mass value="1.52002907684628" />
+      <inertia
+        ixx="0.00237136970226934"
+        ixy="-1.07779733062195E-05"
+        ixz="0.001105445795461"
+        iyy="0.00336785465518477"
+        iyz="1.35189780049483E-05"
+        izz="0.00217739308420728" />
+    </inertial>
     <visual>
       <geometry>
         <mesh filename="package://robot_urdf/meshes/link4.STL" />
@@ -103,6 +158,17 @@
 
   <!-- ===== link5 ===== -->
   <link name="link5">
+    <inertial>
+      <origin xyz="0.103543803753986 0.00128110258418068 0.0700286344319139" rpy="0 0 0" />
+      <mass value="1.33531733905559" />
+      <inertia
+        ixx="0.00132943314339522"
+        ixy="-5.79676814963843E-06"
+        ixz="-0.000370522818090566"
+        iyy="0.00173625912381175"
+        iyz="-5.32345339616087E-06"
+        izz="0.00133982685184081" />
+    </inertial>
     <visual>
       <geometry>
         <mesh filename="package://robot_urdf/meshes/link5.STL" />
@@ -121,6 +187,17 @@
 
   <!-- ===== link6 ===== -->
   <link name="link6">
+    <inertial>
+      <origin xyz="0.205479054239901 4.65480725229672E-05 0.0110413985610982" rpy="0 0 0" />
+      <mass value="1.57403690632572" />
+      <inertia
+        ixx="0.000916731067277579"
+        ixy="2.43668656587855E-06"
+        ixz="2.17360750661418E-06"
+        iyy="0.00339817530099989"
+        iyz="2.76707235474586E-06"
+        izz="0.00357156733612234" />
+    </inertial>
     <visual>
       <geometry>
         <mesh filename="package://robot_urdf/meshes/link6.STL" />
@@ -139,6 +216,17 @@
 
   <!-- ===== link7 ===== -->
   <link name="link7">
+    <inertial>
+      <origin xyz="0.100709801211644 -5.75713818709578E-06 0.000884917898414883" rpy="0 0 0" />
+      <mass value="0.53341444148306" />
+      <inertia
+        ixx="0.000158952234576008"
+        ixy="-4.35834625839253E-07"
+        ixz="8.40887140693924E-06"
+        iyy="0.000531608219607252"
+        iyz="-3.44191354452961E-08"
+        izz="0.000595315890414363" />
+    </inertial>
     <visual>
       <geometry>
         <mesh filename="package://robot_urdf/meshes/link7.STL" />
@@ -157,6 +245,17 @@
 
   <!-- ===== link8 ===== -->
   <link name="link8">
+    <inertial>
+      <origin xyz="-8.26169655895048E-05 -0.0738457907499502 -0.0441586901809172" rpy="0 0 0" />
+      <mass value="0.388714250535921" />
+      <inertia
+        ixx="0.000176419885250118"
+        ixy="-4.65851067629489E-08"
+        ixz="-4.2231396746915E-07"
+        iyy="0.000215021015802394"
+        iyz="5.56073948060143E-06"
+        izz="0.000228930591651484" />
+    </inertial>
     <visual>
       <geometry>
         <mesh filename="package://robot_urdf/meshes/link8.STL" />
@@ -173,6 +272,17 @@
 
   <!-- ===== link9 ===== -->
   <link name="link9">
+    <inertial>
+      <origin xyz="-0.0678872536892172 -2.0890530060963E-05 -0.0455856247697984" rpy="0 0 0" />
+      <mass value="0.340116837655435" />
+      <inertia
+        ixx="9.62939684252204E-05"
+        ixy="-2.05528119360623E-07"
+        ixz="-1.27308889592139E-05"
+        iyy="0.000154852957770118"
+        iyz="2.93147942425605E-07"
+        izz="0.000142496724224792" />
+    </inertial>
     <visual>
       <geometry>
         <mesh filename="package://robot_urdf/meshes/link9.STL" />
@@ -189,6 +299,17 @@
 
   <!-- ===== link10 ===== -->
   <link name="link10">
+    <inertial>
+      <origin xyz="0.0667843397740763 -0.0147053065827579 -0.0421901822353724" rpy="0 0 0" />
+      <mass value="0.118059114867053" />
+      <inertia
+        ixx="5.35434154922427E-05"
+        ixy="-5.30729107500254E-07"
+        ixz="1.13706256710051E-07"
+        iyy="8.84708229090321E-05"
+        iyz="-5.37566435791395E-06"
+        izz="5.80437994317926E-05" />
+    </inertial>
     <visual>
       <geometry>
         <mesh filename="package://robot_urdf/meshes/link10.STL" />
