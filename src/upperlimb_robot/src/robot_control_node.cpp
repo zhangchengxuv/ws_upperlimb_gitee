@@ -112,6 +112,7 @@ public:
     fflush(stderr);
 
     clearAllTorqueCommands();
+    restoreAllAxesToPositionMode();
     const bool axes_ok = stopAllAxesRaw();
 
     if (axes_ok)
@@ -158,19 +159,109 @@ public:
 private:
   // ===================== 控制命令回调 =====================
   //
-  // 切换到零力模式时，记录当前传感器读数作为零偏。
+  // 这里仅记录“请求模式”。
+  // 真正的模式进入/退出动作统一放在控制线程里的状态机中处理，
+  // 这样可以避免在 ROS 回调线程里直接改硬件状态。
   //
   void controlCommandCallback(const upperlimb_robot::msg::ControlCommand::SharedPtr msg)
   {
     current_mode_.store(msg->command);
+    RCLCPP_INFO(this->get_logger(), "收到控制命令=%d", msg->command);
+  }
 
-    if (msg->command == upperlimb_robot::MODE_ZERO_FORCE)
+  // ===================== 模式状态机更新 =====================
+  //
+  // current_mode_ : 外部请求的新模式
+  // applied_mode_ : 已经完成进入动作的当前模式
+  //
+  // 每轮控制循环开始时调用一次：
+  // 1. 如果模式没变，直接返回
+  // 2. 先执行旧模式退出动作
+  // 3. 再执行新模式进入动作
+  // 4. 最后更新 applied_mode_
+  //
+  void updateModeStateMachine()
+  {
+    const int requested_mode = current_mode_.load();
+
+    if (requested_mode == applied_mode_)
     {
-      captureForceSensorBias();
-      RCLCPP_INFO(this->get_logger(), "进入零力模式，已记录六维力零偏");
+      return;
     }
 
-    RCLCPP_INFO(this->get_logger(), "收到控制命令=%d", msg->command);
+    const int old_mode = applied_mode_;
+
+    onModeExit(old_mode, requested_mode);
+    onModeEnter(old_mode, requested_mode);
+
+    applied_mode_ = requested_mode;
+
+    RCLCPP_INFO(
+        this->get_logger(),
+        "模式切换完成: old=%d -> new=%d",
+        old_mode,
+        requested_mode);
+  }
+
+  // ===================== 模式退出动作 =====================
+  //
+  // 退出扭矩相关模式时：
+  // 1. 先把 PT 清零
+  // 2. 再显式切回位置模式
+  //
+  void onModeExit(int old_mode, int new_mode)
+  {
+    (void)new_mode;
+
+    switch (old_mode)
+    {
+    case upperlimb_robot::MODE_ZERO_FORCE:
+    case upperlimb_robot::MODE_ACTIVE:
+      clearAllTorqueCommands();
+      restoreAllAxesToPositionMode();
+      break;
+
+    case upperlimb_robot::MODE_LEFT_PRESET_POSITION:
+    case upperlimb_robot::MODE_RIGHT_PRESET_POSITION:
+    case upperlimb_robot::MODE_IDLE:
+    default:
+      break;
+    }
+  }
+
+  // ===================== 模式进入动作 =====================
+  //
+  // 进入零力模式时，只有在传感器数据有效时才允许记录零偏。
+  //
+  void onModeEnter(int old_mode, int new_mode)
+  {
+    (void)old_mode;
+
+    switch (new_mode)
+    {
+    case upperlimb_robot::MODE_ZERO_FORCE:
+    {
+      const bool ok = captureForceSensorBias();
+      if (ok)
+      {
+        RCLCPP_INFO(this->get_logger(), "进入零力模式，已记录六维力零偏");
+      }
+      else
+      {
+        RCLCPP_WARN(this->get_logger(), "进入零力模式失败：当前传感器数据无效，未记录零偏");
+      }
+      break;
+    }
+
+    case upperlimb_robot::MODE_ACTIVE:
+      break;
+
+    case upperlimb_robot::MODE_LEFT_PRESET_POSITION:
+    case upperlimb_robot::MODE_RIGHT_PRESET_POSITION:
+    case upperlimb_robot::MODE_IDLE:
+    default:
+      break;
+    }
   }
 
   // ===================== 控制器初始化 =====================
@@ -361,10 +452,21 @@ private:
   }
 
   // ===================== 记录当前传感器零偏 =====================
-  void captureForceSensorBias()
+  //
+  // 只有在 latest_sensor_state_.valid == true 时，才允许记录零偏。
+  // 这样可以避免把未初始化值、读失败值或脏值写进 bias。
+  //
+  bool captureForceSensorBias()
   {
     std::lock_guard<std::mutex> lock(sensor_mutex_);
+
+    if (!latest_sensor_state_.valid)
+    {
+      return false;
+    }
+
     latest_sensor_state_.bias = latest_sensor_state_.sensor;
+    return true;
   }
 
   // ===================== 六维力去偏 =====================
@@ -451,6 +553,15 @@ private:
     while (running_.load())
     {
       const int state_hz = state_hz_.load();
+      if (state_hz <= 0)
+      {
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "state_hz 非法=%d，必须大于 0", state_hz);
+        std::this_thread::sleep_for(100ms);
+        continue;
+      }
+
       const auto period = std::chrono::microseconds(1000000 / state_hz);
       auto cycle_start = std::chrono::steady_clock::now();
 
@@ -586,6 +697,15 @@ private:
     while (running_.load())
     {
       const int control_hz = control_hz_.load();
+      if (control_hz <= 0)
+      {
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "control_hz 非法=%d，必须大于 0", control_hz);
+        std::this_thread::sleep_for(100ms);
+        continue;
+      }
+
       const auto period = std::chrono::microseconds(1000000 / control_hz);
       auto cycle_start = std::chrono::steady_clock::now();
 
@@ -614,7 +734,10 @@ private:
         local_sensor_state = latest_sensor_state_;
       }
 
-      const int mode = current_mode_.load();
+      // 先更新模式状态机，再根据当前模式计算控制输出
+      updateModeStateMachine();
+
+      const int mode = applied_mode_;
 
       upperlimb_robot::ControlOutputCache output =
           computeControlOutput(mode, local_state, local_sensor_state);
@@ -626,6 +749,7 @@ private:
       else
       {
         clearAllTorqueCommands();
+        restoreAllAxesToPositionMode();
       }
 
       auto cycle_end = std::chrono::steady_clock::now();
@@ -690,15 +814,101 @@ private:
   }
 
   // ===================== 执行控制输出 =====================
+  //
+  // 先执行位置输出，再执行扭矩输出。
+  // 位置输出阶段会显式确保该轴已经处于位置模式；
+  // 扭矩输出阶段会显式确保该轴已经处于扭矩模式。
+  //
   void applyControlOutput(const upperlimb_robot::ControlOutputCache &output)
   {
     applyPositionOutput(output);
     applyTorqueOutput(output);
   }
 
+  // ===================== 单轴切到位置模式 =====================
+  //
+  // 用于修复：
+  // 上一轮轴已经切到扭矩模式，但这一轮想发位置命令时，
+  // 轴仍然停留在扭矩模式导致位置命令不生效的问题。
+  //
+  bool ensureAxisInPositionMode(std::size_t i)
+  {
+    if (i >= upperlimb_robot::AXIS_NUM)
+    {
+      return false;
+    }
+
+    const int axis = axis_ids_[i];
+
+    // 先把 PT 清零，避免残留扭矩
+    const short rtn_zero = GTN_SetEcatAxisPT(core_id_, axis, 0);
+    if (rtn_zero != 0)
+    {
+      RCLCPP_ERROR_THROTTLE(
+          this->get_logger(), *this->get_clock(), 2000,
+          "切回位置模式前清零 PT 失败，轴%d，错误码=%d", axis, rtn_zero);
+      return false;
+    }
+
+    // 位置模式通常为 8；如果你的驱动实际不是 8，请按设备手册调整
+    const short rtn_mode = GTN_SetEcatAxisMode(core_id_, axis, 8);
+    if (rtn_mode != 0)
+    {
+      RCLCPP_ERROR_THROTTLE(
+          this->get_logger(), *this->get_clock(), 2000,
+          "GTN_SetEcatAxisMode 设置位置模式失败，轴%d，错误码=%d",
+          axis, rtn_mode);
+      return false;
+    }
+
+    axis_in_torque_mode_[i] = false;
+    last_target_torque_[i] = 0.0;
+    return true;
+  }
+
+  // ===================== 单轴切到扭矩模式 =====================
+  bool ensureAxisInTorqueMode(std::size_t i)
+  {
+    if (i >= upperlimb_robot::AXIS_NUM)
+    {
+      return false;
+    }
+
+    const int axis = axis_ids_[i];
+
+    const short rtn_mode = GTN_SetEcatAxisMode(core_id_, axis, 10);
+    if (rtn_mode != 0)
+    {
+      RCLCPP_ERROR_THROTTLE(
+          this->get_logger(), *this->get_clock(), 2000,
+          "GTN_SetEcatAxisMode 设置扭矩模式失败，轴%d，错误码=%d",
+          axis, rtn_mode);
+      return false;
+    }
+
+    axis_in_torque_mode_[i] = true;
+    return true;
+  }
+
+  // ===================== 全部轴恢复到位置模式 =====================
+  void restoreAllAxesToPositionMode()
+  {
+    for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
+    {
+      if (!axis_in_torque_mode_[i])
+      {
+        continue;
+      }
+
+      (void)ensureAxisInPositionMode(i);
+    }
+  }
+
   // ===================== 执行位置输出 =====================
   //
   // 如果某轴本轮 use_torque = true，则该轴本轮不执行位置控制。
+  // 如果某轴上一轮处于扭矩模式，但这一轮要执行位置控制，
+  // 则先显式切回位置模式，再发送位置命令。
   //
   void applyPositionOutput(const upperlimb_robot::ControlOutputCache &output)
   {
@@ -716,7 +926,23 @@ private:
       if (!output.use_position[i])
       {
         command_sent_[i] = false;
+
+        // 如果当前不再使用扭矩控制，而该轴又停留在扭矩模式，
+        // 则显式恢复到位置模式，避免后续第一次位置指令不生效。
+        if (axis_in_torque_mode_[i])
+        {
+          (void)ensureAxisInPositionMode(i);
+        }
         continue;
+      }
+
+      // 如果该轴此前还停留在扭矩模式，本轮要发位置命令前必须先切回位置模式
+      if (axis_in_torque_mode_[i])
+      {
+        if (!ensureAxisInPositionMode(i))
+        {
+          continue;
+        }
       }
 
       const double target_deg = output.target_position[i];
@@ -801,9 +1027,8 @@ private:
 
   // ===================== 执行扭矩输出 =====================
   //
-  // 1. 先切 GTN_SetEcatAxisMode(..., 10)
-  // 2. 再 GTN_SetEcatAxisPT(..., raw_torque)
-  // 3. 不用时 GTN_SetEcatAxisPT(..., 0) 清零
+  // 1. use_torque == true 时，确保切到扭矩模式
+  // 2. use_torque == false 时，如果该轴还停留在扭矩模式，则清零并切回位置模式
   //
   void applyTorqueOutput(const upperlimb_robot::ControlOutputCache &output)
   {
@@ -822,6 +1047,8 @@ private:
                 this->get_logger(), *this->get_clock(), 2000,
                 "GTN_SetEcatAxisPT 清零失败，轴%d，错误码=%d", axis, rtn_zero);
           }
+
+          (void)ensureAxisInPositionMode(i);
         }
 
         last_target_torque_[i] = 0.0;
@@ -846,27 +1073,10 @@ private:
 
       if (!axis_in_torque_mode_[i])
       {
-        short rtn_mode = GTN_SetEcatAxisMode(core_id_, axis, 10);
-        if (rtn_mode != 0)
+        if (!ensureAxisInTorqueMode(i))
         {
-          RCLCPP_ERROR_THROTTLE(
-              this->get_logger(), *this->get_clock(), 2000,
-              "GTN_SetEcatAxisMode 设置扭矩模式失败，轴%d，错误码=%d",
-              axis, rtn_mode);
           continue;
         }
-
-        unsigned short mode_value = 0;
-        short rtn_get = GTN_GetEcatAxisMode(core_id_, axis, &mode_value);
-        if (rtn_get != 0)
-        {
-          RCLCPP_WARN_THROTTLE(
-              this->get_logger(), *this->get_clock(), 2000,
-              "GTN_GetEcatAxisMode 读取失败，轴%d，错误码=%d",
-              axis, rtn_get);
-        }
-
-        axis_in_torque_mode_[i] = true;
       }
 
       const double torque_raw_double =
@@ -964,7 +1174,16 @@ private:
     return all_ok;
   }
 
-  // ===================== JointState 只保留前 10 个关节 =====================
+  // ===================== JointState 转换 =====================
+  //
+  // URDF 定义：
+  // joint1  ~ joint10  -> 左臂
+  // joint11 ~ joint20  -> 右臂
+  //
+  // 控制层内部状态：
+  // state[10~19] -> 左臂
+  // state[0~9]   -> 右臂
+  //
   sensor_msgs::msg::JointState convertToJointStateMsg(
       const upperlimb_robot::MotorStateCache &state)
   {
@@ -973,19 +1192,30 @@ private:
 
     msg.name = {
         "joint1", "joint2", "joint3", "joint4", "joint5",
-        "joint6", "joint7", "joint8", "joint9", "joint10"};
+        "joint6", "joint7", "joint8", "joint9", "joint10",
+        "joint11", "joint12", "joint13", "joint14", "joint15",
+        "joint16", "joint17", "joint18", "joint19", "joint20"};
 
-    msg.position.resize(10);
-    msg.velocity.resize(10);
-    msg.effort.resize(10);
+    msg.position.resize(20);
+    msg.velocity.resize(20);
+    msg.effort.resize(20);
 
     constexpr double deg_to_rad = M_PI / 180.0;
 
-    for (std::size_t i = 0; i < 10; ++i)
+    // 左臂：控制层索引 10~19 -> URDF joint1~joint10 -> msg 下标 0~9
+    for (std::size_t src = 10, dst = 0; src < 20; ++src, ++dst)
     {
-      msg.position[i] = state.position[i] * deg_to_rad;
-      msg.velocity[i] = state.velocity[i] * deg_to_rad;
-      msg.effort[i] = state.torque[i];
+      msg.position[dst] = state.position[src] * deg_to_rad;
+      msg.velocity[dst] = state.velocity[src] * deg_to_rad;
+      msg.effort[dst] = state.torque[src];
+    }
+
+    // 右臂：控制层索引 0~9 -> URDF joint11~joint20 -> msg 下标 10~19
+    for (std::size_t src = 0, dst = 10; src < 10; ++src, ++dst)
+    {
+      msg.position[dst] = state.position[src] * deg_to_rad;
+      msg.velocity[dst] = state.velocity[src] * deg_to_rad;
+      msg.effort[dst] = state.torque[src];
     }
 
     return msg;
@@ -1012,7 +1242,11 @@ private:
   std::thread state_read_thread_;
   std::thread control_thread_;
 
-  std::atomic<int> current_mode_{0};
+  // 外部请求模式
+  std::atomic<int> current_mode_{upperlimb_robot::MODE_IDLE};
+
+  // 已完成进入动作的模式
+  int applied_mode_{upperlimb_robot::MODE_IDLE};
 
   std::atomic<int> state_hz_{200};
   std::atomic<int> control_hz_{100};
@@ -1031,6 +1265,7 @@ private:
 
   int core_id_ = 1;
 
+  // 控制层索引 0~19 -> GTN 物理轴号 1~20
   std::array<int, upperlimb_robot::AXIS_NUM> axis_ids_ = {
       1, 2, 3, 4, 5,
       6, 7, 8, 9, 10,
@@ -1040,10 +1275,16 @@ private:
   std::array<int32_t, upperlimb_robot::AXIS_NUM> enc_pos_{};
   std::array<bool, upperlimb_robot::AXIS_NUM> axis_enabled_{};
 
+  // 上一次发送的位置目标（单位 deg）
   std::array<double, upperlimb_robot::AXIS_NUM> last_target_position_{};
+
+  // 是否已发送过位置命令
   std::array<bool, upperlimb_robot::AXIS_NUM> command_sent_{};
 
+  // 当前轴是否处于扭矩模式
   std::array<bool, upperlimb_robot::AXIS_NUM> axis_in_torque_mode_{};
+
+  // 上一次发送的扭矩目标（单位 Nm）
   std::array<double, upperlimb_robot::AXIS_NUM> last_target_torque_{};
 
   double position_epsilon_ = 0.05;

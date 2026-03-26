@@ -239,7 +239,7 @@
     <parent link="link6" />
     <child link="link7" />
     <origin xyz="0.269 0 -0.008" />
-    <axis xyz="0 0 1" />
+    <axis xyz="0 0 -1" />
     <limit lower="-3.1416" upper="3.1416" effort="50" velocity="2" />
   </joint>
 
