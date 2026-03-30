@@ -9,11 +9,14 @@ endif()
 # Dependencies
 # ========================================
 find_package(ament_cmake REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
 find_package(ament_index_cpp REQUIRED)
+find_package(pinocchio REQUIRED)
+find_package(Eigen3 REQUIRED)
+
 
 # ========================================
 # ROS2 Interfaces
@@ -57,6 +60,7 @@ add_executable(robot_control_node
 target_include_directories(robot_control_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
 
@@ -89,6 +93,8 @@ rosidl_get_typesupport_target(cpp_typesupport_target
 target_link_libraries(robot_control_node
   "${cpp_typesupport_target}"
   ${GOOGOLTECH_LIBS}
+  pinocchio::pinocchio
+  Eigen3::Eigen
 )
 
 
@@ -128,6 +134,11 @@ install(
 install(
   DIRECTORY config/
   DESTINATION share/${PROJECT_NAME}/config
+)
+
+install(
+  DIRECTORY urdf/
+  DESTINATION share/${PROJECT_NAME}/urdf
 )
 
 # ========================================
