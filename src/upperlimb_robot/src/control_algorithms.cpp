@@ -477,7 +477,7 @@ namespace upperlimb_robot
 
         // ===================== 加载 URDF =====================
         //
-        // 
+        //
         // joint1~3、joint8~10 改成 fixed ，
         // model 里只剩 joint4~7 这 4 个可动关节
         //
@@ -686,13 +686,28 @@ namespace upperlimb_robot
     // ===================== 计算重力项 =====================
     //
     // g(q) 的维度是 4，对应 joint4~7。
-    //
+    // Eigen::VectorXd g 本质上就是一个：动态大小的一维向量（列向量），里面存的是每个关节的重力力矩
+    // computeGeneralizedGravity:
+    //     model → 机器人结构 + 质量
+    //     data  → 中间缓存
+    //     q     → 当前关节角（rad）
+    //     g(q)  → 每个关节的重力力矩
     Eigen::VectorXd g = pinocchio::computeGeneralizedGravity(model, *data, q);
 
     // ===================== 计算两个传感器 frame 的 Jacobian =====================
     //
-    // 这里使用 LOCAL 坐标系：
-    // 因为传感器测到的六维力通常就是在自身坐标系下表达
+    // 把“末端（传感器）空间的力/速度”映射到“关节空间”
+    //
+    // 创建两个大小为 6 × nv 的矩阵，并全部初始化为 0
+    // 为什么是 6 行？
+    // [ vx ]   ← 线速度 x
+    // [ vy ]
+    // [ vz ]
+    // [ wx ]   ← 角速度 x
+    // [ wy ]
+    // [ wz ]
+    // 为什么是 nv 列？
+    // nv 是模型的自由度数量，这里是 4，对应 joint4~7。
     Eigen::MatrixXd J_arm = Eigen::MatrixXd::Zero(6, model.nv);
     Eigen::MatrixXd J_hand = Eigen::MatrixXd::Zero(6, model.nv);
 
@@ -705,8 +720,10 @@ namespace upperlimb_robot
     // [angular; linear]
     //
     // 直接用 Force 对象，最后 toVector()，避免顺序写错。
-    //
+
+    // 创建一个 空间力（Force）对象 f_arm，并初始化为零
     pinocchio::Force f_arm = pinocchio::Force::Zero();
+    // 把 fx_arm、fy_arm、fz_arm 填入 f_arm 的线性部分，把 mx_arm、my_arm、mz_arm 填入 f_arm 的角部分
     f_arm.linear() << fx_arm, fy_arm, fz_arm;
     f_arm.angular() << mx_arm, my_arm, mz_arm;
 
@@ -716,22 +733,34 @@ namespace upperlimb_robot
 
     // ===================== 外力映射到关节扭矩 =====================
     //
+    // 数学意义:τ=J^T*F
     // tau_ext = J_arm^T * F_arm + J_hand^T * F_hand
     //
-    Eigen::VectorXd tau_ext =
-        J_arm.transpose() * f_arm.toVector() +
-        J_hand.transpose() * f_hand.toVector();
+    Eigen::VectorXd tau_arm = J_arm.transpose() * f_arm.toVector();
+    Eigen::VectorXd tau_hand = J_hand.transpose() * f_hand.toVector();
+
+    Eigen::VectorXd tau_ext = tau_arm + tau_hand;
 
     // ===================== 关节阻尼项 =====================
     //
     // 防止零力模式下出现漂、轻微自激或关节发飘。
     //
+    // 创建一个长度为 nv 的向量：
     Eigen::VectorXd damping = Eigen::VectorXd::Zero(model.nv);
+    // 给每个关节设置阻尼系数：
     damping(0) = 0.8;
     damping(1) = 0.8;
     damping(2) = 0.8;
     damping(3) = 0.6;
-
+    // 计算阻尼力矩：tau_damping = -damping * v，永远“反着速度方向”
+    // damping.asDiagonal()
+    // 把 [0.8, 0.8, 0.8, 0.6] 变成:
+    // [0.8, 0,   0,   0  ]
+    // [0,   0.8, 0,   0  ]
+    // [0,   0,   0.8, 0  ]
+    // [0,   0,   0,   0.6]
+    // 再乘：* v，就相当于每个元素分别乘以对应的速度：
+    // [0.8 * v(0), 0.8 * v(1), 0.8 * v(2), 0.6 * v(3)]
     Eigen::VectorXd tau_damping = -(damping.asDiagonal() * v);
 
     // ===================== 最终关节扭矩 =====================
