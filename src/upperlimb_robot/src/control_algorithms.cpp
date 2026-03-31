@@ -846,7 +846,7 @@ namespace upperlimb_robot
   // 3. 目标位置单位是 deg
   // 4. 目标速度单位是 deg/s
   // 5. 目标加减速度单位是 deg/s^2
-  //
+  // ===
   // 注意：
   // 这里调用 pulsePerMsToJointSpeedDegPerSecMagnitude() 等辅助函数，
   // 是为了把旧代码里按 pulse/ms、pulse/ms^2 写的经验参数，
