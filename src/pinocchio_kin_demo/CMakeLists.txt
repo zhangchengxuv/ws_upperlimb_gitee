@@ -8,9 +8,14 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(ament_index_cpp REQUIRED)
+
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
+set(Python_EXECUTABLE ${Python3_EXECUTABLE})
+
 find_package(pinocchio REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(ament_index_cpp REQUIRED)
 
 # =========================
 # fk_rviz_node

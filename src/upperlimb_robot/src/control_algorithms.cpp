@@ -804,6 +804,36 @@ namespace upperlimb_robot
     output.target_torque[IDX_J6] = tau(2);
     output.target_torque[IDX_J7] = tau(3);
 
+
+    // 其余轴固定在预设位置，防止移动
+    output.use_position[10] = true;
+    output.target_position[10] = 0.0;
+    output.target_velocity[10] = pulsePerMsToJointSpeedDegPerSecMagnitude(11, 400.0);
+    output.target_acc[10] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(11, 0.5);
+    output.target_dec[10] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(11, 0.25);
+    output.target_smooth_time[10] = 25;
+
+    output.use_position[11] = true;
+    output.target_position[11] = 0.0;
+    output.target_velocity[11] = pulsePerMsToJointSpeedDegPerSecMagnitude(12, 500.0);
+    output.target_acc[11] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(12, 0.5);
+    output.target_dec[11] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(12, 0.25);
+    output.target_smooth_time[11] = 25;
+
+    output.use_position[18] = true;
+    output.target_position[18] = 0.0;
+    output.target_velocity[18] = pulsePerMsToJointSpeedDegPerSecMagnitude(19, 1500.0);
+    output.target_acc[18] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(19, 5.0);
+    output.target_dec[18] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(19, 0.25);
+    output.target_smooth_time[18] = 25;
+
+    output.use_position[19] = true;
+    output.target_position[19] = 0.0;
+    output.target_velocity[19] = pulsePerMsToJointSpeedDegPerSecMagnitude(20, 1500.0);
+    output.target_acc[19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(20, 5.0);
+    output.target_dec[19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(20, 0.25);
+    output.target_smooth_time[19] = 25;
+
     // ===================== 输出有效 =====================
     output.valid = true;
   }

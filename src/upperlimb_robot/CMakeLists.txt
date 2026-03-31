@@ -14,9 +14,6 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(ament_index_cpp REQUIRED)
-find_package(pinocchio REQUIRED)
-find_package(Eigen3 REQUIRED)
-
 
 # ========================================
 # ROS2 Interfaces
@@ -28,6 +25,10 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 )
 
 ament_export_dependencies(rosidl_default_runtime)
+
+# 把 pinocchio / Eigen3 放到这里
+find_package(pinocchio REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 # ========================================
 # Library paths
@@ -45,33 +46,19 @@ set(GOOGOLTECH_LIBS
   ${GOOGOLTECH_LIB_DIR}/libecfg_parser.so
 )
 
-# ========================================
-# Executables
-# ========================================
 add_executable(robot_control_node
   src/robot_control_node.cpp
   src/control_algorithms.cpp
 )
 
-
-# ========================================
-# Include directories
-# ========================================
 target_include_directories(robot_control_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
   ${EIGEN3_INCLUDE_DIRS}
 )
 
-
-# ========================================
-# Compile features
-# ========================================
 target_compile_features(robot_control_node PUBLIC c_std_99 cxx_std_17)
 
-# ========================================
-# Ament dependencies
-# ========================================
 ament_target_dependencies(robot_control_node
   rclcpp
   sensor_msgs
@@ -79,17 +66,10 @@ ament_target_dependencies(robot_control_node
   ament_index_cpp
 )
 
-
-# ========================================
-# ROSIDL type support
-# ========================================
 rosidl_get_typesupport_target(cpp_typesupport_target
   ${PROJECT_NAME} "rosidl_typesupport_cpp"
 )
 
-# ========================================
-# Link libraries
-# ========================================
 target_link_libraries(robot_control_node
   "${cpp_typesupport_target}"
   ${GOOGOLTECH_LIBS}
@@ -97,10 +77,6 @@ target_link_libraries(robot_control_node
   Eigen3::Eigen
 )
 
-
-# ========================================
-# Install
-# ========================================
 install(TARGETS
   robot_control_node
   DESTINATION lib/${PROJECT_NAME}
@@ -132,11 +108,6 @@ install(
 )
 
 install(
-  DIRECTORY config/
-  DESTINATION share/${PROJECT_NAME}/config
-)
-
-install(
   DIRECTORY urdf/
   DESTINATION share/${PROJECT_NAME}/urdf
 )
@@ -146,9 +117,6 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
-# ========================================
-# Testing
-# ========================================
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   set(ament_cmake_copyright_FOUND TRUE)
