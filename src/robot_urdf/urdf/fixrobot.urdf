@@ -210,7 +210,7 @@
     <parent link="link5" />
     <child link="link6" />
     <origin xyz="0.092667 0.0011397 0.094019" rpy="-2.3595 -0.78866 -0.93839" />
-    <axis xyz="0 0 1" />
+    <axis xyz="0 0 -1" />
     <limit lower="-3.1416" upper="3.1416" effort="50" velocity="2" />
   </joint>
 
@@ -340,8 +340,9 @@
   <joint name="ft_sensor_joint" type="fixed">
     <parent link="link6" />
     <child link="ft_sensor_frame" />
-    <origin xyz="0.18416 0 -0.01731" rpy="3.1351 0 -1.5708" />
+    <origin xyz="0.18416 0 -0.01731" rpy="-3.1351 0 3.14159" />
   </joint>
+
 
   <link name="ft_sensor_frame_2">
     <visual>
@@ -357,7 +358,7 @@
   <joint name="ft_sensor_joint_2" type="fixed">
     <parent link="link10" />
     <child link="ft_sensor_frame_2" />
-    <origin xyz="0.082 -0.0287 -0.06447 " rpy="1.5643 -1.5225 1.5708" />
+    <origin xyz="0.082 -0.0287 -0.06447 " rpy="1.5708 0 3.14159" />
   </joint>
 
 </robot>
