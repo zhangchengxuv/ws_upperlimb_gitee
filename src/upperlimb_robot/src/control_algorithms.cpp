@@ -406,23 +406,7 @@ namespace upperlimb_robot
     // 4. 位置或扭矩输出
   }
 
-  // ===================== 零力模式骨架 =====================
-  //
-  // 当前实现说明：
-  // 1. 这里只是一个测试骨架，不是完整零力控制
-  // 2. 当前只给控制层索引 16 的轴发送 2.0 Nm 扭矩目标
-  // 3. 其他轴不输出
-  //
-  // 注意：
-  // output.target_torque[16] = 2.0;
-  // 这里的 2.0 单位是 Nm，不是 raw。
-  //
-  // 后续你可以在这里继续补：
-  // 1. 取去偏后的六维力
-  // 2. 死区和滤波
-  // 3. 力 -> 关节目标或扭矩目标
-  // 4. 设置 output.use_torque / use_position
-  //
+  // ===================== 零力模式 =====================
   void runZeroForceMode(
       const MotorStateCache &state,
       const SensorStateCache &sensor_state,
@@ -803,7 +787,6 @@ namespace upperlimb_robot
     output.target_torque[IDX_J5] = tau(1);
     output.target_torque[IDX_J6] = tau(2);
     output.target_torque[IDX_J7] = tau(3);
-
 
     // 其余轴固定在预设位置，防止移动
     output.use_position[10] = true;
