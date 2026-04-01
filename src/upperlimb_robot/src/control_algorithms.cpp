@@ -372,45 +372,527 @@ namespace upperlimb_robot
     output = ControlOutputCache{};
     output.valid = false;
   }
-
-  // ===================== 主动模式骨架 =====================
-  //
-  // 当前只保留接口，不实现具体主动控制算法。
-  //
-  // 后续你可以在这里继续补：
-  // 1. 传感器去偏
-  // 2. 导纳/阻抗
-  // 3. 轨迹修正
-  // 4. 位置模式或扭矩模式输出
-  //
-  // 注意：
-  // 1. output.target_position 单位是 deg
-  // 2. output.target_velocity 单位是 deg/s
-  // 3. output.target_torque 单位是 Nm
-  //
-  void runActiveMode(
-      const MotorStateCache &state,
-      const SensorStateCache &sensor_state,
-      ControlOutputCache &output)
+    
+  // ===================== 主动模式 =====================
+  void runActiveMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output)
   {
-    (void)state;
-    (void)sensor_state;
-
+    // ===================== 输出初始化 =====================
+    //
+    // 每次进入先清空 output，
+    // 然后只对需要控制的关节写入扭矩输出或位置保持输出。
+    //
     output = ControlOutputCache{};
     output.valid = false;
 
-    // 后续在这里补：
-    // 1. 传感器去偏
-    // 2. 导纳
-    // 3. 轨迹修正
-    // 4. 位置或扭矩输出
+    // ===================== 只做左臂 joint4~joint7 =====================
+    //
+    // 当前实验设定：
+    // 1. URDF 中 joint1~3、joint8~10 已经改成 fixed
+    // 2. Pinocchio 模型只剩 4 个可动关节：joint4~joint7
+    // 3. 这里只控制左臂对应的 4 个控制层索引
+    //
+    constexpr std::size_t IDX_J4 = 13; // joint4 -> 左臂控制层索引
+    constexpr std::size_t IDX_J5 = 14; // joint5 -> 左臂控制层索引
+    constexpr std::size_t IDX_J6 = 15; // joint6 -> 左臂控制层索引
+    constexpr std::size_t IDX_J7 = 16; // joint7 -> 左臂控制层索引
+
+    // ===================== Pinocchio 懒加载上下文 =====================
+    //
+    // 不另外写很多函数，直接在本函数里静态初始化。
+    // 第一次进入时加载 URDF、查 joint/frame id；
+    // 后续周期只做实时计算。
+    //
+    static bool pin_initialized = false;
+    static bool pin_init_failed = false;
+    static pinocchio::Model model;
+    static std::unique_ptr<pinocchio::Data> data;
+    static pinocchio::FrameIndex frame_id_arm = 0;
+    static pinocchio::FrameIndex frame_id_hand = 0;
+
+    // ===================== 导纳内部状态 =====================
+    //
+    // q_adm  : 导纳生成的参考关节角（rad）
+    // dq_adm : 导纳生成的参考关节角速度（rad/s）
+    //
+    // 说明：
+    // 1. 这里使用静态变量保存导纳内部状态
+    // 2. 第一次进入主动模式时，用当前实际姿态初始化，避免一上电就跳变
+    //
+    static bool admittance_initialized = false;
+    static Eigen::VectorXd q_adm;
+    static Eigen::VectorXd dq_adm;
+
+    if (!pin_initialized && !pin_init_failed)
+    {
+      try
+      {
+        // ===================== URDF 路径 =====================
+        // upperlimb_robot/urdf/left_arm_experiment.urdf
+        //
+        std::string urdf_path =
+            ament_index_cpp::get_package_share_directory("upperlimb_robot") +
+            "/urdf/left_arm_experiment.urdf";
+
+        // ===================== 加载 URDF =====================
+        //
+        // joint1~3、joint8~10 改成 fixed，
+        // model 里只剩 joint4~7 这 4 个可动关节
+        //
+        pinocchio::urdf::buildModel(urdf_path, model);
+        data = std::make_unique<pinocchio::Data>(model);
+
+        // ===================== 获取两个六维力传感器 frame =====================
+        //
+        // ft_sensor_frame     -> 大臂绑缚件
+        // ft_sensor_frame_2   -> 手部绑缚件
+        //
+        frame_id_arm = model.getFrameId("ft_sensor_frame");
+        frame_id_hand = model.getFrameId("ft_sensor_frame_2");
+
+        if (frame_id_arm >= model.frames.size())
+        {
+          std::cerr << "[runActiveMode] 没找到 frame: ft_sensor_frame" << std::endl;
+          pin_init_failed = true;
+        }
+        else if (frame_id_hand >= model.frames.size())
+        {
+          std::cerr << "[runActiveMode] 没找到 frame: ft_sensor_frame_2" << std::endl;
+          pin_init_failed = true;
+        }
+        else if (model.nq != 4 || model.nv != 4)
+        {
+          std::cerr
+              << "[runActiveMode] 当前 Pinocchio 模型自由度不是 4，"
+              << "请确认 joint1~3、joint8~10 已改成 fixed。"
+              << " model.nq=" << model.nq << " model.nv=" << model.nv
+              << std::endl;
+          pin_init_failed = true;
+        }
+        else
+        {
+          pin_initialized = true;
+          std::cout
+              << "[runActiveMode] Pinocchio 初始化成功。"
+              << " urdf_path=" << urdf_path
+              << " nq=" << model.nq
+              << " nv=" << model.nv
+              << std::endl;
+        }
+      }
+      catch (const std::exception &e)
+      {
+        std::cerr << "[runActiveMode] Pinocchio 初始化异常: " << e.what() << std::endl;
+        pin_init_failed = true;
+      }
+    }
+
+    if (!pin_initialized || pin_init_failed || !data)
+    {
+      // 初始化失败则本轮不输出
+      output.valid = false;
+      return;
+    }
+
+    // ===================== 传感器有效性检查 =====================
+    //
+    // 当前传感器无效时，不要输出扭矩。
+    //
+    if (!sensor_state.valid)
+    {
+      output.valid = false;
+      return;
+    }
+
+    // ===================== 组装 q / dq =====================
+    //
+    // 注意：
+    // 1. state.position / velocity 的单位是 deg / deg/s
+    // 2. Pinocchio 这里使用 rad / rad/s
+    // 3. 因为 fixed joint 不再出现在模型里，所以 q 只有 4 维：
+    //    q = [joint4, joint5, joint6, joint7]
+    //
+    constexpr double DEG2RAD = M_PI / 180.0;
+
+    Eigen::VectorXd q = Eigen::VectorXd::Zero(model.nq);
+    Eigen::VectorXd v = Eigen::VectorXd::Zero(model.nv);
+
+    q(0) = state.position[IDX_J4] * DEG2RAD;
+    q(1) = state.position[IDX_J5] * DEG2RAD;
+    q(2) = state.position[IDX_J6] * DEG2RAD;
+    q(3) = state.position[IDX_J7] * DEG2RAD;
+
+    v(0) = state.velocity[IDX_J4] * DEG2RAD;
+    v(1) = state.velocity[IDX_J5] * DEG2RAD;
+    v(2) = state.velocity[IDX_J6] * DEG2RAD;
+    v(3) = state.velocity[IDX_J7] * DEG2RAD;
+
+    // ===================== 导纳状态初始化 =====================
+    //
+    // 第一次进入主动模式时，用当前实际姿态初始化导纳参考。
+    //
+    if (!admittance_initialized)
+    {
+      q_adm = q;
+      dq_adm = Eigen::VectorXd::Zero(model.nv);
+      admittance_initialized = true;
+    }
+
+    // ===================== 读取并去偏两个六维力传感器 =====================
+    //
+    // 左臂：
+    // SENSOR_LEFT_HAND = 2
+    // SENSOR_LEFT_ARM  = 3
+    //
+    // 约定：
+    // 1. sensor_state.sensor[] 是实时值
+    // 2. sensor_state.bias[]   是进入模式时记录的零偏
+    // 3. 这里直接做 raw - bias
+    //
+    const auto &raw_hand = sensor_state.sensor[SENSOR_LEFT_HAND];
+    const auto &bias_hand = sensor_state.bias[SENSOR_LEFT_HAND];
+
+    const auto &raw_arm = sensor_state.sensor[SENSOR_LEFT_ARM];
+    const auto &bias_arm = sensor_state.bias[SENSOR_LEFT_ARM];
+
+    double fx_arm = raw_arm.fx - bias_arm.fx;
+    double fy_arm = raw_arm.fy - bias_arm.fy;
+    double fz_arm = raw_arm.fz - bias_arm.fz;
+    double mx_arm = raw_arm.mx - bias_arm.mx;
+    double my_arm = raw_arm.my - bias_arm.my;
+    double mz_arm = raw_arm.mz - bias_arm.mz;
+
+    double fx_hand = raw_hand.fx - bias_hand.fx;
+    double fy_hand = raw_hand.fy - bias_hand.fy;
+    double fz_hand = raw_hand.fz - bias_hand.fz;
+    double mx_hand = raw_hand.mx - bias_hand.mx;
+    double my_hand = raw_hand.my - bias_hand.my;
+    double mz_hand = raw_hand.mz - bias_hand.mz;
+
+    // ===================== 传感器方向符号修正 =====================
+    //
+    // 顺序：
+    // [Fx, Fy, Fz, Mx, My, Mz]
+    //
+    // 如果后面发现某个方向“人往前推，系统却反着帮”，
+    // 优先在这里改符号，不要先去改导纳参数。
+    //
+    static const std::array<double, 6> arm_sign = {
+        1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0};
+
+    static const std::array<double, 6> hand_sign = {
+        1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0};
+
+    fx_arm *= arm_sign[0];
+    fy_arm *= arm_sign[1];
+    fz_arm *= arm_sign[2];
+    mx_arm *= arm_sign[3];
+    my_arm *= arm_sign[4];
+    mz_arm *= arm_sign[5];
+
+    fx_hand *= hand_sign[0];
+    fy_hand *= hand_sign[1];
+    fz_hand *= hand_sign[2];
+    mx_hand *= hand_sign[3];
+    my_hand *= hand_sign[4];
+    mz_hand *= hand_sign[5];
+
+    // ===================== 死区 =====================
+    //
+    // 力 / 力矩很小时直接置 0，防止噪声抖动。
+    //
+    const double force_deadzone = 1.0;   // N
+    const double torque_deadzone = 0.05; // Nm
+
+    auto apply_deadzone = [](double x, double dz) -> double
+    {
+      return (std::abs(x) < dz) ? 0.0 : x;
+    };
+
+    fx_arm = apply_deadzone(fx_arm, force_deadzone);
+    fy_arm = apply_deadzone(fy_arm, force_deadzone);
+    fz_arm = apply_deadzone(fz_arm, force_deadzone);
+    mx_arm = apply_deadzone(mx_arm, torque_deadzone);
+    my_arm = apply_deadzone(my_arm, torque_deadzone);
+    mz_arm = apply_deadzone(mz_arm, torque_deadzone);
+
+    fx_hand = apply_deadzone(fx_hand, force_deadzone);
+    fy_hand = apply_deadzone(fy_hand, force_deadzone);
+    fz_hand = apply_deadzone(fz_hand, force_deadzone);
+    mx_hand = apply_deadzone(mx_hand, torque_deadzone);
+    my_hand = apply_deadzone(my_hand, torque_deadzone);
+    mz_hand = apply_deadzone(mz_hand, torque_deadzone);
+
+    // ===================== 限幅 =====================
+    //
+    // 防止异常值把控制打飞。
+    //
+    const double force_limit = 80.0; // N
+    const double moment_limit = 8.0; // Nm
+
+    auto clamp_abs = [](double x, double lim) -> double
+    {
+      if (x > lim)
+        return lim;
+      if (x < -lim)
+        return -lim;
+      return x;
+    };
+
+    auto clamp_between = [](double x, double lo, double hi) -> double
+    {
+      if (x < lo)
+        return lo;
+      if (x > hi)
+        return hi;
+      return x;
+    };
+
+    fx_arm = clamp_abs(fx_arm, force_limit);
+    fy_arm = clamp_abs(fy_arm, force_limit);
+    fz_arm = clamp_abs(fz_arm, force_limit);
+    mx_arm = clamp_abs(mx_arm, moment_limit);
+    my_arm = clamp_abs(my_arm, moment_limit);
+    mz_arm = clamp_abs(mz_arm, moment_limit);
+
+    fx_hand = clamp_abs(fx_hand, force_limit);
+    fy_hand = clamp_abs(fy_hand, force_limit);
+    fz_hand = clamp_abs(fz_hand, force_limit);
+    mx_hand = clamp_abs(mx_hand, moment_limit);
+    my_hand = clamp_abs(my_hand, moment_limit);
+    mz_hand = clamp_abs(mz_hand, moment_limit);
+
+    // ===================== 计算两个传感器 frame 的 Jacobian =====================
+    //
+    // 把“末端（传感器）空间的力/速度”映射到“关节空间”
+    //
+    Eigen::MatrixXd J_arm = Eigen::MatrixXd::Zero(6, model.nv);
+    Eigen::MatrixXd J_hand = Eigen::MatrixXd::Zero(6, model.nv);
+
+    pinocchio::computeFrameJacobian(model, *data, q, frame_id_arm, pinocchio::LOCAL, J_arm);
+    pinocchio::computeFrameJacobian(model, *data, q, frame_id_hand, pinocchio::LOCAL, J_hand);
+
+    // ===================== 构造 Pinocchio 空间力 =====================
+    //
+    // Pinocchio 空间力的顺序是：
+    // [angular; linear]
+    //
+    pinocchio::Force f_arm = pinocchio::Force::Zero();
+    f_arm.linear() << fx_arm, fy_arm, fz_arm;
+    f_arm.angular() << mx_arm, my_arm, mz_arm;
+
+    pinocchio::Force f_hand = pinocchio::Force::Zero();
+    f_hand.linear() << fx_hand, fy_hand, fz_hand;
+    f_hand.angular() << mx_hand, my_hand, mz_hand;
+
+    // ===================== 外力映射到关节空间 =====================
+    //
+    // 数学意义：
+    // tau_ext = J_arm^T * F_arm + J_hand^T * F_hand
+    //
+    // 这里得到的是“患者作用到系统上的等效关节力矩”，
+    // 后面作为导纳模型的输入。
+    //
+    Eigen::VectorXd tau_arm = J_arm.transpose() * f_arm.toVector();
+    Eigen::VectorXd tau_hand = J_hand.transpose() * f_hand.toVector();
+    Eigen::VectorXd tau_ext = tau_arm + tau_hand;
+
+    // ===================== 导纳模型 =====================
+    //
+    // 采用关节空间导纳：
+    //
+    //   M_a * ddq_adm + D_a * dq_adm + K_a * (q_adm - q) = tau_ext
+    //
+    // 其中：
+    // q        -> 当前实际关节角
+    // q_adm    -> 导纳生成的参考关节角
+    // dq_adm   -> 导纳生成的参考关节角速度
+    // tau_ext  -> 由六维力传感器映射得到的等效关节交互力矩
+    //
+    // 物理意义：
+    // 1. M_a 决定“推起来有多沉”
+    // 2. D_a 决定“推起来有多黏”
+    // 3. K_a 决定“是否有回中/回稳趋势”
+    //
+    // 数值积分：
+    // ddq_adm -> dq_adm -> q_adm
+    //
+    const double dt = 1.0 / 90.0; // 当前控制线程频率约为 90 Hz
+
+    Eigen::VectorXd M_a = Eigen::VectorXd::Zero(model.nv);
+    Eigen::VectorXd D_a = Eigen::VectorXd::Zero(model.nv);
+    Eigen::VectorXd K_a = Eigen::VectorXd::Zero(model.nv);
+
+    // 导纳参数需要后续根据实际手感继续调
+    M_a(0) = 1.5;
+    M_a(1) = 1.5;
+    M_a(2) = 1.2;
+    M_a(3) = 0.8;
+
+    D_a(0) = 20.0;
+    D_a(1) = 20.0;
+    D_a(2) = 18.0;
+    D_a(3) = 12.0;
+
+    K_a(0) = 8.0;
+    K_a(1) = 8.0;
+    K_a(2) = 6.0;
+    K_a(3) = 4.0;
+
+    Eigen::VectorXd ddq_adm = Eigen::VectorXd::Zero(model.nv);
+
+    for (int i = 0; i < model.nv; ++i)
+    {
+      ddq_adm(i) =
+          (tau_ext(i) - D_a(i) * dq_adm(i) - K_a(i) * (q_adm(i) - q(i))) /
+          M_a(i);
+    }
+
+    dq_adm = dq_adm + ddq_adm * dt;
+    q_adm = q_adm + dq_adm * dt;
+
+    // ===================== 导纳参考限位 =====================
+    //
+    // 防止导纳内部状态在长时间交互下跑飞。
+    // 这里给一个保守范围，后续可按实际关节安全范围继续调整。
+    //
+    const double q4_min = -60.0 * DEG2RAD;
+    const double q4_max = 60.0 * DEG2RAD;
+    const double q5_min = -60.0 * DEG2RAD;
+    const double q5_max = 60.0 * DEG2RAD;
+    const double q6_min = -60.0 * DEG2RAD;
+    const double q6_max = 60.0 * DEG2RAD;
+    const double q7_min = 0.0 * DEG2RAD;
+    const double q7_max = 120.0 * DEG2RAD;
+
+    q_adm(0) = clamp_between(q_adm(0), q4_min, q4_max);
+    q_adm(1) = clamp_between(q_adm(1), q5_min, q5_max);
+    q_adm(2) = clamp_between(q_adm(2), q6_min, q6_max);
+    q_adm(3) = clamp_between(q_adm(3), q7_min, q7_max);
+
+    // 同时限制参考速度，避免导纳速度积累过大
+    const double dq_adm_limit = 1.5; // rad/s
+
+    dq_adm(0) = clamp_abs(dq_adm(0), dq_adm_limit);
+    dq_adm(1) = clamp_abs(dq_adm(1), dq_adm_limit);
+    dq_adm(2) = clamp_abs(dq_adm(2), dq_adm_limit);
+    dq_adm(3) = clamp_abs(dq_adm(3), dq_adm_limit);
+
+    // ===================== 重力补偿 =====================
+    //
+    // g(q) 是系统在当前姿态下抵消自身重力所需的关节力矩。
+    //
+    // 数学意义：
+    //   g(q) = computeGeneralizedGravity(model, data, q)
+    //
+    // 物理意义：
+    // 1. 不让患者额外承担外骨骼自身重量
+    // 2. 让导纳看到的交互更接近“患者真实意图”
+    //
+    Eigen::VectorXd g = pinocchio::computeGeneralizedGravity(model, *data, q);
+
+    // ===================== 扭矩跟踪控制 =====================
+    //
+    // 最终控制律：
+    //
+    //   tau_cmd = g(q) + Kp * (q_adm - q) + Kv * (dq_adm - v)
+    //
+    // 其中：
+    // 1. g(q)                     -> 重力补偿
+    // 2. Kp * (q_adm - q)         -> 把系统拉向导纳生成的参考位置
+    // 3. Kv * (dq_adm - v)        -> 提供速度跟踪与阻尼稳定性
+    //
+    // 这意味着：
+    // 1. 导纳负责“根据人的力生成想去的位置/速度”
+    // 2. 扭矩控制负责“把这个想去的位置/速度真正实现出来”
+    //
+    Eigen::VectorXd Kp = Eigen::VectorXd::Zero(model.nv);
+    Eigen::VectorXd Kv = Eigen::VectorXd::Zero(model.nv);
+
+    Kp(0) = 18.0;
+    Kp(1) = 18.0;
+    Kp(2) = 16.0;
+    Kp(3) = 10.0;
+
+    Kv(0) = 2.5;
+    Kv(1) = 2.5;
+    Kv(2) = 2.0;
+    Kv(3) = 1.5;
+
+    Eigen::VectorXd tau_cmd =
+        g + Kp.asDiagonal() * (q_adm - q) + Kv.asDiagonal() * (dq_adm - v);
+
+    // ===================== 最终扭矩限幅 =====================
+    //
+    // 输出给执行层前，限制每个关节的目标扭矩。
+    //
+    const double joint_torque_limit_j4 = 12.0;
+    const double joint_torque_limit_j5 = 12.0;
+    const double joint_torque_limit_j6 = 12.0;
+    const double joint_torque_limit_j7 = 8.0;
+
+    tau_cmd(0) = clamp_abs(tau_cmd(0), joint_torque_limit_j4);
+    tau_cmd(1) = clamp_abs(tau_cmd(1), joint_torque_limit_j5);
+    tau_cmd(2) = clamp_abs(tau_cmd(2), joint_torque_limit_j6);
+    tau_cmd(3) = clamp_abs(tau_cmd(3), joint_torque_limit_j7);
+
+    // ===================== 输出到控制层 =====================
+    //
+    // 这里只对 joint4~7 对应的控制层索引写扭矩。
+    // 这些轴在主动模式下使用扭矩控制。
+    //
+    output.use_torque[IDX_J4] = true;
+    output.use_torque[IDX_J5] = true;
+    output.use_torque[IDX_J6] = true;
+    output.use_torque[IDX_J7] = true;
+
+    output.target_torque[IDX_J4] = tau_cmd(0);
+    output.target_torque[IDX_J5] = tau_cmd(1);
+    output.target_torque[IDX_J6] = tau_cmd(2);
+    output.target_torque[IDX_J7] = tau_cmd(3);
+
+    // ===================== 其余轴固定在预设位置 =====================
+    //
+    // 防止未参与主动模式的轴在交互过程中乱动。
+    //
+    output.use_position[10] = true;
+    output.target_position[10] = 0.0;
+    output.target_velocity[10] = pulsePerMsToJointSpeedDegPerSecMagnitude(11, 400.0);
+    output.target_acc[10] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(11, 0.5);
+    output.target_dec[10] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(11, 0.25);
+    output.target_smooth_time[10] = 25;
+
+    output.use_position[11] = true;
+    output.target_position[11] = 0.0;
+    output.target_velocity[11] = pulsePerMsToJointSpeedDegPerSecMagnitude(12, 500.0);
+    output.target_acc[11] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(12, 0.5);
+    output.target_dec[11] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(12, 0.25);
+    output.target_smooth_time[11] = 25;
+
+    output.use_position[18] = true;
+    output.target_position[18] = 0.0;
+    output.target_velocity[18] = pulsePerMsToJointSpeedDegPerSecMagnitude(19, 1500.0);
+    output.target_acc[18] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(19, 5.0);
+    output.target_dec[18] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(19, 0.25);
+    output.target_smooth_time[18] = 25;
+
+    output.use_position[19] = true;
+    output.target_position[19] = 0.0;
+    output.target_velocity[19] = pulsePerMsToJointSpeedDegPerSecMagnitude(20, 1500.0);
+    output.target_acc[19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(20, 5.0);
+    output.target_dec[19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(20, 0.25);
+    output.target_smooth_time[19] = 25;
+
+    // ===================== 输出有效 =====================
+    output.valid = true;
   }
 
+
+
+
   // ===================== 零力模式 =====================
-  void runZeroForceMode(
-      const MotorStateCache &state,
-      const SensorStateCache &sensor_state,
-      ControlOutputCache &output)
+  void runZeroForceMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output)
   {
     // ===================== 输出初始化 =====================
     //
@@ -821,6 +1303,8 @@ namespace upperlimb_robot
     output.valid = true;
   }
 
+  
+  
   // ===================== 左臂预设位姿 =====================
   //
   // 当前实现：

@@ -254,7 +254,18 @@ private:
     }
 
     case upperlimb_robot::MODE_ACTIVE:
+    {
+      const bool ok = captureForceSensorBias();
+      if (ok)
+      {
+        RCLCPP_INFO(this->get_logger(), "进入主动模式，已记录六维力零偏");
+      }
+      else
+      {
+        RCLCPP_WARN(this->get_logger(), "进入主动模式失败：当前传感器数据无效，未记录零偏");
+      }
       break;
+    }
 
     case upperlimb_robot::MODE_LEFT_PRESET_POSITION:
     case upperlimb_robot::MODE_RIGHT_PRESET_POSITION:
@@ -548,26 +559,45 @@ private:
   // ===================== 状态采集线程 =====================
   void stateReadLoop()
   {
+    // 1. 周期性读取所有电机状态（位置 / 速度 / 力矩 / 使能）
+    // 2. 读取六维力传感器数据
+    // 3. 更新共享缓存（供控制线程使用）
+    // 4. 按一定频率发布 ROS2 状态消息
+
     std::uint64_t timeout_count = 0;
 
     while (running_.load())
     {
-      const int state_hz = state_hz_.load();
+      const int state_hz = state_hz_.load(); // 目标状态采集频率（Hz）
+
       if (state_hz <= 0)
       {
+        // 防止非法参数
         RCLCPP_ERROR_THROTTLE(
             this->get_logger(), *this->get_clock(), 2000,
             "state_hz 非法=%d，必须大于 0", state_hz);
+
         std::this_thread::sleep_for(100ms);
         continue;
       }
-
+      // 根据频率计算周期（单位：微秒）
       const auto period = std::chrono::microseconds(1000000 / state_hz);
+
+      // 记录本次循环开始时间（用于后面计算耗时）
       auto cycle_start = std::chrono::steady_clock::now();
 
+      // ===================== 局部缓存（避免锁冲突） =====================
+      //
+      // 所有数据先写到 local，再统一拷贝到共享变量
+      // 这样可以减少锁的占用时间，提高实时性
+      //
       upperlimb_robot::MotorStateCache local_state;
       upperlimb_robot::SensorStateCache local_sensor_state;
 
+      // ===================== 状态读取降频控制 =====================
+      //
+      // enable不需要每个周期都读，降低频率
+      //
       const bool do_read_status =
           (++status_read_divider_count_ >= status_read_divider_);
 
@@ -576,47 +606,58 @@ private:
         status_read_divider_count_ = 0;
       }
 
+      // ===================== 遍历所有轴，读取状态 =====================
       for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
       {
-        const int axis = axis_ids_[i];
+        const int axis = axis_ids_[i]; // 实际控制卡上的轴号
 
-        short rtn = 0;
-        int32_t sts = 0;
-        int32_t enc_pos = 0;
-        double vel = 0.0;
-        short torque_raw = 0;
+        // 临时变量（底层接口返回）
+        short rtn = 0;        // 返回值（0=成功）
+        int32_t sts = 0;      // 状态字
+        int32_t enc_pos = 0;  // 编码器位置（脉冲）
+        double vel = 0.0;     // 编码器速度（脉冲/ms）
+        short torque_raw = 0; // 原始力矩（驱动器单位）
 
+        // 读取使能状态 
         if (do_read_status)
         {
           rtn = GTN_GetSts(core_id_, axis, &sts, 1);
           if (rtn == 0)
           {
+            // sts != 0 表示轴处于使能状态
             local_state.enable[i] = (sts != 0);
           }
           else
           {
+            // 如果读取失败，使用上一次缓存值
             local_state.enable[i] = axis_enabled_[i];
           }
         }
         else
         {
+          // 如果本周期不读取状态，直接用缓存
           local_state.enable[i] = axis_enabled_[i];
         }
 
+        // 读取位置 
         rtn = GTN_GetEcatEncPos(core_id_, axis, &enc_pos);
         if (rtn == 0)
         {
+          // 脉冲 → 关节角度（deg）
           local_state.position[i] =
               upperlimb_robot::pulseToJointDeg(axis, static_cast<double>(enc_pos));
         }
         else
         {
+          // 读取失败置零（也可以考虑保持上次值）
           local_state.position[i] = 0.0;
         }
 
+        // 读取力矩
         rtn = GTN_GetEcatAxisAtlTorque(core_id_, axis, &torque_raw);
         if (rtn == 0)
         {
+          // 原始值 → Nm
           local_state.torque[i] =
               upperlimb_robot::torqueRawToNm(axis, static_cast<double>(torque_raw));
         }
@@ -625,9 +666,11 @@ private:
           local_state.torque[i] = 0.0;
         }
 
+        // 读取速度 
         rtn = GTN_GetEncVel(core_id_, axis, &vel, 1);
         if (rtn == 0)
         {
+          // 脉冲/ms → deg/s
           local_state.velocity[i] =
               upperlimb_robot::pulsePerMsToJointDegPerSec(axis, vel);
         }
@@ -637,45 +680,70 @@ private:
         }
       }
 
+      // 力传感器处理
+
       {
+        // 拷贝零偏（bias）——用于后续减去漂移
         std::lock_guard<std::mutex> lock(sensor_mutex_);
         local_sensor_state.bias = latest_sensor_state_.bias;
       }
+
+      // 实际读取六维力传感器（填充 sensor）
       readAllForceSensors(local_sensor_state);
 
+      // 更新共享电机状态 
       {
         std::lock_guard<std::mutex> lock(state_mutex_);
+
+        // 将本周期读取的数据写入全局缓存
         latest_motor_state_ = local_state;
+
+        // 标记“状态已准备好”（控制线程可以开始使用）
         state_ready_.store(true);
       }
 
+      // 更新共享传感器状态
       {
         std::lock_guard<std::mutex> lock(sensor_mutex_);
+
         latest_sensor_state_.sensor = local_sensor_state.sensor;
         latest_sensor_state_.bias = local_sensor_state.bias;
         latest_sensor_state_.valid = local_sensor_state.valid;
       }
 
+      // 发布 ROS 状态 
+      //
+      // 不一定每个周期都发布（降低通信负载）
+      //
       publish_divider_count_++;
       if (publish_divider_count_ >= publish_divider_)
       {
         publish_divider_count_ = 0;
+
+        // 发布消息（/robot_state）
         publishRobotState(local_state, local_sensor_state);
       }
 
       auto cycle_end = std::chrono::steady_clock::now();
+
+      // 本周期耗时（us）
       auto elapsed =
           std::chrono::duration_cast<std::chrono::microseconds>(cycle_end - cycle_start);
 
       if (elapsed < period)
       {
+        // 如果执行太快 补齐周期
         std::this_thread::sleep_for(period - elapsed);
       }
       else
       {
+        // 如果执行太慢 记录超时
         timeout_count++;
+
+        // 每 100 次打印一次
         if (timeout_count % 100 == 0)
         {
+          // 实际频率 = 1 / 实际耗时
           double actual_hz = 1000000.0 / static_cast<double>(elapsed.count());
 
           RCLCPP_WARN(
