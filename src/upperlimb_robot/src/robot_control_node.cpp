@@ -850,7 +850,7 @@ private:
       return false;
     }
 
-    // 位置模式通常为 8；如果你的驱动实际不是 8，请按设备手册调整
+    // 切回位置模式
     const short rtn_mode = GTN_SetEcatAxisMode(core_id_, axis, 8);
     if (rtn_mode != 0)
     {
@@ -861,8 +861,43 @@ private:
       return false;
     }
 
+    // ===================== 关键补充：重新同步当前位置 =====================
+    //
+    // 轴在扭矩模式下可能已经被拖到新的位置。
+    // 切回位置模式时，需要把“当前编码器位置”重新同步给规划位置，
+    // 避免后续位置指令基于旧的 PrfPos 导致不运动或行为异常。
+    //
+    int32_t enc_pos = 0;
+    const short rtn_get_enc = GTN_GetEcatEncPos(core_id_, axis, &enc_pos);
+    if (rtn_get_enc != 0)
+    {
+      RCLCPP_ERROR_THROTTLE(
+          this->get_logger(), *this->get_clock(), 2000,
+          "读取轴%d编码器位置失败，错误码=%d", axis, rtn_get_enc);
+      return false;
+    }
+
+    const short rtn_set_prf = GTN_SetPrfPos(core_id_, axis, enc_pos);
+    if (rtn_set_prf != 0)
+    {
+      RCLCPP_ERROR_THROTTLE(
+          this->get_logger(), *this->get_clock(), 2000,
+          "同步轴%d规划位置失败，错误码=%d", axis, rtn_set_prf);
+      return false;
+    }
+
+    const short rtn_set_enc = GTN_SetEncPos(core_id_, axis, enc_pos);
+    if (rtn_set_enc != 0)
+    {
+      RCLCPP_ERROR_THROTTLE(
+          this->get_logger(), *this->get_clock(), 2000,
+          "同步轴%d编码器位置失败，错误码=%d", axis, rtn_set_enc);
+      return false;
+    }
+
     axis_in_torque_mode_[i] = false;
     last_target_torque_[i] = 0.0;
+    command_sent_[i] = false; // 让下一次位置命令一定重发
     return true;
   }
 
@@ -900,7 +935,10 @@ private:
         continue;
       }
 
-      (void)ensureAxisInPositionMode(i);
+      for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
+      {
+        (void)ensureAxisInPositionMode(i);
+      }
     }
     // ===================== 清除位置命令缓存 =====================
     // 下一次进入位置模式时，即使目标位置与上次一致，也会重新发送位置指令
