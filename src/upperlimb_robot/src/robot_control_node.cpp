@@ -902,6 +902,12 @@ private:
 
       (void)ensureAxisInPositionMode(i);
     }
+    // ===================== 清除位置命令缓存 =====================
+    // 下一次进入位置模式时，即使目标位置与上次一致，也会重新发送位置指令
+    for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
+    {
+      command_sent_[i] = false;
+    }
   }
 
   // ===================== 执行位置输出 =====================
@@ -1249,7 +1255,7 @@ private:
   int applied_mode_{upperlimb_robot::MODE_IDLE};
 
   std::atomic<int> state_hz_{200};
-  std::atomic<int> control_hz_{100};
+  std::atomic<int> control_hz_{90};
 
   int status_read_divider_ = 20;
   int status_read_divider_count_ = 0;
