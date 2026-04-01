@@ -1214,10 +1214,10 @@ namespace upperlimb_robot
     // 创建一个长度为 nv 的向量：
     Eigen::VectorXd damping = Eigen::VectorXd::Zero(model.nv);
     // 给每个关节设置阻尼系数：
-    damping(0) = 0.8;
-    damping(1) = 0.8;
-    damping(2) = 0.8;
-    damping(3) = 0.6;
+    damping(0) = 0.0;
+    damping(1) = 0.0;
+    damping(2) = 0.2;
+    damping(3) = 0.3;
     // 计算阻尼力矩：tau_damping = -damping * v，永远“反着速度方向”
     // damping.asDiagonal()
     // 把 [0.8, 0.8, 0.8, 0.6] 变成:

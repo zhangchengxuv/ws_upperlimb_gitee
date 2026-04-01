@@ -28,7 +28,7 @@ EtherCAT 0-20: Slave alias is 0
 EtherCAT 0-21: Slave alias is 0
 EtherCAT 0-22: Slave alias is 0
 EtherCAT 0-23: Slave alias is 0
-EtherCAT 0: Bus scanning completed in 361 ms.
+EtherCAT 0: Bus scanning completed in 377 ms.
 EtherCAT 0: Config each slave SDO config info ...
 EtherCAT 0: Config each slave PDO sync info ...
 EtherCAT 0: Registering PDO entries...
@@ -47,30 +47,30 @@ EtherCAT WARNING 0-2: Slave does not support changing the PDO mapping!
 EtherCAT WARNING 0-2: Currently mapped PDO entries: 0x6030:00/16 0x6030:01/32 0x6030:02/32 0x6030:03/32 0x6030:04/32 0x6030:05/32 0x6030:06/32. Entries to map: 0x6030:01/16 0x6030:02/32 0x6030:03/32 0x6030:04/32 0x6030:05/32 0x6030:06/32 0x6030:07/32
 EtherCAT WARNING 0-3: Slave does not support changing the PDO mapping!
 EtherCAT WARNING 0-3: Currently mapped PDO entries: 0x6030:00/16 0x6030:01/32 0x6030:02/32 0x6030:03/32 0x6030:04/32 0x6030:05/32 0x6030:06/32. Entries to map: 0x6030:01/16 0x6030:02/32 0x6030:03/32 0x6030:04/32 0x6030:05/32 0x6030:06/32 0x6030:07/32
-EtherCAT 0-5: Now in OP. Finished configuration.
-EtherCAT 0-6: Now in OP. Finished configuration.
-EtherCAT 0-7: Now in OP. Finished configuration.
-EtherCAT 0-8: Now in OP. Finished configuration.
-EtherCAT 0-19: Now in OP. Finished configuration.
 EtherCAT 0-4: Now in OP. Finished configuration.
-EtherCAT 0-9: Now in OP. Finished configuration.
+EtherCAT 0-5: Now in OP. Finished configuration.
+EtherCAT 0-8: Now in OP. Finished configuration.
 EtherCAT 0-10: Now in OP. Finished configuration.
 EtherCAT 0-11: Now in OP. Finished configuration.
-EtherCAT 0-12: Now in OP. Finished configuration.
 EtherCAT 0-13: Now in OP. Finished configuration.
 EtherCAT 0-14: Now in OP. Finished configuration.
-EtherCAT 0-15: Now in OP. Finished configuration.
 EtherCAT 0-16: Now in OP. Finished configuration.
 EtherCAT 0-17: Now in OP. Finished configuration.
-EtherCAT 0-18: Now in OP. Finished configuration.
-EtherCAT 0-20: Now in OP. Finished configuration.
 EtherCAT 0-21: Now in OP. Finished configuration.
 EtherCAT 0-22: Now in OP. Finished configuration.
+EtherCAT 0-6: Now in OP. Finished configuration.
+EtherCAT 0-7: Now in OP. Finished configuration.
+EtherCAT 0-9: Now in OP. Finished configuration.
+EtherCAT 0-12: Now in OP. Finished configuration.
+EtherCAT 0-15: Now in OP. Finished configuration.
+EtherCAT 0-18: Now in OP. Finished configuration.
+EtherCAT 0-19: Now in OP. Finished configuration.
+EtherCAT 0-20: Now in OP. Finished configuration.
 EtherCAT 0-23: Now in OP. Finished configuration.
 EtherCAT 0-0: Now in OP. Finished configuration.
 EtherCAT 0-1: Now in OP. Finished configuration.
-EtherCAT 0-2: Now in OP. Finished configuration.
 EtherCAT 0-3: Now in OP. Finished configuration.
+EtherCAT 0-2: Now in OP. Finished configuration.
 EtherCAT 0: All slaves are in OP mode
 EtherCAT 0: Slave states: OP .
 EtherCAT 0: Releasing master...
