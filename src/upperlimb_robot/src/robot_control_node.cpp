@@ -935,10 +935,7 @@ private:
         continue;
       }
 
-      for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
-      {
-        (void)ensureAxisInPositionMode(i);
-      }
+      (void)ensureAxisInPositionMode(i);
     }
     // ===================== 清除位置命令缓存 =====================
     // 下一次进入位置模式时，即使目标位置与上次一致，也会重新发送位置指令
