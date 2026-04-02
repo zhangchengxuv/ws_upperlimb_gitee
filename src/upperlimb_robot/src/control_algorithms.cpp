@@ -372,9 +372,9 @@ namespace upperlimb_robot
     output = ControlOutputCache{};
     output.valid = false;
   }
-    
+
   // ===================== 主动模式 =====================
-  void runActiveMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output)
+  void runActiveMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output)
   {
     // ===================== 输出初始化 =====================
     //
@@ -724,7 +724,7 @@ namespace upperlimb_robot
     Eigen::VectorXd D_a = Eigen::VectorXd::Zero(model.nv);
     Eigen::VectorXd K_a = Eigen::VectorXd::Zero(model.nv);
 
-    // 导纳参数需要后续根据实际手感继续调
+    // 导纳参数
     M_a(0) = 1.5;
     M_a(1) = 1.5;
     M_a(2) = 1.2;
@@ -749,7 +749,9 @@ namespace upperlimb_robot
           M_a(i);
     }
 
+    // 加速度 → 速度 v = v + a * dt
     dq_adm = dq_adm + ddq_adm * dt;
+    // 速度 → 位置 q = q + v * dt
     q_adm = q_adm + dq_adm * dt;
 
     // ===================== 导纳参考限位 =====================
@@ -820,8 +822,7 @@ namespace upperlimb_robot
     Kv(2) = 2.0;
     Kv(3) = 1.5;
 
-    Eigen::VectorXd tau_cmd =
-        g + Kp.asDiagonal() * (q_adm - q) + Kv.asDiagonal() * (dq_adm - v);
+    Eigen::VectorXd tau_cmd = g + Kp.asDiagonal() * (q_adm - q) + Kv.asDiagonal() * (dq_adm - v);
 
     // ===================== 最终扭矩限幅 =====================
     //
@@ -888,11 +889,8 @@ namespace upperlimb_robot
     output.valid = true;
   }
 
-
-
-
   // ===================== 零力模式 =====================
-  void runZeroForceMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output)
+  void runZeroForceMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output)
   {
     // ===================== 输出初始化 =====================
     //
@@ -1303,8 +1301,6 @@ namespace upperlimb_robot
     output.valid = true;
   }
 
-  
-  
   // ===================== 左臂预设位姿 =====================
   //
   // 当前实现：
