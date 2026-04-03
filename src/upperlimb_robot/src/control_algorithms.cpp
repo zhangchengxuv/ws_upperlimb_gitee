@@ -1216,7 +1216,7 @@ namespace upperlimb_robot
     damping(1) = 0.0;
     damping(2) = 0.2;
     damping(3) = 0.3;
-    // 计算阻尼力矩：tau_damping = -damping * v，永远“反着速度方向”
+    // 计算阻尼力矩：tau_damping = -damping * v，反速度方向
     // damping.asDiagonal()
     // 把 [0.8, 0.8, 0.8, 0.6] 变成:
     // [0.8, 0,   0,   0  ]
