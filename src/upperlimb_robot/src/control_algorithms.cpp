@@ -384,13 +384,16 @@ namespace upperlimb_robot
     output = ControlOutputCache{};
     output.valid = false;
 
-    // ===================== 只做左臂 joint4~joint7 =====================
+    // ===================== 左臂 joint1~joint7 =====================
     //
     // 当前实验设定：
-    // 1. URDF 中 joint1~3、joint8~10 已经改成 fixed
-    // 2. Pinocchio 模型只剩 4 个可动关节：joint4~joint7
-    // 3. 这里只控制左臂对应的 4 个控制层索引
+    // 1. URDF 中 joint1~3 已经改成 revolute，joint8~10 保持 fixed
+    // 2. Pinocchio 模型现在有 7 个可动关节：joint1~joint7
+    // 3. 这里 joint1~7 全部参与主动模式扭矩控制
     //
+    constexpr std::size_t IDX_J1 = 10; // joint1 -> 左臂控制层索引
+    constexpr std::size_t IDX_J2 = 11; // joint2 -> 左臂控制层索引
+    constexpr std::size_t IDX_J3 = 12; // joint3 -> 左臂控制层索引
     constexpr std::size_t IDX_J4 = 13; // joint4 -> 左臂控制层索引
     constexpr std::size_t IDX_J5 = 14; // joint5 -> 左臂控制层索引
     constexpr std::size_t IDX_J6 = 15; // joint6 -> 左臂控制层索引
@@ -435,8 +438,8 @@ namespace upperlimb_robot
 
         // ===================== 加载 URDF =====================
         //
-        // joint1~3、joint8~10 改成 fixed，
-        // model 里只剩 joint4~7 这 4 个可动关节
+        // joint1~3 已改成 revolute，joint8~10 保持 fixed，
+        // model 里应有 joint1~7 这 7 个可动关节
         //
         pinocchio::urdf::buildModel(urdf_path, model);
         data = std::make_unique<pinocchio::Data>(model);
@@ -459,11 +462,11 @@ namespace upperlimb_robot
           std::cerr << "[runActiveMode] 没找到 frame: ft_sensor_frame_2" << std::endl;
           pin_init_failed = true;
         }
-        else if (model.nq != 4 || model.nv != 4)
+        else if (model.nq != 7 || model.nv != 7)
         {
           std::cerr
-              << "[runActiveMode] 当前 Pinocchio 模型自由度不是 4，"
-              << "请确认 joint1~3、joint8~10 已改成 fixed。"
+              << "[runActiveMode] 当前 Pinocchio 模型自由度不是 7，"
+              << "请确认 joint1~3 已改成 revolute，joint8~10 保持 fixed。"
               << " model.nq=" << model.nq << " model.nv=" << model.nv
               << std::endl;
           pin_init_failed = true;
@@ -508,23 +511,29 @@ namespace upperlimb_robot
     // 注意：
     // 1. state.position / velocity 的单位是 deg / deg/s
     // 2. Pinocchio 这里使用 rad / rad/s
-    // 3. 因为 fixed joint 不再出现在模型里，所以 q 只有 4 维：
-    //    q = [joint4, joint5, joint6, joint7]
+    // 3. 当前模型自由度为 7：
+    //    q = [joint1, joint2, joint3, joint4, joint5, joint6, joint7]
     //
     constexpr double DEG2RAD = M_PI / 180.0;
 
     Eigen::VectorXd q = Eigen::VectorXd::Zero(model.nq);
     Eigen::VectorXd v = Eigen::VectorXd::Zero(model.nv);
 
-    q(0) = state.position[IDX_J4] * DEG2RAD;
-    q(1) = state.position[IDX_J5] * DEG2RAD;
-    q(2) = state.position[IDX_J6] * DEG2RAD;
-    q(3) = state.position[IDX_J7] * DEG2RAD;
+    q(0) = state.position[IDX_J1] * DEG2RAD;
+    q(1) = state.position[IDX_J2] * DEG2RAD;
+    q(2) = state.position[IDX_J3] * DEG2RAD;
+    q(3) = state.position[IDX_J4] * DEG2RAD;
+    q(4) = state.position[IDX_J5] * DEG2RAD;
+    q(5) = state.position[IDX_J6] * DEG2RAD;
+    q(6) = state.position[IDX_J7] * DEG2RAD;
 
-    v(0) = state.velocity[IDX_J4] * DEG2RAD;
-    v(1) = state.velocity[IDX_J5] * DEG2RAD;
-    v(2) = state.velocity[IDX_J6] * DEG2RAD;
-    v(3) = state.velocity[IDX_J7] * DEG2RAD;
+    v(0) = state.velocity[IDX_J1] * DEG2RAD;
+    v(1) = state.velocity[IDX_J2] * DEG2RAD;
+    v(2) = state.velocity[IDX_J3] * DEG2RAD;
+    v(3) = state.velocity[IDX_J4] * DEG2RAD;
+    v(4) = state.velocity[IDX_J5] * DEG2RAD;
+    v(5) = state.velocity[IDX_J6] * DEG2RAD;
+    v(6) = state.velocity[IDX_J7] * DEG2RAD;
 
     // ===================== 导纳状态初始化 =====================
     //
@@ -725,20 +734,31 @@ namespace upperlimb_robot
     Eigen::VectorXd K_a = Eigen::VectorXd::Zero(model.nv);
 
     // 导纳参数
-    M_a(0) = 1.5;
-    M_a(1) = 1.5;
-    M_a(2) = 1.2;
-    M_a(3) = 0.8;
+    // 背部这 3 个关节比较重，前臂这 4 个关节比较轻。
+    // 对手端交互会产生更大耦合
+    M_a(0) = 4.0;
+    M_a(1) = 4.0;
+    M_a(2) = 3.0;
+    M_a(3) = 1.5;
+    M_a(4) = 1.5;
+    M_a(5) = 1.2;
+    M_a(6) = 0.8;
 
-    D_a(0) = 20.0;
-    D_a(1) = 20.0;
-    D_a(2) = 18.0;
-    D_a(3) = 12.0;
+    D_a(0) = 45.0;
+    D_a(1) = 45.0;
+    D_a(2) = 35.0;
+    D_a(3) = 20.0;
+    D_a(4) = 20.0;
+    D_a(5) = 18.0;
+    D_a(6) = 12.0;
 
-    K_a(0) = 8.0;
-    K_a(1) = 8.0;
-    K_a(2) = 6.0;
-    K_a(3) = 4.0;
+    K_a(0) = 18.0;
+    K_a(1) = 18.0;
+    K_a(2) = 14.0;
+    K_a(3) = 8.0;
+    K_a(4) = 8.0;
+    K_a(5) = 6.0;
+    K_a(6) = 4.0;
 
     Eigen::VectorXd ddq_adm = Eigen::VectorXd::Zero(model.nv);
 
@@ -759,6 +779,12 @@ namespace upperlimb_robot
     // 防止导纳内部状态在长时间交互下跑飞。
     // 这里给一个保守范围，后续可按实际关节安全范围继续调整。
     //
+    const double q1_min = -30.0 * DEG2RAD;
+    const double q1_max = 30.0 * DEG2RAD;
+    const double q2_min = -30.0 * DEG2RAD;
+    const double q2_max = 30.0 * DEG2RAD;
+    const double q3_min = -30.0 * DEG2RAD;
+    const double q3_max = 30.0 * DEG2RAD;
     const double q4_min = -60.0 * DEG2RAD;
     const double q4_max = 60.0 * DEG2RAD;
     const double q5_min = -60.0 * DEG2RAD;
@@ -768,18 +794,25 @@ namespace upperlimb_robot
     const double q7_min = 0.0 * DEG2RAD;
     const double q7_max = 120.0 * DEG2RAD;
 
-    q_adm(0) = clamp_between(q_adm(0), q4_min, q4_max);
-    q_adm(1) = clamp_between(q_adm(1), q5_min, q5_max);
-    q_adm(2) = clamp_between(q_adm(2), q6_min, q6_max);
-    q_adm(3) = clamp_between(q_adm(3), q7_min, q7_max);
+    q_adm(0) = clamp_between(q_adm(0), q1_min, q1_max);
+    q_adm(1) = clamp_between(q_adm(1), q2_min, q2_max);
+    q_adm(2) = clamp_between(q_adm(2), q3_min, q3_max);
+    q_adm(3) = clamp_between(q_adm(3), q4_min, q4_max);
+    q_adm(4) = clamp_between(q_adm(4), q5_min, q5_max);
+    q_adm(5) = clamp_between(q_adm(5), q6_min, q6_max);
+    q_adm(6) = clamp_between(q_adm(6), q7_min, q7_max);
 
     // 同时限制参考速度，避免导纳速度积累过大
-    const double dq_adm_limit = 1.5; // rad/s
+    const double dq_adm_limit_j123 = 1.0;  // rad/s
+    const double dq_adm_limit_j4567 = 1.5; // rad/s
 
-    dq_adm(0) = clamp_abs(dq_adm(0), dq_adm_limit);
-    dq_adm(1) = clamp_abs(dq_adm(1), dq_adm_limit);
-    dq_adm(2) = clamp_abs(dq_adm(2), dq_adm_limit);
-    dq_adm(3) = clamp_abs(dq_adm(3), dq_adm_limit);
+    dq_adm(0) = clamp_abs(dq_adm(0), dq_adm_limit_j123);
+    dq_adm(1) = clamp_abs(dq_adm(1), dq_adm_limit_j123);
+    dq_adm(2) = clamp_abs(dq_adm(2), dq_adm_limit_j123);
+    dq_adm(3) = clamp_abs(dq_adm(3), dq_adm_limit_j4567);
+    dq_adm(4) = clamp_abs(dq_adm(4), dq_adm_limit_j4567);
+    dq_adm(5) = clamp_abs(dq_adm(5), dq_adm_limit_j4567);
+    dq_adm(6) = clamp_abs(dq_adm(6), dq_adm_limit_j4567);
 
     // ===================== 重力补偿 =====================
     //
@@ -812,15 +845,22 @@ namespace upperlimb_robot
     Eigen::VectorXd Kp = Eigen::VectorXd::Zero(model.nv);
     Eigen::VectorXd Kv = Eigen::VectorXd::Zero(model.nv);
 
-    Kp(0) = 18.0;
-    Kp(1) = 18.0;
+    // 扭矩控制参数
+    Kp(0) = 20.0;
+    Kp(1) = 20.0;
     Kp(2) = 16.0;
-    Kp(3) = 10.0;
+    Kp(3) = 18.0;
+    Kp(4) = 18.0;
+    Kp(5) = 16.0;
+    Kp(6) = 10.0;
 
-    Kv(0) = 2.5;
-    Kv(1) = 2.5;
-    Kv(2) = 2.0;
-    Kv(3) = 1.5;
+    Kv(0) = 4.0;
+    Kv(1) = 4.0;
+    Kv(2) = 3.0;
+    Kv(3) = 2.5;
+    Kv(4) = 2.5;
+    Kv(5) = 2.0;
+    Kv(6) = 1.5;
 
     Eigen::VectorXd tau_cmd = g + Kp.asDiagonal() * (q_adm - q) + Kv.asDiagonal() * (dq_adm - v);
 
@@ -828,49 +868,47 @@ namespace upperlimb_robot
     //
     // 输出给执行层前，限制每个关节的目标扭矩。
     //
+    const double joint_torque_limit_j1 = 24.0;
+    const double joint_torque_limit_j2 = 24.0;
+    const double joint_torque_limit_j3 = 18.0;
     const double joint_torque_limit_j4 = 12.0;
     const double joint_torque_limit_j5 = 12.0;
     const double joint_torque_limit_j6 = 12.0;
     const double joint_torque_limit_j7 = 8.0;
 
-    tau_cmd(0) = clamp_abs(tau_cmd(0), joint_torque_limit_j4);
-    tau_cmd(1) = clamp_abs(tau_cmd(1), joint_torque_limit_j5);
-    tau_cmd(2) = clamp_abs(tau_cmd(2), joint_torque_limit_j6);
-    tau_cmd(3) = clamp_abs(tau_cmd(3), joint_torque_limit_j7);
+    tau_cmd(0) = clamp_abs(tau_cmd(0), joint_torque_limit_j1);
+    tau_cmd(1) = clamp_abs(tau_cmd(1), joint_torque_limit_j2);
+    tau_cmd(2) = clamp_abs(tau_cmd(2), joint_torque_limit_j3);
+    tau_cmd(3) = clamp_abs(tau_cmd(3), joint_torque_limit_j4);
+    tau_cmd(4) = clamp_abs(tau_cmd(4), joint_torque_limit_j5);
+    tau_cmd(5) = clamp_abs(tau_cmd(5), joint_torque_limit_j6);
+    tau_cmd(6) = clamp_abs(tau_cmd(6), joint_torque_limit_j7);
 
     // ===================== 输出到控制层 =====================
     //
-    // 这里只对 joint4~7 对应的控制层索引写扭矩。
+    // 这里对 joint1~7 对应的控制层索引全部写扭矩。
     // 这些轴在主动模式下使用扭矩控制。
     //
+    output.use_torque[IDX_J1] = true;
+    output.use_torque[IDX_J2] = true;
+    output.use_torque[IDX_J3] = true;
     output.use_torque[IDX_J4] = true;
     output.use_torque[IDX_J5] = true;
     output.use_torque[IDX_J6] = true;
     output.use_torque[IDX_J7] = true;
 
-    output.target_torque[IDX_J4] = tau_cmd(0);
-    output.target_torque[IDX_J5] = tau_cmd(1);
-    output.target_torque[IDX_J6] = tau_cmd(2);
-    output.target_torque[IDX_J7] = tau_cmd(3);
+    output.target_torque[IDX_J1] = tau_cmd(0);
+    output.target_torque[IDX_J2] = tau_cmd(1);
+    output.target_torque[IDX_J3] = tau_cmd(2);
+    output.target_torque[IDX_J4] = tau_cmd(3);
+    output.target_torque[IDX_J5] = tau_cmd(4);
+    output.target_torque[IDX_J6] = tau_cmd(5);
+    output.target_torque[IDX_J7] = tau_cmd(6);
 
     // ===================== 其余轴固定在预设位置 =====================
     //
     // 防止未参与主动模式的轴在交互过程中乱动。
     //
-    output.use_position[10] = true;
-    output.target_position[10] = 0.0;
-    output.target_velocity[10] = pulsePerMsToJointSpeedDegPerSecMagnitude(11, 400.0);
-    output.target_acc[10] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(11, 0.5);
-    output.target_dec[10] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(11, 0.25);
-    output.target_smooth_time[10] = 25;
-
-    output.use_position[11] = true;
-    output.target_position[11] = 0.0;
-    output.target_velocity[11] = pulsePerMsToJointSpeedDegPerSecMagnitude(12, 500.0);
-    output.target_acc[11] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(12, 0.5);
-    output.target_dec[11] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(12, 0.25);
-    output.target_smooth_time[11] = 25;
-
     output.use_position[18] = true;
     output.target_position[18] = 0.0;
     output.target_velocity[18] = pulsePerMsToJointSpeedDegPerSecMagnitude(19, 1500.0);
@@ -900,16 +938,19 @@ namespace upperlimb_robot
     output = ControlOutputCache{};
     output.valid = false;
 
-    // ===================== 只做左臂 joint4~joint7 =====================
+    // ===================== 左臂 joint1~joint7 =====================
     //
     // 当前实验设定：
-    // 1. URDF 中 joint1~3、joint8~10 已经改成 fixed
-    // 2. Pinocchio 模型只剩 4 个可动关节：joint4~joint7
-    // 3. 这里只控制左臂对应的 4 个控制层索引
+    // 1. URDF 中 joint1~3 已经改成 revolute，joint8~10 保持 fixed
+    // 2. Pinocchio 模型现在有 7 个可动关节：joint1~joint7
+    // 3. 这里 joint1~7 全部参与零力模式扭矩控制
     //
     // 注意：
-    // 下面这 4 个控制层索引，必须与你当前左臂真实映射一致。
+    // 下面这 7 个控制层索引，必须与你当前左臂真实映射一致。
     //
+    constexpr std::size_t IDX_J1 = 10; // joint1 -> 左臂控制层索引
+    constexpr std::size_t IDX_J2 = 11; // joint2 -> 左臂控制层索引
+    constexpr std::size_t IDX_J3 = 12; // joint3 -> 左臂控制层索引
     constexpr std::size_t IDX_J4 = 13; // joint4 -> 左臂控制层索引
     constexpr std::size_t IDX_J5 = 14; // joint5 -> 左臂控制层索引
     constexpr std::size_t IDX_J6 = 15; // joint6 -> 左臂控制层索引
@@ -941,9 +982,8 @@ namespace upperlimb_robot
 
         // ===================== 加载 URDF =====================
         //
-        //
-        // joint1~3、joint8~10 改成 fixed ，
-        // model 里只剩 joint4~7 这 4 个可动关节
+        // joint1~3 已改成 revolute，joint8~10 保持 fixed，
+        // model 里应有 joint1~7 这 7 个可动关节
         //
         pinocchio::urdf::buildModel(urdf_path, model);
         data = std::make_unique<pinocchio::Data>(model);
@@ -966,11 +1006,11 @@ namespace upperlimb_robot
           std::cerr << "[runZeroForceMode] 没找到 frame: ft_sensor_frame_2" << std::endl;
           pin_init_failed = true;
         }
-        else if (model.nq != 4 || model.nv != 4)
+        else if (model.nq != 7 || model.nv != 7)
         {
           std::cerr
-              << "[runZeroForceMode] 当前 Pinocchio 模型自由度不是 4，"
-              << "请确认 joint1~3、joint8~10 已改成 fixed。"
+              << "[runZeroForceMode] 当前 Pinocchio 模型自由度不是 7，"
+              << "请确认 joint1~3 已改成 revolute，joint8~10 保持 fixed。"
               << " model.nq=" << model.nq << " model.nv=" << model.nv
               << std::endl;
           pin_init_failed = true;
@@ -1015,23 +1055,29 @@ namespace upperlimb_robot
     // 注意：
     // 1. state.position / velocity 的单位是 deg / deg/s
     // 2. Pinocchio 这里使用 rad / rad/s
-    // 3. 因为 fixed joint 不再出现在模型里，所以 q 只有 4 维：
-    //    q = [joint4, joint5, joint6, joint7]
+    // 3. 当前模型自由度为 7：
+    //    q = [joint1, joint2, joint3, joint4, joint5, joint6, joint7]
     //
     constexpr double DEG2RAD = M_PI / 180.0;
 
     Eigen::VectorXd q = Eigen::VectorXd::Zero(model.nq);
     Eigen::VectorXd v = Eigen::VectorXd::Zero(model.nv);
 
-    q(0) = state.position[IDX_J4] * DEG2RAD;
-    q(1) = state.position[IDX_J5] * DEG2RAD;
-    q(2) = state.position[IDX_J6] * DEG2RAD;
-    q(3) = state.position[IDX_J7] * DEG2RAD;
+    q(0) = state.position[IDX_J1] * DEG2RAD;
+    q(1) = state.position[IDX_J2] * DEG2RAD;
+    q(2) = state.position[IDX_J3] * DEG2RAD;
+    q(3) = state.position[IDX_J4] * DEG2RAD;
+    q(4) = state.position[IDX_J5] * DEG2RAD;
+    q(5) = state.position[IDX_J6] * DEG2RAD;
+    q(6) = state.position[IDX_J7] * DEG2RAD;
 
-    v(0) = state.velocity[IDX_J4] * DEG2RAD;
-    v(1) = state.velocity[IDX_J5] * DEG2RAD;
-    v(2) = state.velocity[IDX_J6] * DEG2RAD;
-    v(3) = state.velocity[IDX_J7] * DEG2RAD;
+    v(0) = state.velocity[IDX_J1] * DEG2RAD;
+    v(1) = state.velocity[IDX_J2] * DEG2RAD;
+    v(2) = state.velocity[IDX_J3] * DEG2RAD;
+    v(3) = state.velocity[IDX_J4] * DEG2RAD;
+    v(4) = state.velocity[IDX_J5] * DEG2RAD;
+    v(5) = state.velocity[IDX_J6] * DEG2RAD;
+    v(6) = state.velocity[IDX_J7] * DEG2RAD;
 
     // ===================== 读取并去偏两个六维力传感器 =====================
     //
@@ -1149,7 +1195,7 @@ namespace upperlimb_robot
 
     // ===================== 计算重力项 =====================
     //
-    // g(q) 的维度是 4，对应 joint4~7。
+    // g(q) 的维度是 7，对应 joint1~7。
     // Eigen::VectorXd g 本质上就是一个：动态大小的一维向量（列向量），里面存的是每个关节的重力力矩
     // computeGeneralizedGravity:
     //     model → 机器人结构 + 质量
@@ -1171,7 +1217,7 @@ namespace upperlimb_robot
     // [ wy ]
     // [ wz ]
     // 为什么是 nv 列？
-    // nv 是模型的自由度数量，这里是 4，对应 joint4~7。
+    // nv 是模型的自由度数量，这里是 7，对应 joint1~7。
     Eigen::MatrixXd J_arm = Eigen::MatrixXd::Zero(6, model.nv);
     Eigen::MatrixXd J_hand = Eigen::MatrixXd::Zero(6, model.nv);
 
@@ -1211,20 +1257,24 @@ namespace upperlimb_robot
     //
     // 创建一个长度为 nv 的向量：
     Eigen::VectorXd damping = Eigen::VectorXd::Zero(model.nv);
+
+
     // 给每个关节设置阻尼系数：
-    damping(0) = 0.0;
-    damping(1) = 0.0;
-    damping(2) = 0.2;
-    damping(3) = 0.3;
+    // 背部零力不是“完全无阻尼”，而是“有一定粘滞感，但不会死硬”
+    // 肩部和肘部继续保留较强跟随性
+    damping(0) = 0.4;
+    damping(1) = 0.4;
+    damping(2) = 0.3;
+    damping(3) = 0.0;
+    damping(4) = 0.0;
+    damping(5) = 0.2;
+    damping(6) = 0.3;
+
+
+    
     // 计算阻尼力矩：tau_damping = -damping * v，反速度方向
     // damping.asDiagonal()
-    // 把 [0.8, 0.8, 0.8, 0.6] 变成:
-    // [0.8, 0,   0,   0  ]
-    // [0,   0.8, 0,   0  ]
-    // [0,   0,   0.8, 0  ]
-    // [0,   0,   0,   0.6]
-    // 再乘：* v，就相当于每个元素分别乘以对应的速度：
-    // [0.8 * v(0), 0.8 * v(1), 0.8 * v(2), 0.6 * v(3)]
+    // 把向量变成对角矩阵，再乘 v，就相当于每个元素分别乘以对应的速度
     Eigen::VectorXd tau_damping = -(damping.asDiagonal() * v);
 
     // ===================== 最终关节扭矩 =====================
@@ -1243,46 +1293,44 @@ namespace upperlimb_robot
     //
     // 输出给执行层前，限制每个关节的目标扭矩。
     //
+    const double joint_torque_limit_j1 = 20.0;
+    const double joint_torque_limit_j2 = 20.0;
+    const double joint_torque_limit_j3 = 16.0;
     const double joint_torque_limit_j4 = 12.0;
     const double joint_torque_limit_j5 = 12.0;
     const double joint_torque_limit_j6 = 12.0;
     const double joint_torque_limit_j7 = 8.0;
 
-    tau(0) = clamp_abs(tau(0), joint_torque_limit_j4);
-    tau(1) = clamp_abs(tau(1), joint_torque_limit_j5);
-    tau(2) = clamp_abs(tau(2), joint_torque_limit_j6);
-    tau(3) = clamp_abs(tau(3), joint_torque_limit_j7);
+    tau(0) = clamp_abs(tau(0), joint_torque_limit_j1);
+    tau(1) = clamp_abs(tau(1), joint_torque_limit_j2);
+    tau(2) = clamp_abs(tau(2), joint_torque_limit_j3);
+    tau(3) = clamp_abs(tau(3), joint_torque_limit_j4);
+    tau(4) = clamp_abs(tau(4), joint_torque_limit_j5);
+    tau(5) = clamp_abs(tau(5), joint_torque_limit_j6);
+    tau(6) = clamp_abs(tau(6), joint_torque_limit_j7);
 
     // ===================== 输出到控制层 =====================
     //
-    // 这里只对 joint4~7 对应的控制层索引写扭矩。
+    // 这里对 joint1~7 对应的控制层索引写扭矩。
     // 其他关节默认保持 0，不参与零力控制。
     //
+    output.use_torque[IDX_J1] = true;
+    output.use_torque[IDX_J2] = true;
+    output.use_torque[IDX_J3] = true;
     output.use_torque[IDX_J4] = true;
     output.use_torque[IDX_J5] = true;
     output.use_torque[IDX_J6] = true;
     output.use_torque[IDX_J7] = true;
 
-    output.target_torque[IDX_J4] = tau(0);
-    output.target_torque[IDX_J5] = tau(1);
-    output.target_torque[IDX_J6] = tau(2);
-    output.target_torque[IDX_J7] = tau(3);
+    output.target_torque[IDX_J1] = tau(0);
+    output.target_torque[IDX_J2] = tau(1);
+    output.target_torque[IDX_J3] = tau(2);
+    output.target_torque[IDX_J4] = tau(3);
+    output.target_torque[IDX_J5] = tau(4);
+    output.target_torque[IDX_J6] = tau(5);
+    output.target_torque[IDX_J7] = tau(6);
 
     // 其余轴固定在预设位置，防止移动
-    output.use_position[10] = true;
-    output.target_position[10] = 0.0;
-    output.target_velocity[10] = pulsePerMsToJointSpeedDegPerSecMagnitude(11, 400.0);
-    output.target_acc[10] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(11, 0.5);
-    output.target_dec[10] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(11, 0.25);
-    output.target_smooth_time[10] = 25;
-
-    output.use_position[11] = true;
-    output.target_position[11] = 0.0;
-    output.target_velocity[11] = pulsePerMsToJointSpeedDegPerSecMagnitude(12, 500.0);
-    output.target_acc[11] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(12, 0.5);
-    output.target_dec[11] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(12, 0.25);
-    output.target_smooth_time[11] = 25;
-
     output.use_position[18] = true;
     output.target_position[18] = 0.0;
     output.target_velocity[18] = pulsePerMsToJointSpeedDegPerSecMagnitude(19, 1500.0);
