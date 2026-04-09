@@ -1849,7 +1849,7 @@ namespace upperlimb_robot
     output.valid = true;
   }
 
-  void runPassivePDFFMode(const MotorStateCache &state,  const SensorStateCache &sensor_state, ControlOutputCache &output)
+  void runPassivePDFFMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output)
   {
     (void)sensor_state;
 
@@ -1948,6 +1948,9 @@ namespace upperlimb_robot
     const double dq6 = state.velocity[IDX_J6];
     const double dq7 = state.velocity[IDX_J7];
 
+    (void)q1;
+    (void)q2;
+    (void)q3;
     (void)dq1;
     (void)dq2;
     (void)dq3;
