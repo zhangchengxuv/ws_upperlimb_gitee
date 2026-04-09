@@ -1849,4 +1849,319 @@ namespace upperlimb_robot
     output.valid = true;
   }
 
+  void runPassivePDFFMode(const MotorStateCache &state,  const SensorStateCache &sensor_state, ControlOutputCache &output)
+  {
+    (void)sensor_state;
+
+    // ===================== 输出初始化 =====================
+    //
+    // 本模式采用位置模式：
+    // 1. joint1~3（背部）固定
+    // 2. joint4~6（肩）做正弦被动训练
+    // 3. joint7（肘）做正弦被动训练
+    // 4. 腕关节固定
+    //
+    // 与 runPassiveMode(...) 的区别：
+    // 本函数采用“PD + 速度前馈”：
+    //
+    // q_cmd = q_ref + Kp * (q_ref - q) + Kd * (dq_ref - dq)
+    //
+    // 其中：
+    // q_ref  -> 目标位置
+    // dq_ref -> 目标速度（由正弦轨迹直接求导得到）
+    // q      -> 当前实际位置
+    // dq     -> 当前实际速度
+    //
+    output = ControlOutputCache{};
+    output.valid = false;
+
+    // ===================== 左臂 joint1~7 对应控制层索引 =====================
+    //
+    // joint1~3 -> 背部关节
+    // joint4~6 -> 肩关节自由度
+    // joint7   -> 肘关节
+    //
+    constexpr std::size_t IDX_J1 = 10;
+    constexpr std::size_t IDX_J2 = 11;
+    constexpr std::size_t IDX_J3 = 12;
+    constexpr std::size_t IDX_J4 = 13;
+    constexpr std::size_t IDX_J5 = 14;
+    constexpr std::size_t IDX_J6 = 15;
+    constexpr std::size_t IDX_J7 = 16;
+
+    // ===================== 模式初始化 =====================
+    //
+    // 第一次进入该模式时：
+    // 1. 记录起始时间
+    // 2. 记录初始位置，作为正弦轨迹中心位置
+    //
+    static bool initialized = false;
+    static std::chrono::steady_clock::time_point start_time;
+
+    // 进入模式时各关节中心位置（deg）
+    static double q0_j1 = 0.0;
+    static double q0_j2 = 0.0;
+    static double q0_j3 = 0.0;
+    static double q0_j4 = 0.0;
+    static double q0_j5 = 0.0;
+    static double q0_j6 = 0.0;
+    static double q0_j7 = 0.0;
+
+    if (!initialized)
+    {
+      start_time = std::chrono::steady_clock::now();
+
+      q0_j1 = state.position[IDX_J1];
+      q0_j2 = state.position[IDX_J2];
+      q0_j3 = state.position[IDX_J3];
+      q0_j4 = state.position[IDX_J4];
+      q0_j5 = state.position[IDX_J5];
+      q0_j6 = state.position[IDX_J6];
+      q0_j7 = state.position[IDX_J7];
+
+      initialized = true;
+    }
+
+    // ===================== 当前时间 =====================
+    const auto now = std::chrono::steady_clock::now();
+    const double t =
+        std::chrono::duration<double>(now - start_time).count();
+
+    // ===================== 当前关节位置 / 速度 =====================
+    //
+    // position -> deg
+    // velocity -> deg/s
+    //
+    const double q1 = state.position[IDX_J1];
+    const double q2 = state.position[IDX_J2];
+    const double q3 = state.position[IDX_J3];
+    const double q4 = state.position[IDX_J4];
+    const double q5 = state.position[IDX_J5];
+    const double q6 = state.position[IDX_J6];
+    const double q7 = state.position[IDX_J7];
+
+    const double dq1 = state.velocity[IDX_J1];
+    const double dq2 = state.velocity[IDX_J2];
+    const double dq3 = state.velocity[IDX_J3];
+    const double dq4 = state.velocity[IDX_J4];
+    const double dq5 = state.velocity[IDX_J5];
+    const double dq6 = state.velocity[IDX_J6];
+    const double dq7 = state.velocity[IDX_J7];
+
+    (void)dq1;
+    (void)dq2;
+    (void)dq3;
+
+    // ===================== 正弦轨迹参数 =====================
+    //
+    // 背部 joint1~3 固定，不参与摆动
+    // 肩 joint4~6、肘 joint7 参与被动训练
+    //
+    // 位置参考：
+    // q_ref = q0 + A * sin(wt + phase)
+    //
+    // 速度前馈：
+    // dq_ref = A * w * cos(wt + phase)
+    //
+    // 说明：
+    // 1. A 的单位是 deg
+    // 2. f 的单位是 Hz
+    // 3. w = 2*pi*f，单位是 rad/s
+    // 4. 因为 sin/cos 只是无量纲函数，所以 dq_ref 最终单位仍是 deg/s
+    //
+    const double A4 = 8.0;  // deg
+    const double A5 = 12.0; // deg
+    const double A6 = 10.0; // deg
+    const double A7 = 15.0; // deg
+
+    const double f4 = 0.10; // Hz
+    const double f5 = 0.10; // Hz
+    const double f6 = 0.10; // Hz
+    const double f7 = 0.12; // Hz
+
+    const double w4 = 2.0 * M_PI * f4;
+    const double w5 = 2.0 * M_PI * f5;
+    const double w6 = 2.0 * M_PI * f6;
+    const double w7 = 2.0 * M_PI * f7;
+
+    // 可根据需要设置不同相位
+    const double phase4 = 0.0;
+    const double phase5 = M_PI / 2.0;
+    const double phase6 = 0.0;
+    const double phase7 = 0.0;
+
+    // ===================== 位置参考轨迹 =====================
+    const double q_ref_j1 = q0_j1;
+    const double q_ref_j2 = q0_j2;
+    const double q_ref_j3 = q0_j3;
+
+    const double q_ref_j4 = q0_j4 + A4 * std::sin(w4 * t + phase4);
+    const double q_ref_j5 = q0_j5 + A5 * std::sin(w5 * t + phase5);
+    const double q_ref_j6 = q0_j6 + A6 * std::sin(w6 * t + phase6);
+    const double q_ref_j7 = q0_j7 + A7 * std::sin(w7 * t + phase7);
+
+    // ===================== 速度前馈轨迹 =====================
+    //
+    // 对正弦轨迹直接求导：
+    //
+    // q_ref  = q0 + A * sin(wt + phase)
+    // dq_ref = A * w * cos(wt + phase)
+    //
+    const double dq_ref_j4 = A4 * w4 * std::cos(w4 * t + phase4);
+    const double dq_ref_j5 = A5 * w5 * std::cos(w5 * t + phase5);
+    const double dq_ref_j6 = A6 * w6 * std::cos(w6 * t + phase6);
+    const double dq_ref_j7 = A7 * w7 * std::cos(w7 * t + phase7);
+
+    // ===================== PD + 前馈参数 =====================
+    //
+    // 这里不使用 Ki：
+    // 1. 当前是周期正弦轨迹，不是静态定点
+    // 2. 驱动器底层通常已有位置环
+    // 3. 外环再加积分，容易引起慢振荡或发飘
+    //
+    // 这里的 Kd 乘的是“速度误差”：
+    // (dq_ref - dq)
+    //
+    const double Kp4 = 0.8;
+    const double Kd4 = 0.08;
+
+    const double Kp5 = 0.8;
+    const double Kd5 = 0.08;
+
+    const double Kp6 = 0.8;
+    const double Kd6 = 0.08;
+
+    const double Kp7 = 0.8;
+    const double Kd7 = 0.08;
+
+    // ===================== 位置误差 =====================
+    const double e4 = q_ref_j4 - q4;
+    const double e5 = q_ref_j5 - q5;
+    const double e6 = q_ref_j6 - q6;
+    const double e7 = q_ref_j7 - q7;
+
+    // ===================== 速度误差 =====================
+    //
+    // 传统PID 是直接使用位置误差求导得到速度误差，即 de = d(q_ref - q) = dq_ref - dq
+    // 直接使用目标速度 - 实际速度
+    //
+    const double ev4 = dq_ref_j4 - dq4;
+    const double ev5 = dq_ref_j5 - dq5;
+    const double ev6 = dq_ref_j6 - dq6;
+    const double ev7 = dq_ref_j7 - dq7;
+
+    // ===================== 生成控制命令 =====================
+    //
+    // q_cmd = q_ref + Kp * (q_ref - q) + Kd * (dq_ref - dq)
+    //
+    // 理解方式：
+    // 1. q_ref                    -> 基础轨迹
+    // 2. Kp * (q_ref - q)         -> 位置纠偏
+    // 3. Kd * (dq_ref - dq)       -> 速度前馈 + 速度误差修正
+    //
+    double q_cmd_j4 = q_ref_j4 + Kp4 * e4 + Kd4 * ev4;
+    double q_cmd_j5 = q_ref_j5 + Kp5 * e5 + Kd5 * ev5;
+    double q_cmd_j6 = q_ref_j6 + Kp6 * e6 + Kd6 * ev6;
+    double q_cmd_j7 = q_ref_j7 + Kp7 * e7 + Kd7 * ev7;
+
+    // ===================== 安全限幅 =====================
+    //
+    // 限制最终输出，避免在大误差时超出训练范围
+    //
+    auto clamp_between = [](double x, double lo, double hi) -> double
+    {
+      if (x < lo)
+        return lo;
+      if (x > hi)
+        return hi;
+      return x;
+    };
+
+    q_cmd_j4 = clamp_between(q_cmd_j4, q0_j4 - 15.0, q0_j4 + 15.0);
+    q_cmd_j5 = clamp_between(q_cmd_j5, q0_j5 - 20.0, q0_j5 + 20.0);
+    q_cmd_j6 = clamp_between(q_cmd_j6, q0_j6 - 20.0, q0_j6 + 20.0);
+    q_cmd_j7 = clamp_between(q_cmd_j7, q0_j7 - 25.0, q0_j7 + 25.0);
+
+    // ===================== 输出：背部 joint1~3 固定 =====================
+    output.use_position[IDX_J1] = true;
+    output.target_position[IDX_J1] = q_ref_j1;
+
+    output.use_position[IDX_J2] = true;
+    output.target_position[IDX_J2] = q_ref_j2;
+
+    output.use_position[IDX_J3] = true;
+    output.target_position[IDX_J3] = q_ref_j3;
+
+    // ===================== 输出：肩 joint4~6、肘 joint7 正弦被动轨迹 =====================
+    output.use_position[IDX_J4] = true;
+    output.target_position[IDX_J4] = q_cmd_j4;
+
+    output.use_position[IDX_J5] = true;
+    output.target_position[IDX_J5] = q_cmd_j5;
+
+    output.use_position[IDX_J6] = true;
+    output.target_position[IDX_J6] = q_cmd_j6;
+
+    output.use_position[IDX_J7] = true;
+    output.target_position[IDX_J7] = q_cmd_j7;
+
+    // ===================== 统一设置速度/加速度参数 =====================
+    //
+    // 背部关节保守一些
+    // 肩、肘训练关节稍快一些
+    //
+    output.target_velocity[IDX_J1] = pulsePerMsToJointSpeedDegPerSecMagnitude(11, 400.0);
+    output.target_acc[IDX_J1] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(11, 0.5);
+    output.target_dec[IDX_J1] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(11, 0.25);
+    output.target_smooth_time[IDX_J1] = 25;
+
+    output.target_velocity[IDX_J2] = pulsePerMsToJointSpeedDegPerSecMagnitude(12, 500.0);
+    output.target_acc[IDX_J2] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(12, 0.5);
+    output.target_dec[IDX_J2] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(12, 0.25);
+    output.target_smooth_time[IDX_J2] = 25;
+
+    output.target_velocity[IDX_J3] = pulsePerMsToJointSpeedDegPerSecMagnitude(13, 500.0);
+    output.target_acc[IDX_J3] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(13, 0.5);
+    output.target_dec[IDX_J3] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(13, 0.25);
+    output.target_smooth_time[IDX_J3] = 25;
+
+    output.target_velocity[IDX_J4] = pulsePerMsToJointSpeedDegPerSecMagnitude(14, 1200.0);
+    output.target_acc[IDX_J4] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(14, 3.0);
+    output.target_dec[IDX_J4] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(14, 3.0);
+    output.target_smooth_time[IDX_J4] = 25;
+
+    output.target_velocity[IDX_J5] = pulsePerMsToJointSpeedDegPerSecMagnitude(15, 1200.0);
+    output.target_acc[IDX_J5] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(15, 3.0);
+    output.target_dec[IDX_J5] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(15, 3.0);
+    output.target_smooth_time[IDX_J5] = 25;
+
+    output.target_velocity[IDX_J6] = pulsePerMsToJointSpeedDegPerSecMagnitude(16, 1200.0);
+    output.target_acc[IDX_J6] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(16, 3.0);
+    output.target_dec[IDX_J6] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(16, 3.0);
+    output.target_smooth_time[IDX_J6] = 25;
+
+    output.target_velocity[IDX_J7] = pulsePerMsToJointSpeedDegPerSecMagnitude(17, 1200.0);
+    output.target_acc[IDX_J7] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(17, 3.0);
+    output.target_dec[IDX_J7] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(17, 3.0);
+    output.target_smooth_time[IDX_J7] = 25;
+
+    // ===================== 腕关节固定 =====================
+    output.use_position[18] = true;
+    output.target_position[18] = 0.0;
+    output.target_velocity[18] = pulsePerMsToJointSpeedDegPerSecMagnitude(19, 1500.0);
+    output.target_acc[18] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(19, 5.0);
+    output.target_dec[18] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(19, 0.25);
+    output.target_smooth_time[18] = 25;
+
+    output.use_position[19] = true;
+    output.target_position[19] = 0.0;
+    output.target_velocity[19] = pulsePerMsToJointSpeedDegPerSecMagnitude(20, 1500.0);
+    output.target_acc[19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(20, 5.0);
+    output.target_dec[19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(20, 0.25);
+    output.target_smooth_time[19] = 25;
+
+    // ===================== 输出有效 =====================
+    output.valid = true;
+  }
+
 } // namespace upperlimb_robot
