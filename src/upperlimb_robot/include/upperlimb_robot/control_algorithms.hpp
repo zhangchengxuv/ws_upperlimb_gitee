@@ -42,8 +42,11 @@ namespace upperlimb_robot
     // 左臂零力模式
     MODE_ZERO_FORCE = 4,
 
-    // 左臂被动训练模式
+    // 左臂正弦被动模式（PID跟踪）
     MODE_PASSIVE = 5,
+
+    // 左臂正弦被动模式（PD+前馈跟踪）
+    MODE_PASSIVE_SINE_PD_FF = 6,
 
   };
 
@@ -226,5 +229,9 @@ namespace upperlimb_robot
   void runZeroForceMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
   // 主动模式
   void runActiveMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
+  // 左边正弦被动模式（PID跟踪）
+  void runPassiveMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
+  // 左边正弦被动模式（PD+前馈跟踪）
+  void runPassivePDFFMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
 
 } // namespace upperlimb_robot

@@ -618,7 +618,7 @@ private:
         double vel = 0.0;     // 编码器速度（脉冲/ms）
         short torque_raw = 0; // 原始力矩（驱动器单位）
 
-        // 读取使能状态 
+        // 读取使能状态
         if (do_read_status)
         {
           rtn = GTN_GetSts(core_id_, axis, &sts, 1);
@@ -639,7 +639,7 @@ private:
           local_state.enable[i] = axis_enabled_[i];
         }
 
-        // 读取位置 
+        // 读取位置
         rtn = GTN_GetEcatEncPos(core_id_, axis, &enc_pos);
         if (rtn == 0)
         {
@@ -666,7 +666,7 @@ private:
           local_state.torque[i] = 0.0;
         }
 
-        // 读取速度 
+        // 读取速度
         rtn = GTN_GetEncVel(core_id_, axis, &vel, 1);
         if (rtn == 0)
         {
@@ -691,7 +691,7 @@ private:
       // 实际读取六维力传感器（填充 sensor）
       readAllForceSensors(local_sensor_state);
 
-      // 更新共享电机状态 
+      // 更新共享电机状态
       {
         std::lock_guard<std::mutex> lock(state_mutex_);
 
@@ -711,7 +711,7 @@ private:
         latest_sensor_state_.valid = local_sensor_state.valid;
       }
 
-      // 发布 ROS 状态 
+      // 发布 ROS 状态
       //
       // 不一定每个周期都发布（降低通信负载）
       //
@@ -856,21 +856,31 @@ private:
 
     switch (mode)
     {
+      // 左臂回零位
     case upperlimb_robot::MODE_LEFT_PRESET_POSITION:
       upperlimb_robot::runLeftPresetPosition(state, output);
       break;
-
+      // 右臂回零位
     case upperlimb_robot::MODE_RIGHT_PRESET_POSITION:
       upperlimb_robot::runRightPresetPosition(state, output);
       break;
-
+      // 零力模式（左臂全关节）
     case upperlimb_robot::MODE_ZERO_FORCE:
       upperlimb_robot::runZeroForceMode(state, sensor_state, output);
       break;
-
+      // 主动模式（左臂全关节）
     case upperlimb_robot::MODE_ACTIVE:
       upperlimb_robot::runActiveMode(state, sensor_state, output);
       break;
+      // 被动模式（左臂全关节 PID）
+    case upperlimb_robot::MODE_PASSIVE:
+      upperlimb_robot::runLeftPresetPosition(state, output);
+      break;
+      // 左臂正弦被动模式（PD+前馈跟踪）
+    case upperlimb_robot::MODE_PASSIVE_SINE_PD_FF:
+      upperlimb_robot::runPassivePDFFMode(state, sensor_state, output);
+      break;
+
 
     case upperlimb_robot::MODE_IDLE:
     default:
