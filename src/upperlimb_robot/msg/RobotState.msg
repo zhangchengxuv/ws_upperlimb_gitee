@@ -1,3 +1,4 @@
+# RobotState.msg
 # 定义机器人与GUI交互的数据
 
 float64[] position

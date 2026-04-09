@@ -36,11 +36,15 @@ namespace upperlimb_robot
     // 右臂预设位置模式
     MODE_RIGHT_PRESET_POSITION = 2,
 
-    // 主动训练模式
+    // 左臂主动训练模式
     MODE_ACTIVE = 3,
 
-    // 零力模式
+    // 左臂零力模式
     MODE_ZERO_FORCE = 4,
+
+    // 左臂被动训练模式
+    MODE_PASSIVE = 5,
+
   };
 
   // ===================== 电机状态缓存 =====================
