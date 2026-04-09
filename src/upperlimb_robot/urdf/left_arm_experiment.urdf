@@ -65,7 +65,7 @@
     <parent link="base_link" />
     <child link="link1" />
     <origin xyz="0 0 0" rpy="0 0 -1.5708" />
-    <axis xyz="0 0 -1" />
+    <axis xyz="0 0 1" />
     <limit lower="-3.1416" upper="3.1416" effort="50" velocity="2" />
   </joint>
 

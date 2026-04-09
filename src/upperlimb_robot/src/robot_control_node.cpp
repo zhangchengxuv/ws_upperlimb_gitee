@@ -896,7 +896,7 @@ private:
       break;
       // 被动模式（左臂全关节 PID）
     case upperlimb_robot::MODE_PASSIVE:
-      upperlimb_robot::runLeftPresetPosition(state, output);
+      upperlimb_robot::runPassiveMode(state, sensor_state, output);
       break;
       // 左臂正弦被动模式（PD+前馈跟踪）
     case upperlimb_robot::MODE_PASSIVE_SINE_PD_FF:
