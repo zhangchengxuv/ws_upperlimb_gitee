@@ -268,7 +268,29 @@ private:
     }
 
     case upperlimb_robot::MODE_LEFT_PRESET_POSITION:
+    {  
+        RCLCPP_INFO(this->get_logger(), "进入左臂预设位置模式");
+        break;
+    }
+
     case upperlimb_robot::MODE_RIGHT_PRESET_POSITION:
+    {
+        RCLCPP_INFO(this->get_logger(), "进入右臂预设位置模式");
+        break;
+    }
+
+    case upperlimb_robot::MODE_PASSIVE:
+    {
+        RCLCPP_INFO(this->get_logger(), "进入左臂正弦被动模式（PID跟踪）");
+        break;
+    } 
+
+    case upperlimb_robot::MODE_PASSIVE_SINE_PD_FF:
+    {
+        RCLCPP_INFO(this->get_logger(), "进入左臂正弦被动模式（PD+前馈跟踪）");
+        break;
+    }
+
     case upperlimb_robot::MODE_IDLE:
     default:
       break;
