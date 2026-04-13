@@ -205,9 +205,10 @@ private:
 
   // ===================== 模式退出动作 =====================
   //
-  // 退出扭矩相关模式时：
-  // 1. 先把 PT 清零
-  // 2. 再显式切回位置模式
+  // 设计目的：
+  // 1. 退出扭矩相关模式时，先清零 PT，再恢复到位置模式
+  // 2. 退出被动模式时，停止当前残余位置运动，并清除位置命令缓存
+  // 3. 下一次进入预设位置模式时，保证位置命令和 Trap 参数会重新完整下发
   //
   void onModeExit(int old_mode, int new_mode)
   {
@@ -219,6 +220,13 @@ private:
     case upperlimb_robot::MODE_ACTIVE:
       clearAllTorqueCommands();
       restoreAllAxesToPositionMode();
+      invalidateAllPositionCommandCache();
+      break;
+
+    case upperlimb_robot::MODE_PASSIVE:
+    case upperlimb_robot::MODE_PASSIVE_SINE_PD_FF:
+      stopAllAxesMotionOnly();
+      invalidateAllPositionCommandCache();
       break;
 
     case upperlimb_robot::MODE_LEFT_PRESET_POSITION:
@@ -268,27 +276,27 @@ private:
     }
 
     case upperlimb_robot::MODE_LEFT_PRESET_POSITION:
-    {  
-        RCLCPP_INFO(this->get_logger(), "进入左臂预设位置模式");
-        break;
+    {
+      RCLCPP_INFO(this->get_logger(), "进入左臂预设位置模式");
+      break;
     }
 
     case upperlimb_robot::MODE_RIGHT_PRESET_POSITION:
     {
-        RCLCPP_INFO(this->get_logger(), "进入右臂预设位置模式");
-        break;
+      RCLCPP_INFO(this->get_logger(), "进入右臂预设位置模式");
+      break;
     }
 
     case upperlimb_robot::MODE_PASSIVE:
     {
-        RCLCPP_INFO(this->get_logger(), "进入左臂正弦被动模式（PID跟踪）");
-        break;
-    } 
+      RCLCPP_INFO(this->get_logger(), "进入左臂正弦被动模式（PID跟踪）");
+      break;
+    }
 
     case upperlimb_robot::MODE_PASSIVE_SINE_PD_FF:
     {
-        RCLCPP_INFO(this->get_logger(), "进入左臂正弦被动模式（PD+前馈跟踪）");
-        break;
+      RCLCPP_INFO(this->get_logger(), "进入左臂正弦被动模式（PD+前馈跟踪）");
+      break;
     }
 
     case upperlimb_robot::MODE_IDLE:
@@ -581,20 +589,14 @@ private:
   // ===================== 状态采集线程 =====================
   void stateReadLoop()
   {
-    // 1. 周期性读取所有电机状态（位置 / 速度 / 力矩 / 使能）
-    // 2. 读取六维力传感器数据
-    // 3. 更新共享缓存（供控制线程使用）
-    // 4. 按一定频率发布 ROS2 状态消息
-
     std::uint64_t timeout_count = 0;
 
     while (running_.load())
     {
-      const int state_hz = state_hz_.load(); // 目标状态采集频率（Hz）
+      const int state_hz = state_hz_.load();
 
       if (state_hz <= 0)
       {
-        // 防止非法参数
         RCLCPP_ERROR_THROTTLE(
             this->get_logger(), *this->get_clock(), 2000,
             "state_hz 非法=%d，必须大于 0", state_hz);
@@ -602,24 +604,13 @@ private:
         std::this_thread::sleep_for(100ms);
         continue;
       }
-      // 根据频率计算周期（单位：微秒）
-      const auto period = std::chrono::microseconds(1000000 / state_hz);
 
-      // 记录本次循环开始时间（用于后面计算耗时）
+      const auto period = std::chrono::microseconds(1000000 / state_hz);
       auto cycle_start = std::chrono::steady_clock::now();
 
-      // ===================== 局部缓存（避免锁冲突） =====================
-      //
-      // 所有数据先写到 local，再统一拷贝到共享变量
-      // 这样可以减少锁的占用时间，提高实时性
-      //
       upperlimb_robot::MotorStateCache local_state;
       upperlimb_robot::SensorStateCache local_sensor_state;
 
-      // ===================== 状态读取降频控制 =====================
-      //
-      // enable不需要每个周期都读，降低频率
-      //
       const bool do_read_status =
           (++status_read_divider_count_ >= status_read_divider_);
 
@@ -628,58 +619,47 @@ private:
         status_read_divider_count_ = 0;
       }
 
-      // ===================== 遍历所有轴，读取状态 =====================
       for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
       {
-        const int axis = axis_ids_[i]; // 实际控制卡上的轴号
+        const int axis = axis_ids_[i];
 
-        // 临时变量（底层接口返回）
-        short rtn = 0;        // 返回值（0=成功）
-        int32_t sts = 0;      // 状态字
-        int32_t enc_pos = 0;  // 编码器位置（脉冲）
-        double vel = 0.0;     // 编码器速度（脉冲/ms）
-        short torque_raw = 0; // 原始力矩（驱动器单位）
+        short rtn = 0;
+        int32_t sts = 0;
+        int32_t enc_pos = 0;
+        double vel = 0.0;
+        short torque_raw = 0;
 
-        // 读取使能状态
         if (do_read_status)
         {
           rtn = GTN_GetSts(core_id_, axis, &sts, 1);
           if (rtn == 0)
           {
-            // sts != 0 表示轴处于使能状态
             local_state.enable[i] = (sts != 0);
           }
           else
           {
-            // 如果读取失败，使用上一次缓存值
             local_state.enable[i] = axis_enabled_[i];
           }
         }
         else
         {
-          // 如果本周期不读取状态，直接用缓存
           local_state.enable[i] = axis_enabled_[i];
         }
 
-        // 读取位置
         rtn = GTN_GetEcatEncPos(core_id_, axis, &enc_pos);
         if (rtn == 0)
         {
-          // 脉冲 → 关节角度（deg）
           local_state.position[i] =
               upperlimb_robot::pulseToJointDeg(axis, static_cast<double>(enc_pos));
         }
         else
         {
-          // 读取失败置零（也可以考虑保持上次值）
           local_state.position[i] = 0.0;
         }
 
-        // 读取力矩
         rtn = GTN_GetEcatAxisAtlTorque(core_id_, axis, &torque_raw);
         if (rtn == 0)
         {
-          // 原始值 → Nm
           local_state.torque[i] =
               upperlimb_robot::torqueRawToNm(axis, static_cast<double>(torque_raw));
         }
@@ -688,11 +668,9 @@ private:
           local_state.torque[i] = 0.0;
         }
 
-        // 读取速度
         rtn = GTN_GetEncVel(core_id_, axis, &vel, 1);
         if (rtn == 0)
         {
-          // 脉冲/ms → deg/s
           local_state.velocity[i] =
               upperlimb_robot::pulsePerMsToJointDegPerSec(axis, vel);
         }
@@ -702,70 +680,47 @@ private:
         }
       }
 
-      // 力传感器处理
-
       {
-        // 拷贝零偏（bias）——用于后续减去漂移
         std::lock_guard<std::mutex> lock(sensor_mutex_);
         local_sensor_state.bias = latest_sensor_state_.bias;
       }
 
-      // 实际读取六维力传感器（填充 sensor）
       readAllForceSensors(local_sensor_state);
 
-      // 更新共享电机状态
       {
         std::lock_guard<std::mutex> lock(state_mutex_);
-
-        // 将本周期读取的数据写入全局缓存
         latest_motor_state_ = local_state;
-
-        // 标记“状态已准备好”（控制线程可以开始使用）
         state_ready_.store(true);
       }
 
-      // 更新共享传感器状态
       {
         std::lock_guard<std::mutex> lock(sensor_mutex_);
-
         latest_sensor_state_.sensor = local_sensor_state.sensor;
         latest_sensor_state_.bias = local_sensor_state.bias;
         latest_sensor_state_.valid = local_sensor_state.valid;
       }
 
-      // 发布 ROS 状态
-      //
-      // 不一定每个周期都发布（降低通信负载）
-      //
       publish_divider_count_++;
       if (publish_divider_count_ >= publish_divider_)
       {
         publish_divider_count_ = 0;
-
-        // 发布消息（/robot_state）
         publishRobotState(local_state, local_sensor_state);
       }
 
       auto cycle_end = std::chrono::steady_clock::now();
-
-      // 本周期耗时（us）
       auto elapsed =
           std::chrono::duration_cast<std::chrono::microseconds>(cycle_end - cycle_start);
 
       if (elapsed < period)
       {
-        // 如果执行太快 补齐周期
         std::this_thread::sleep_for(period - elapsed);
       }
       else
       {
-        // 如果执行太慢 记录超时
         timeout_count++;
 
-        // 每 100 次打印一次
         if (timeout_count % 100 == 0)
         {
-          // 实际频率 = 1 / 实际耗时
           double actual_hz = 1000000.0 / static_cast<double>(elapsed.count());
 
           RCLCPP_WARN(
@@ -824,7 +779,6 @@ private:
         local_sensor_state = latest_sensor_state_;
       }
 
-      // 先更新模式状态机，再根据当前模式计算控制输出
       updateModeStateMachine();
 
       const int mode = applied_mode_;
@@ -878,31 +832,29 @@ private:
 
     switch (mode)
     {
-      // 左臂回零位
     case upperlimb_robot::MODE_LEFT_PRESET_POSITION:
       upperlimb_robot::runLeftPresetPosition(state, output);
       break;
-      // 右臂回零位
+
     case upperlimb_robot::MODE_RIGHT_PRESET_POSITION:
       upperlimb_robot::runRightPresetPosition(state, output);
       break;
-      // 零力模式（左臂全关节）
+
     case upperlimb_robot::MODE_ZERO_FORCE:
       upperlimb_robot::runZeroForceMode(state, sensor_state, output);
       break;
-      // 主动模式（左臂全关节）
+
     case upperlimb_robot::MODE_ACTIVE:
       upperlimb_robot::runActiveMode(state, sensor_state, output);
       break;
-      // 被动模式（左臂全关节 PID）
+
     case upperlimb_robot::MODE_PASSIVE:
       upperlimb_robot::runPassiveMode(state, sensor_state, output);
       break;
-      // 左臂正弦被动模式（PD+前馈跟踪）
+
     case upperlimb_robot::MODE_PASSIVE_SINE_PD_FF:
       upperlimb_robot::runPassivePDFFMode(state, sensor_state, output);
       break;
-
 
     case upperlimb_robot::MODE_IDLE:
     default:
@@ -940,7 +892,6 @@ private:
 
     const int axis = axis_ids_[i];
 
-    // 先把 PT 清零，避免残留扭矩
     const short rtn_zero = GTN_SetEcatAxisPT(core_id_, axis, 0);
     if (rtn_zero != 0)
     {
@@ -950,7 +901,6 @@ private:
       return false;
     }
 
-    // 切回位置模式
     const short rtn_mode = GTN_SetEcatAxisMode(core_id_, axis, 8);
     if (rtn_mode != 0)
     {
@@ -961,12 +911,6 @@ private:
       return false;
     }
 
-    // ===================== 关键补充：重新同步当前位置 =====================
-    //
-    // 轴在扭矩模式下可能已经被拖到新的位置。
-    // 切回位置模式时，需要把“当前编码器位置”重新同步给规划位置，
-    // 避免后续位置指令基于旧的 PrfPos 导致不运动或行为异常。
-    //
     int32_t enc_pos = 0;
     const short rtn_get_enc = GTN_GetEcatEncPos(core_id_, axis, &enc_pos);
     if (rtn_get_enc != 0)
@@ -997,7 +941,8 @@ private:
 
     axis_in_torque_mode_[i] = false;
     last_target_torque_[i] = 0.0;
-    command_sent_[i] = false; // 让下一次位置命令一定重发
+    command_sent_[i] = false;
+    position_profile_configured_[i] = false;
     return true;
   }
 
@@ -1025,7 +970,64 @@ private:
     return true;
   }
 
+  // ===================== 清除全部位置命令缓存 =====================
+  //
+  // 作用：
+  // 1. 强制下一轮位置目标重新发送
+  // 2. 强制下一轮重新配置 Trap 参数
+  //
+  void invalidateAllPositionCommandCache()
+  {
+    for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
+    {
+      command_sent_[i] = false;
+      position_profile_configured_[i] = false;
+    }
+  }
+
+  // ===================== 停止全部轴当前运动（不下使能） =====================
+  //
+  // 作用：
+  // 退出被动模式时，先把残余位置运动停掉，
+  // 避免旧的正弦轨迹继续影响下一模式。
+  //
+  void stopAllAxesMotionOnly()
+  {
+    long mask = 0;
+
+    for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
+    {
+      if (!axis_enabled_[i])
+      {
+        continue;
+      }
+
+      const int axis = axis_ids_[i];
+      mask |= (1L << (axis - 1));
+    }
+
+    if (mask == 0)
+    {
+      return;
+    }
+
+    const short rtn = GTN_Stop(core_id_, mask, 0);
+    if (rtn != 0)
+    {
+      RCLCPP_ERROR_THROTTLE(
+          this->get_logger(), *this->get_clock(), 2000,
+          "GTN_Stop 停止当前运动失败，mask=0x%lx，错误码=%d",
+          mask, rtn);
+    }
+  }
+
   // ===================== 全部轴恢复到位置模式 =====================
+  //
+  // 作用：
+  // 1. 对当前仍停留在扭矩模式的轴，显式切回位置模式
+  // 2. 清除位置命令缓存与 Trap 配置缓存
+  // 3. 保证下一次位置模式下发时，目标和参数一定重新发送
+  //
   void restoreAllAxesToPositionMode()
   {
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
@@ -1037,19 +1039,17 @@ private:
 
       (void)ensureAxisInPositionMode(i);
     }
-    // ===================== 清除位置命令缓存 =====================
-    // 下一次进入位置模式时，即使目标位置与上次一致，也会重新发送位置指令
-    for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
-    {
-      command_sent_[i] = false;
-    }
+
+    invalidateAllPositionCommandCache();
   }
 
   // ===================== 执行位置输出 =====================
   //
-  // 如果某轴本轮 use_torque = true，则该轴本轮不执行位置控制。
-  // 如果某轴上一轮处于扭矩模式，但这一轮要执行位置控制，
-  // 则先显式切回位置模式，再发送位置命令。
+  // 设计要点：
+  // 1. 不再在每次位置变化时都重复调用 GTN_PrfTrap / GTN_SetTrapPrm / GTN_SetVel
+  // 2. 只有在“第一次启用该轴位置控制”或“轨迹参数变化”时，才重新配置 Trap
+  // 3. 位置模式第一次接管该轴时，无论该轴此前是否在扭矩模式，
+  //    都重新同步当前编码器位置 -> 规划位置，避免规划起点陈旧
   //
   void applyPositionOutput(const upperlimb_robot::ControlOutputCache &output)
   {
@@ -1061,15 +1061,16 @@ private:
 
       if (output.use_torque[i])
       {
+        command_sent_[i] = false;
+        position_profile_configured_[i] = false;
         continue;
       }
 
       if (!output.use_position[i])
       {
         command_sent_[i] = false;
+        position_profile_configured_[i] = false;
 
-        // 如果当前不再使用扭矩控制，而该轴又停留在扭矩模式，
-        // 则显式恢复到位置模式，避免后续第一次位置指令不生效。
         if (axis_in_torque_mode_[i])
         {
           (void)ensureAxisInPositionMode(i);
@@ -1077,7 +1078,6 @@ private:
         continue;
       }
 
-      // 如果该轴此前还停留在扭矩模式，本轮要发位置命令前必须先切回位置模式
       if (axis_in_torque_mode_[i])
       {
         if (!ensureAxisInPositionMode(i))
@@ -1090,61 +1090,116 @@ private:
       const double target_pulse =
           upperlimb_robot::jointDegToPulse(axis, target_deg);
 
+      const double vel_deg = output.target_velocity[i];
+      const double acc_deg = output.target_acc[i];
+      const double dec_deg = output.target_dec[i];
+      const short smooth_time = output.target_smooth_time[i];
+
+      bool need_reconfigure_profile = false;
+
+      if (!position_profile_configured_[i])
+      {
+        need_reconfigure_profile = true;
+      }
+      else
+      {
+        if (std::abs(vel_deg - last_profile_velocity_[i]) > 1e-6 ||
+            std::abs(acc_deg - last_profile_acc_[i]) > 1e-6 ||
+            std::abs(dec_deg - last_profile_dec_[i]) > 1e-6 ||
+            smooth_time != last_profile_smooth_time_[i])
+        {
+          need_reconfigure_profile = true;
+        }
+      }
+
+      if (need_reconfigure_profile)
+      {
+        int32_t enc_pos = 0;
+        short rtn = GTN_GetEcatEncPos(core_id_, axis, &enc_pos);
+        if (rtn != 0)
+        {
+          RCLCPP_ERROR_THROTTLE(
+              this->get_logger(), *this->get_clock(), 2000,
+              "读取轴%d编码器位置失败，错误码=%d", axis, rtn);
+          continue;
+        }
+
+        rtn = GTN_SetPrfPos(core_id_, axis, enc_pos);
+        if (rtn != 0)
+        {
+          RCLCPP_ERROR_THROTTLE(
+              this->get_logger(), *this->get_clock(), 2000,
+              "同步轴%d规划位置失败，错误码=%d", axis, rtn);
+          continue;
+        }
+
+        rtn = GTN_SetEncPos(core_id_, axis, enc_pos);
+        if (rtn != 0)
+        {
+          RCLCPP_ERROR_THROTTLE(
+              this->get_logger(), *this->get_clock(), 2000,
+              "同步轴%d编码器位置失败，错误码=%d", axis, rtn);
+          continue;
+        }
+
+        rtn = GTN_PrfTrap(core_id_, axis);
+        if (rtn != 0)
+        {
+          RCLCPP_ERROR_THROTTLE(
+              this->get_logger(), *this->get_clock(), 2000,
+              "GTN_PrfTrap 轴%d失败，错误码=%d", axis, rtn);
+          continue;
+        }
+
+        TTrapPrm trap{};
+        trap.acc =
+            upperlimb_robot::jointAccelDegPerSec2ToPulsePerMs2(axis, acc_deg);
+        trap.dec =
+            upperlimb_robot::jointAccelDegPerSec2ToPulsePerMs2(axis, dec_deg);
+        trap.smoothTime = smooth_time;
+        trap.velStart = 0;
+
+        rtn = GTN_SetTrapPrm(core_id_, axis, &trap);
+        if (rtn != 0)
+        {
+          RCLCPP_ERROR_THROTTLE(
+              this->get_logger(), *this->get_clock(), 2000,
+              "GTN_SetTrapPrm 轴%d失败，错误码=%d", axis, rtn);
+          continue;
+        }
+
+        rtn = GTN_SetVel(
+            core_id_,
+            axis,
+            upperlimb_robot::jointSpeedDegPerSecToPulsePerMs(axis, vel_deg));
+        if (rtn != 0)
+        {
+          RCLCPP_ERROR_THROTTLE(
+              this->get_logger(), *this->get_clock(), 2000,
+              "GTN_SetVel 轴%d失败，错误码=%d", axis, rtn);
+          continue;
+        }
+
+        position_profile_configured_[i] = true;
+        last_profile_velocity_[i] = vel_deg;
+        last_profile_acc_[i] = acc_deg;
+        last_profile_dec_[i] = dec_deg;
+        last_profile_smooth_time_[i] = smooth_time;
+      }
+
       if (command_sent_[i] &&
           std::abs(target_deg - last_target_position_[i]) < position_epsilon_)
       {
         continue;
       }
 
-      short rtn = 0;
-
-      TTrapPrm trap{};
-      trap.acc =
-          upperlimb_robot::jointAccelDegPerSec2ToPulsePerMs2(
-              axis, output.target_acc[i]);
-      trap.dec =
-          upperlimb_robot::jointAccelDegPerSec2ToPulsePerMs2(
-              axis, output.target_dec[i]);
-      trap.smoothTime = output.target_smooth_time[i];
-      trap.velStart = 0;
-
-      rtn = GTN_PrfTrap(core_id_, axis);
-      if (rtn != 0)
+      const short rtn_set_pos =
+          GTN_SetPos(core_id_, axis, static_cast<int32_t>(target_pulse));
+      if (rtn_set_pos != 0)
       {
         RCLCPP_ERROR_THROTTLE(
             this->get_logger(), *this->get_clock(), 2000,
-            "GTN_PrfTrap 轴%d失败，错误码=%d", axis, rtn);
-        continue;
-      }
-
-      rtn = GTN_SetTrapPrm(core_id_, axis, &trap);
-      if (rtn != 0)
-      {
-        RCLCPP_ERROR_THROTTLE(
-            this->get_logger(), *this->get_clock(), 2000,
-            "GTN_SetTrapPrm 轴%d失败，错误码=%d", axis, rtn);
-        continue;
-      }
-
-      rtn = GTN_SetVel(
-          core_id_,
-          axis,
-          upperlimb_robot::jointSpeedDegPerSecToPulsePerMs(
-              axis, output.target_velocity[i]));
-      if (rtn != 0)
-      {
-        RCLCPP_ERROR_THROTTLE(
-            this->get_logger(), *this->get_clock(), 2000,
-            "GTN_SetVel 轴%d失败，错误码=%d", axis, rtn);
-        continue;
-      }
-
-      rtn = GTN_SetPos(core_id_, axis, static_cast<int32_t>(target_pulse));
-      if (rtn != 0)
-      {
-        RCLCPP_ERROR_THROTTLE(
-            this->get_logger(), *this->get_clock(), 2000,
-            "GTN_SetPos 轴%d失败，错误码=%d", axis, rtn);
+            "GTN_SetPos 轴%d失败，错误码=%d", axis, rtn_set_pos);
         continue;
       }
 
@@ -1343,7 +1398,6 @@ private:
 
     constexpr double deg_to_rad = M_PI / 180.0;
 
-    // 左臂：控制层索引 10~19 -> URDF joint1~joint10 -> msg 下标 0~9
     for (std::size_t src = 10, dst = 0; src < 20; ++src, ++dst)
     {
       msg.position[dst] = state.position[src] * deg_to_rad;
@@ -1351,7 +1405,6 @@ private:
       msg.effort[dst] = state.torque[src];
     }
 
-    // 右臂：控制层索引 0~9 -> URDF joint11~joint20 -> msg 下标 10~19
     for (std::size_t src = 0, dst = 10; src < 10; ++src, ++dst)
     {
       msg.position[dst] = state.position[src] * deg_to_rad;
@@ -1383,10 +1436,7 @@ private:
   std::thread state_read_thread_;
   std::thread control_thread_;
 
-  // 外部请求模式
   std::atomic<int> current_mode_{upperlimb_robot::MODE_IDLE};
-
-  // 已完成进入动作的模式
   int applied_mode_{upperlimb_robot::MODE_IDLE};
 
   std::atomic<int> state_hz_{200};
@@ -1406,7 +1456,6 @@ private:
 
   int core_id_ = 1;
 
-  // 控制层索引 0~19 -> GTN 物理轴号 1~20
   std::array<int, upperlimb_robot::AXIS_NUM> axis_ids_ = {
       1, 2, 3, 4, 5,
       6, 7, 8, 9, 10,
@@ -1416,17 +1465,39 @@ private:
   std::array<int32_t, upperlimb_robot::AXIS_NUM> enc_pos_{};
   std::array<bool, upperlimb_robot::AXIS_NUM> axis_enabled_{};
 
-  // 上一次发送的位置目标（单位 deg）
+  // ===================== 位置命令缓存 =====================
+  //
+  // last_target_position_ :
+  // 记录上一次发送的位置目标（单位 deg）
+  //
+  // command_sent_ :
+  // 标记该轴是否已经发送过位置命令
+  //
   std::array<double, upperlimb_robot::AXIS_NUM> last_target_position_{};
-
-  // 是否已发送过位置命令
   std::array<bool, upperlimb_robot::AXIS_NUM> command_sent_{};
 
-  // 当前轴是否处于扭矩模式
+  // ===================== 扭矩模式状态缓存 =====================
+  //
+  // axis_in_torque_mode_ :
+  // 标记该轴当前是否处于扭矩模式
+  //
+  // last_target_torque_ :
+  // 记录上一次发送的扭矩目标（单位 Nm）
+  //
   std::array<bool, upperlimb_robot::AXIS_NUM> axis_in_torque_mode_{};
-
-  // 上一次发送的扭矩目标（单位 Nm）
   std::array<double, upperlimb_robot::AXIS_NUM> last_target_torque_{};
+
+  // ===================== 位置规划参数缓存 =====================
+  //
+  // 作用：
+  // 1. 避免在连续轨迹模式下，每个周期都重复配置 Trap 参数
+  // 2. 只有在速度/加速度/减速度/平滑时间变化时，才重新配置
+  //
+  std::array<bool, upperlimb_robot::AXIS_NUM> position_profile_configured_{};
+  std::array<double, upperlimb_robot::AXIS_NUM> last_profile_velocity_{};
+  std::array<double, upperlimb_robot::AXIS_NUM> last_profile_acc_{};
+  std::array<double, upperlimb_robot::AXIS_NUM> last_profile_dec_{};
+  std::array<short, upperlimb_robot::AXIS_NUM> last_profile_smooth_time_{};
 
   double position_epsilon_ = 0.05;
   double torque_epsilon_ = 0.01;
