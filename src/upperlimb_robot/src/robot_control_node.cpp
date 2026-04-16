@@ -856,6 +856,10 @@ private:
       upperlimb_robot::runPassivePDFFMode(state, sensor_state, output);
       break;
 
+    case upperlimb_robot::MODE_PASSIVE_TORQUE:
+      upperlimb_robot::runPassiveTorqueMode(state, sensor_state, output);
+      break;
+
     case upperlimb_robot::MODE_IDLE:
     default:
       upperlimb_robot::runIdle(state, output);

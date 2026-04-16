@@ -48,6 +48,9 @@ namespace upperlimb_robot
     // 左臂正弦被动模式（PD+前馈跟踪）
     MODE_PASSIVE_SINE_PD_FF = 6,
 
+    // 左臂正弦被动模式（扭矩输出）
+    MODE_PASSIVE_TORQUE = 7,
+
   };
 
   // ===================== 电机状态缓存 =====================
@@ -233,5 +236,7 @@ namespace upperlimb_robot
   void runPassiveMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
   // 左边正弦被动模式（PD+前馈跟踪）
   void runPassivePDFFMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
+  // 左边正弦被动模式（扭矩输出）
+  void runPassiveTorqueMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
 
 } // namespace upperlimb_robot

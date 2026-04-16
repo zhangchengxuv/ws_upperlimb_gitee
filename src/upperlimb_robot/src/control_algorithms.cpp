@@ -2167,4 +2167,369 @@ namespace upperlimb_robot
     output.valid = true;
   }
 
+  // ===================== 扭矩被动模式 =====================
+  void runPassiveTorqueMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output)
+  {
+    (void)sensor_state;
+
+    // ===================== 输出初始化 =====================
+    //
+    // 本模式采用扭矩模式：
+    // 1. joint1~3（背部）默认不参与正弦跟踪，保持零扭矩输出
+    // 2. joint4~6（肩）做正弦被动训练
+    // 3. joint7（肘）做正弦被动训练
+    // 4. 腕关节固定在位置模式
+    //
+    output = ControlOutputCache{};
+    output.valid = false;
+
+    // ===================== 左臂 joint1~7 控制层索引 =====================
+    constexpr std::size_t IDX_J1 = 10;
+    constexpr std::size_t IDX_J2 = 11;
+    constexpr std::size_t IDX_J3 = 12;
+    constexpr std::size_t IDX_J4 = 13;
+    constexpr std::size_t IDX_J5 = 14;
+    constexpr std::size_t IDX_J6 = 15;
+    constexpr std::size_t IDX_J7 = 16;
+
+    // ===================== Pinocchio 懒加载上下文 =====================
+    //
+    // 当前模型按已有工程设置，左臂 joint1~7 为可动关节。
+    //
+    static bool pin_initialized = false;
+    static bool pin_init_failed = false;
+    static pinocchio::Model model;
+    static std::unique_ptr<pinocchio::Data> data;
+
+    if (!pin_initialized && !pin_init_failed)
+    {
+      try
+      {
+        std::string urdf_path =
+            ament_index_cpp::get_package_share_directory("upperlimb_robot") +
+            "/urdf/left_arm_experiment.urdf";
+
+        pinocchio::urdf::buildModel(urdf_path, model);
+        data = std::make_unique<pinocchio::Data>(model);
+
+        if (model.nq != 7 || model.nv != 7)
+        {
+          std::cerr
+              << "[runPassiveTorqueMode] 当前 Pinocchio 模型自由度不是 7，"
+              << "model.nq=" << model.nq << " model.nv=" << model.nv
+              << std::endl;
+          pin_init_failed = true;
+        }
+        else
+        {
+          pin_initialized = true;
+          std::cout
+              << "[runPassiveTorqueMode] Pinocchio 初始化成功。"
+              << " nq=" << model.nq
+              << " nv=" << model.nv
+              << std::endl;
+        }
+      }
+      catch (const std::exception &e)
+      {
+        std::cerr << "[runPassiveTorqueMode] Pinocchio 初始化异常: " << e.what() << std::endl;
+        pin_init_failed = true;
+      }
+    }
+
+    if (!pin_initialized || pin_init_failed || !data)
+    {
+      output.valid = false;
+      return;
+    }
+
+    // ===================== 模式内部状态 =====================
+    //
+    // 使用调用间隔判断是否属于重新进入模式，
+    // 避免额外新增 reset 函数。
+    //
+    static bool initialized = false;
+    static std::chrono::steady_clock::time_point start_time;
+    static std::chrono::steady_clock::time_point last_call_time;
+
+    // 进入模式时的中心位置（deg）
+    static double q0_j4 = 0.0;
+    static double q0_j5 = 0.0;
+    static double q0_j6 = 0.0;
+    static double q0_j7 = 0.0;
+
+    const auto now = std::chrono::steady_clock::now();
+
+    bool reenter_mode = false;
+    if (initialized)
+    {
+      const double gap =
+          std::chrono::duration<double>(now - last_call_time).count();
+
+      if (gap > 0.2)
+      {
+        reenter_mode = true;
+      }
+    }
+
+    if (!initialized || reenter_mode)
+    {
+      start_time = now;
+      last_call_time = now;
+
+      q0_j4 = state.position[IDX_J4];
+      q0_j5 = state.position[IDX_J5];
+      q0_j6 = state.position[IDX_J6];
+      q0_j7 = state.position[IDX_J7];
+
+      initialized = true;
+    }
+
+    const double t =
+        std::chrono::duration<double>(now - start_time).count();
+    last_call_time = now;
+
+    // ===================== 组装 q / v =====================
+    //
+    // Pinocchio 使用 rad / rad/s
+    //
+    constexpr double DEG2RAD = M_PI / 180.0;
+
+    Eigen::VectorXd q = Eigen::VectorXd::Zero(model.nq);
+    Eigen::VectorXd v = Eigen::VectorXd::Zero(model.nv);
+
+    q(0) = state.position[IDX_J1] * DEG2RAD;
+    q(1) = state.position[IDX_J2] * DEG2RAD;
+    q(2) = state.position[IDX_J3] * DEG2RAD;
+    q(3) = state.position[IDX_J4] * DEG2RAD;
+    q(4) = state.position[IDX_J5] * DEG2RAD;
+    q(5) = state.position[IDX_J6] * DEG2RAD;
+    q(6) = state.position[IDX_J7] * DEG2RAD;
+
+    v(0) = state.velocity[IDX_J1] * DEG2RAD;
+    v(1) = state.velocity[IDX_J2] * DEG2RAD;
+    v(2) = state.velocity[IDX_J3] * DEG2RAD;
+    v(3) = state.velocity[IDX_J4] * DEG2RAD;
+    v(4) = state.velocity[IDX_J5] * DEG2RAD;
+    v(5) = state.velocity[IDX_J6] * DEG2RAD;
+    v(6) = state.velocity[IDX_J7] * DEG2RAD;
+
+    // ===================== 正弦参考轨迹 =====================
+    //
+    // 背部关节不做正弦训练，肩肘关节做正弦参考
+    //
+    // 幅值 A 是正弦参考轨迹的幅度，单位是 deg
+    const double A4 = 8.0 * DEG2RAD;
+    const double A5 = 12.0 * DEG2RAD;
+    const double A6 = 10.0 * DEG2RAD;
+    const double A7 = 15.0 * DEG2RAD;
+
+    const double f4 = 0.10;
+    const double f5 = 0.10;
+    const double f6 = 0.10;
+    const double f7 = 0.12;
+
+    const double w4 = 2.0 * M_PI * f4;
+    const double w5 = 2.0 * M_PI * f5;
+    const double w6 = 2.0 * M_PI * f6;
+    const double w7 = 2.0 * M_PI * f7;
+
+    const double phase4 = 0.0;
+    const double phase5 = M_PI / 2.0;
+    const double phase6 = 0.0;
+    const double phase7 = 0.0;
+
+    Eigen::VectorXd q_ref = q;
+    Eigen::VectorXd dq_ref = Eigen::VectorXd::Zero(model.nv);
+
+    // 背部关节固定在当前实际位置，不主动拉动
+    q_ref(0) = q(0);
+    q_ref(1) = q(1);
+    q_ref(2) = q(2);
+    dq_ref(0) = 0.0;
+    dq_ref(1) = 0.0;
+    dq_ref(2) = 0.0;
+
+    q_ref(3) = q0_j4 * DEG2RAD + A4 * std::sin(w4 * t + phase4);
+    q_ref(4) = q0_j5 * DEG2RAD + A5 * std::sin(w5 * t + phase5);
+    q_ref(5) = q0_j6 * DEG2RAD + A6 * std::sin(w6 * t + phase6);
+    q_ref(6) = q0_j7 * DEG2RAD + A7 * std::sin(w7 * t + phase7);
+
+    dq_ref(3) = A4 * w4 * std::cos(w4 * t + phase4);
+    dq_ref(4) = A5 * w5 * std::cos(w5 * t + phase5);
+    dq_ref(5) = A6 * w6 * std::cos(w6 * t + phase6);
+    dq_ref(6) = A7 * w7 * std::cos(w7 * t + phase7);
+
+    // ===================== 重力补偿 =====================
+    //
+    // g(q) 为当前姿态下的重力力矩
+    //
+    Eigen::VectorXd g = pinocchio::computeGeneralizedGravity(model, *data, q);
+
+    // ===================== 关节空间弹簧阻尼参数 =====================
+    //
+    // tau_cmd = g + Kp*(q_ref-q) + Kd*(dq_ref-v)
+    //
+    // 背部关节不做主训练，因此给较小或零跟踪刚度
+    //
+    Eigen::VectorXd Kp = Eigen::VectorXd::Zero(model.nv);
+    Eigen::VectorXd Kd = Eigen::VectorXd::Zero(model.nv);
+
+    // 背部
+    Kp(0) = 0.0;
+    Kp(1) = 0.0;
+    Kp(2) = 0.0;
+
+    Kd(0) = 0.5;
+    Kd(1) = 0.5;
+    Kd(2) = 0.3;
+
+    // 肩肘
+    Kp(3) = 18.0;
+    Kp(4) = 18.0;
+    Kp(5) = 16.0;
+    Kp(6) = 10.0;
+
+    Kd(3) = 2.5;
+    Kd(4) = 2.5;
+    Kd(5) = 2.0;
+    Kd(6) = 1.5;
+
+    // ===================== 计算扭矩命令 =====================
+    Eigen::VectorXd tau_cmd =
+        g + Kp.asDiagonal() * (q_ref - q) + Kd.asDiagonal() * (dq_ref - v);
+
+    // ===================== 额外阻尼保护 =====================
+    //
+    // 在训练关节上增加少量纯阻尼，防止轻微发飘
+    //
+    Eigen::VectorXd damping = Eigen::VectorXd::Zero(model.nv);
+    damping(3) = 0.3;
+    damping(4) = 0.3;
+    damping(5) = 0.2;
+    damping(6) = 0.2;
+
+    tau_cmd += -(damping.asDiagonal() * v);
+
+    // ===================== 扭矩限幅 =====================
+    //
+    // 先保守设置，后续再根据实际效果调
+    //
+    auto clamp_abs = [](double x, double lim) -> double
+    {
+      if (x > lim)
+        return lim;
+      if (x < -lim)
+        return -lim;
+      return x;
+    };
+
+    const double joint_torque_limit_j1 = 8.0;
+    const double joint_torque_limit_j2 = 8.0;
+    const double joint_torque_limit_j3 = 6.0;
+    const double joint_torque_limit_j4 = 10.0;
+    const double joint_torque_limit_j5 = 10.0;
+    const double joint_torque_limit_j6 = 8.0;
+    const double joint_torque_limit_j7 = 6.0;
+
+    tau_cmd(0) = clamp_abs(tau_cmd(0), joint_torque_limit_j1);
+    tau_cmd(1) = clamp_abs(tau_cmd(1), joint_torque_limit_j2);
+    tau_cmd(2) = clamp_abs(tau_cmd(2), joint_torque_limit_j3);
+    tau_cmd(3) = clamp_abs(tau_cmd(3), joint_torque_limit_j4);
+    tau_cmd(4) = clamp_abs(tau_cmd(4), joint_torque_limit_j5);
+    tau_cmd(5) = clamp_abs(tau_cmd(5), joint_torque_limit_j6);
+    tau_cmd(6) = clamp_abs(tau_cmd(6), joint_torque_limit_j7);
+
+    // ===================== 输出到控制层 =====================
+    //
+    // 左臂 joint1~7 采用扭矩输出
+    //
+    // output.use_torque[IDX_J1] = true;
+    // output.use_torque[IDX_J2] = true;
+    // output.use_torque[IDX_J3] = true;
+    // output.use_torque[IDX_J4] = true;
+    // output.use_torque[IDX_J5] = true;
+    // output.use_torque[IDX_J6] = true;
+    output.use_torque[IDX_J7] = true;
+
+    // output.target_torque[IDX_J1] = tau_cmd(0);
+    // output.target_torque[IDX_J2] = tau_cmd(1);
+    // output.target_torque[IDX_J3] = tau_cmd(2);
+    // output.target_torque[IDX_J4] = tau_cmd(3);
+    // output.target_torque[IDX_J5] = tau_cmd(4);
+    // output.target_torque[IDX_J6] = tau_cmd(5);
+    output.target_torque[IDX_J7] = tau_cmd(6);
+
+    // ===================== 关节固定在位置模式 =====================
+    //
+    //
+    // 背部关节 joint1~3 固定在当前位置，防止发飘
+    // ===================== 左臂 物理轴11 -> 控制层索引10 =====================
+    output.use_position[10] = true;
+    output.target_position[10] = 0.0;
+    output.target_velocity[10] = pulsePerMsToJointSpeedDegPerSecMagnitude(11, 400.0);
+    output.target_acc[10] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(11, 0.5);
+    output.target_dec[10] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(11, 0.25);
+    output.target_smooth_time[10] = 25;
+
+    // ===================== 左臂 物理轴12 -> 控制层索引11 =====================
+    output.use_position[11] = true;
+    output.target_position[11] = 0.0;
+    output.target_velocity[11] = pulsePerMsToJointSpeedDegPerSecMagnitude(12, 500.0);
+    output.target_acc[11] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(12, 0.5);
+    output.target_dec[11] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(12, 0.25);
+    output.target_smooth_time[11] = 25;
+
+    // ===================== 左臂 物理轴13 -> 控制层索引12 =====================
+    output.use_position[12] = true;
+    output.target_position[12] = 0.0;
+    output.target_velocity[12] = pulsePerMsToJointSpeedDegPerSecMagnitude(13, 500.0);
+    output.target_acc[12] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(13, 0.5);
+    output.target_dec[12] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(13, 0.25);
+    output.target_smooth_time[12] = 25;
+    
+    // 肩部关节 joint4~6 固定在当前位置，防止发飘
+    // ===================== 左臂 物理轴14 -> 控制层索引13 =====================
+    output.use_position[13] = true;
+    output.target_position[13] = 0.0;
+    output.target_velocity[13] = pulsePerMsToJointSpeedDegPerSecMagnitude(14, 1500.0);
+    output.target_acc[13] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(14, 5.0);
+    output.target_dec[13] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(14, 5.0);
+    output.target_smooth_time[13] = 25;
+
+    // ===================== 左臂 物理轴15 -> 控制层索引14 =====================
+    output.use_position[14] = true;
+    output.target_position[14] = 0.0;
+    output.target_velocity[14] = pulsePerMsToJointSpeedDegPerSecMagnitude(15, 1500.0);
+    output.target_acc[14] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(15, 5.0);
+    output.target_dec[14] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(15, 5.0);
+    output.target_smooth_time[14] = 25;
+
+    // ===================== 左臂 物理轴16 -> 控制层索引15 =====================
+    output.use_position[15] = true;
+    output.target_position[15] = 0.0;
+    output.target_velocity[15] = pulsePerMsToJointSpeedDegPerSecMagnitude(16, 1500.0);
+    output.target_acc[15] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(16, 5.0);
+    output.target_dec[15] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(16, 5.0);
+    output.target_smooth_time[15] = 25;
+
+    // 防止末端未参与训练关节乱动
+    //
+    output.use_position[18] = true;
+    output.target_position[18] = 0.0;
+    output.target_velocity[18] = pulsePerMsToJointSpeedDegPerSecMagnitude(19, 1500.0);
+    output.target_acc[18] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(19, 5.0);
+    output.target_dec[18] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(19, 0.25);
+    output.target_smooth_time[18] = 25;
+
+    output.use_position[19] = true;
+    output.target_position[19] = 0.0;
+    output.target_velocity[19] = pulsePerMsToJointSpeedDegPerSecMagnitude(20, 1500.0);
+    output.target_acc[19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(20, 5.0);
+    output.target_dec[19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(20, 0.25);
+    output.target_smooth_time[19] = 25;
+
+    output.valid = true;
+  }
+
 } // namespace upperlimb_robot
