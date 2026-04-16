@@ -2194,7 +2194,7 @@ namespace upperlimb_robot
   }
 
   // ===================== 扭矩被动模式 =====================
-  void runPassiveTorqueMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output)
+  void runPassiveTorqueMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output)
   {
     (void)sensor_state;
 
@@ -2414,13 +2414,13 @@ namespace upperlimb_robot
     Kp(3) = 18.0;
     Kp(4) = 18.0;
     Kp(5) = 16.0;
-    // 
-    Kp(6) = 20.0;
+    //
+    Kp(6) = 2.5;
 
     Kd(3) = 2.5;
     Kd(4) = 2.5;
     Kd(5) = 2.0;
-    // 
+    //
     Kd(6) = 1.5;
 
     // ===================== 计算扭矩命令 =====================
@@ -2438,6 +2438,46 @@ namespace upperlimb_robot
     damping(6) = 0.2;
 
     tau_cmd += -(damping.asDiagonal() * v);
+    // ===================== 基础扭矩（for循环版） =====================
+    //
+    // 给 joint4~7 增加一个随目标速度方向变化的小扭矩
+    // 不参与误差计算，只做辅助驱动
+    // 在低速区关闭，避免换向抖动
+    //
+
+    const double vel_deadband = 0.05; // rad/s
+
+    // joint4~7 的基础扭矩幅值
+    double base_tau[4];
+    base_tau[0] = 0.4; // joint4
+    base_tau[1] = 0.4; // joint5
+    base_tau[2] = 0.3; // joint6
+    base_tau[3] = 0.2; // joint7
+
+    // 遍历 joint4~7（对应索引 3~6）
+    for (int i = 0; i < 4; ++i)
+    {
+      const int idx = 3 + i;
+
+      double tau_base = 0.0;
+
+      // 判断目标速度方向
+      if (dq_ref(idx) > vel_deadband)
+      {
+        tau_base = base_tau[i];
+      }
+      else if (dq_ref(idx) < -vel_deadband)
+      {
+        tau_base = -base_tau[i];
+      }
+      else
+      {
+        tau_base = 0.0;
+      }
+
+      // 叠加到总扭矩
+      tau_cmd(idx) += tau_base;
+    }
 
     // ===================== 扭矩限幅 =====================
     //
@@ -2515,7 +2555,7 @@ namespace upperlimb_robot
     output.target_acc[12] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(13, 0.5);
     output.target_dec[12] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(13, 0.25);
     output.target_smooth_time[12] = 25;
-    
+
     // 肩部关节 joint4~6 固定到预设角度，防止发飘
     // ===================== 左臂 物理轴14 -> 控制层索引13 =====================
     output.use_position[13] = true;
