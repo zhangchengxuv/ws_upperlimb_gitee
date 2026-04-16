@@ -905,10 +905,17 @@ namespace upperlimb_robot
     output.target_torque[IDX_J6] = tau_cmd(5);
     output.target_torque[IDX_J7] = tau_cmd(6);
 
-    // ===================== 其余轴固定在预设位置 =====================
+    // ===================== 末端其余关节固定 =====================
     //
-    // 防止未参与主动模式的轴在交互过程中乱动。
+    // 固定左臂物理轴18、19、20，避免模式切换后末端发飘。
     //
+    output.use_position[17] = true;
+    output.target_position[17] = 0.0;
+    output.target_velocity[17] = pulsePerMsToJointSpeedDegPerSecMagnitude(18, 1500.0);
+    output.target_acc[17] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(18, 5.0);
+    output.target_dec[17] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(18, 0.25);
+    output.target_smooth_time[17] = 25;
+
     output.use_position[18] = true;
     output.target_position[18] = 0.0;
     output.target_velocity[18] = pulsePerMsToJointSpeedDegPerSecMagnitude(19, 1500.0);
@@ -1327,7 +1334,14 @@ namespace upperlimb_robot
     output.target_torque[IDX_J6] = tau(5);
     output.target_torque[IDX_J7] = tau(6);
 
-    // 其余轴固定在预设位置，防止移动
+    // 末端其余关节固定，避免切模式后还能晃动
+    output.use_position[17] = true;
+    output.target_position[17] = 0.0;
+    output.target_velocity[17] = pulsePerMsToJointSpeedDegPerSecMagnitude(18, 1500.0);
+    output.target_acc[17] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(18, 5.0);
+    output.target_dec[17] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(18, 0.25);
+    output.target_smooth_time[17] = 25;
+
     output.use_position[18] = true;
     output.target_position[18] = 0.0;
     output.target_velocity[18] = pulsePerMsToJointSpeedDegPerSecMagnitude(19, 1500.0);
@@ -1422,7 +1436,13 @@ namespace upperlimb_robot
     output.target_dec[16] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(17, 0.25);
     output.target_smooth_time[16] = 25;
 
-    // 控制层索引17 当前未设置，保持默认值
+    // ===================== 左臂 物理轴18 -> 控制层索引17 =====================
+    output.use_position[17] = true;
+    output.target_position[17] = 0.0;
+    output.target_velocity[17] = pulsePerMsToJointSpeedDegPerSecMagnitude(18, 1500.0);
+    output.target_acc[17] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(18, 5.0);
+    output.target_dec[17] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(18, 0.25);
+    output.target_smooth_time[17] = 25;
 
     // ===================== 左臂 物理轴19 -> 控制层索引18 =====================
     output.use_position[18] = true;
@@ -1827,10 +1847,17 @@ namespace upperlimb_robot
     output.target_dec[IDX_J7] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(17, 3.0);
     output.target_smooth_time[IDX_J7] = 25;
 
-    // ===================== 腕关节固定 =====================
+    // ===================== 末端关节固定 =====================
     //
-    // 固定 18、19
+    // 固定左臂物理轴18、19、20。
     //
+    output.use_position[17] = true;
+    output.target_position[17] = 0.0;
+    output.target_velocity[17] = pulsePerMsToJointSpeedDegPerSecMagnitude(18, 1500.0);
+    output.target_acc[17] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(18, 5.0);
+    output.target_dec[17] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(18, 0.25);
+    output.target_smooth_time[17] = 25;
+
     output.use_position[18] = true;
     output.target_position[18] = 0.0;
     output.target_velocity[18] = pulsePerMsToJointSpeedDegPerSecMagnitude(19, 1500.0);
@@ -1862,15 +1889,7 @@ namespace upperlimb_robot
     // 4. 腕关节固定
     //
     // 与 runPassiveMode(...) 的区别：
-    // 本函数采用“PD + 速度前馈”：
-    //
-    // q_cmd = q_ref + Kp * (q_ref - q) + Kd * (dq_ref - dq)
-    //
-    // 其中：
-    // q_ref  -> 目标位置
-    // dq_ref -> 目标速度（由正弦轨迹直接求导得到）
-    // q      -> 当前实际位置
-    // dq     -> 当前实际速度
+    // 这里用 PD + 速度前馈修正正弦参考。
     //
     output = ControlOutputCache{};
     output.valid = false;
@@ -2148,7 +2167,14 @@ namespace upperlimb_robot
     output.target_dec[IDX_J7] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(17, 3.0);
     output.target_smooth_time[IDX_J7] = 25;
 
-    // ===================== 腕关节固定 =====================
+    // ===================== 末端关节固定 =====================
+    output.use_position[17] = true;
+    output.target_position[17] = 0.0;
+    output.target_velocity[17] = pulsePerMsToJointSpeedDegPerSecMagnitude(18, 1500.0);
+    output.target_acc[17] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(18, 5.0);
+    output.target_dec[17] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(18, 0.25);
+    output.target_smooth_time[17] = 25;
+
     output.use_position[18] = true;
     output.target_position[18] = 0.0;
     output.target_velocity[18] = pulsePerMsToJointSpeedDegPerSecMagnitude(19, 1500.0);
@@ -2490,7 +2516,7 @@ namespace upperlimb_robot
     output.target_dec[12] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(13, 0.25);
     output.target_smooth_time[12] = 25;
     
-    // 肩部关节 joint4~6 固定在当前位置，防止发飘
+    // 肩部关节 joint4~6 固定到预设角度，防止发飘
     // ===================== 左臂 物理轴14 -> 控制层索引13 =====================
     output.use_position[13] = true;
     output.target_position[13] = 0.0;
@@ -2517,6 +2543,13 @@ namespace upperlimb_robot
 
     // 防止末端未参与训练关节乱动
     //
+    output.use_position[17] = true;
+    output.target_position[17] = 0.0;
+    output.target_velocity[17] = pulsePerMsToJointSpeedDegPerSecMagnitude(18, 1500.0);
+    output.target_acc[17] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(18, 5.0);
+    output.target_dec[17] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(18, 0.25);
+    output.target_smooth_time[17] = 25;
+
     output.use_position[18] = true;
     output.target_position[18] = 0.0;
     output.target_velocity[18] = pulsePerMsToJointSpeedDegPerSecMagnitude(19, 1500.0);

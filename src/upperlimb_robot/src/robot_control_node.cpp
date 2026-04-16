@@ -218,7 +218,9 @@ private:
     {
     case upperlimb_robot::MODE_ZERO_FORCE:
     case upperlimb_robot::MODE_ACTIVE:
+    case upperlimb_robot::MODE_PASSIVE_TORQUE:
       clearAllTorqueCommands();
+      stopAllAxesMotionOnly();
       restoreAllAxesToPositionMode();
       invalidateAllPositionCommandCache();
       break;
@@ -340,6 +342,12 @@ private:
       return false;
     }
     RCLCPP_INFO(this->get_logger(), "GTN_LoadConfig 成功");
+
+    rtn = GTN_ClrSts(core_id_, 1, static_cast<short>(upperlimb_robot::AXIS_NUM));
+    if (rtn != 0)
+    {
+      RCLCPP_WARN(this->get_logger(), "GTN_ClrSts 更新配置状态失败，错误码=%d", rtn);
+    }
 
     rtn = GTN_InitEcatComm(core_id_);
     if (rtn != 0)
@@ -883,9 +891,11 @@ private:
 
   // ===================== 单轴切到位置模式 =====================
   //
-  // 用于修复：
-  // 上一轮轴已经切到扭矩模式，但这一轮想发位置命令时，
-  // 轴仍然停留在扭矩模式导致位置命令不生效的问题。
+  // 作用：
+  // 1. 先停掉当前规划运动
+  // 2. 清零 PT 命令
+  // 3. 切到 EtherCAT 位置模式
+  // 4. 再同步当前位置，避免跳变
   //
   bool ensureAxisInPositionMode(std::size_t i)
   {
@@ -895,6 +905,16 @@ private:
     }
 
     const int axis = axis_ids_[i];
+
+    const short rtn_stop =
+        GTN_Stop(core_id_, static_cast<long>(1L << (axis - 1)), 0);
+    if (rtn_stop != 0)
+    {
+      RCLCPP_ERROR_THROTTLE(
+          this->get_logger(), *this->get_clock(), 2000,
+          "切回位置模式前停止轴%d失败，错误码=%d", axis, rtn_stop);
+      return false;
+    }
 
     const short rtn_zero = GTN_SetEcatAxisPT(core_id_, axis, 0);
     if (rtn_zero != 0)
@@ -912,6 +932,24 @@ private:
           this->get_logger(), *this->get_clock(), 2000,
           "GTN_SetEcatAxisMode 设置位置模式失败，轴%d，错误码=%d",
           axis, rtn_mode);
+      return false;
+    }
+
+    unsigned short actual_mode = -1;
+    const short rtn_get_mode = GTN_GetEcatAxisMode(core_id_, axis, &actual_mode);
+    if (rtn_get_mode != 0)
+    {
+      RCLCPP_ERROR_THROTTLE(
+          this->get_logger(), *this->get_clock(), 2000,
+          "读取轴%d当前模式失败，错误码=%d", axis, rtn_get_mode);
+      return false;
+    }
+
+    if (actual_mode != 8)
+    {
+      RCLCPP_ERROR_THROTTLE(
+          this->get_logger(), *this->get_clock(), 2000,
+          "轴%d 期望切到位置模式，但当前模式=%d", axis, actual_mode);
       return false;
     }
 
@@ -960,6 +998,16 @@ private:
 
     const int axis = axis_ids_[i];
 
+    const short rtn_stop =
+        GTN_Stop(core_id_, static_cast<long>(1L << (axis - 1)), 0);
+    if (rtn_stop != 0)
+    {
+      RCLCPP_ERROR_THROTTLE(
+          this->get_logger(), *this->get_clock(), 2000,
+          "切到扭矩模式前停止轴%d失败，错误码=%d", axis, rtn_stop);
+      return false;
+    }
+
     const short rtn_mode = GTN_SetEcatAxisMode(core_id_, axis, 10);
     if (rtn_mode != 0)
     {
@@ -970,7 +1018,27 @@ private:
       return false;
     }
 
+    unsigned short actual_mode = -1;
+    const short rtn_get_mode = GTN_GetEcatAxisMode(core_id_, axis, &actual_mode);
+    if (rtn_get_mode != 0)
+    {
+      RCLCPP_ERROR_THROTTLE(
+          this->get_logger(), *this->get_clock(), 2000,
+          "读取轴%d当前模式失败，错误码=%d", axis, rtn_get_mode);
+      return false;
+    }
+
+    if (actual_mode != 10)
+    {
+      RCLCPP_ERROR_THROTTLE(
+          this->get_logger(), *this->get_clock(), 2000,
+          "轴%d 期望切到扭矩模式，但当前模式=%d", axis, actual_mode);
+      return false;
+    }
+
     axis_in_torque_mode_[i] = true;
+    command_sent_[i] = false;
+    position_profile_configured_[i] = false;
     return true;
   }
 
@@ -1036,7 +1104,18 @@ private:
   {
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
     {
-      if (!axis_in_torque_mode_[i])
+      const int axis = axis_ids_[i];
+
+      unsigned short actual_mode = -1;
+      const short rtn_get_mode = GTN_GetEcatAxisMode(core_id_, axis, &actual_mode);
+      if (rtn_get_mode == 0)
+      {
+        axis_in_torque_mode_[i] = (actual_mode == 10);
+      }
+
+      const bool need_force_restore = (i == 17 || i == 18 || i == 19);
+
+      if (!axis_in_torque_mode_[i] && !need_force_restore)
       {
         continue;
       }
@@ -1062,6 +1141,13 @@ private:
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
     {
       const int axis = axis_ids_[i];
+
+      unsigned short actual_mode = -1;
+      const short rtn_get_mode = GTN_GetEcatAxisMode(core_id_, axis, &actual_mode);
+      if (rtn_get_mode == 0)
+      {
+        axis_in_torque_mode_[i] = (actual_mode == 10);
+      }
 
       if (output.use_torque[i])
       {
@@ -1236,6 +1322,13 @@ private:
     {
       const int axis = axis_ids_[i];
 
+      unsigned short actual_mode = -1;
+      const short rtn_get_mode = GTN_GetEcatAxisMode(core_id_, axis, &actual_mode);
+      if (rtn_get_mode == 0)
+      {
+        axis_in_torque_mode_[i] = (actual_mode == 10);
+      }
+
       if (!output.use_torque[i])
       {
         if (axis_in_torque_mode_[i])
@@ -1303,12 +1396,19 @@ private:
   {
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
     {
+      const int axis = axis_ids_[i];
+
+      unsigned short actual_mode = -1;
+      const short rtn_get_mode = GTN_GetEcatAxisMode(core_id_, axis, &actual_mode);
+      if (rtn_get_mode == 0)
+      {
+        axis_in_torque_mode_[i] = (actual_mode == 10);
+      }
+
       if (!axis_in_torque_mode_[i])
       {
         continue;
       }
-
-      const int axis = axis_ids_[i];
       const short rtn = GTN_SetEcatAxisPT(core_id_, axis, 0);
       if (rtn != 0)
       {
