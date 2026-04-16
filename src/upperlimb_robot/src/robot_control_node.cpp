@@ -1443,7 +1443,7 @@ private:
   std::atomic<int> current_mode_{upperlimb_robot::MODE_IDLE};
   int applied_mode_{upperlimb_robot::MODE_IDLE};
 
-  std::atomic<int> state_hz_{200};
+  std::atomic<int> state_hz_{150};
   std::atomic<int> control_hz_{90};
 
   int status_read_divider_ = 20;

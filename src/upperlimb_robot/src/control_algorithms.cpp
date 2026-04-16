@@ -1261,7 +1261,7 @@ namespace upperlimb_robot
     // 给每个关节设置阻尼系数：
     // 背部零力不是“完全无阻尼”，而是“有一定粘滞感，但不会死硬”
     // 肩部和肘部继续保留较强跟随性
-    damping(0) = 0.4;
+    damping(0) = 0.0;
     damping(1) = 0.4;
     damping(2) = 0.3;
     damping(3) = 0.0;
@@ -1290,7 +1290,7 @@ namespace upperlimb_robot
     //
     // 输出给执行层前，限制每个关节的目标扭矩。
     //
-    const double joint_torque_limit_j1 = 20.0;
+    const double joint_torque_limit_j1 = 30.0;
     const double joint_torque_limit_j2 = 20.0;
     const double joint_torque_limit_j3 = 16.0;
     const double joint_torque_limit_j4 = 12.0;
@@ -2322,7 +2322,7 @@ namespace upperlimb_robot
     const double A4 = 8.0 * DEG2RAD;
     const double A5 = 12.0 * DEG2RAD;
     const double A6 = 10.0 * DEG2RAD;
-    const double A7 = 15.0 * DEG2RAD;
+    const double A7 = 30.0 * DEG2RAD;
 
     const double f4 = 0.10;
     const double f5 = 0.10;
@@ -2388,11 +2388,13 @@ namespace upperlimb_robot
     Kp(3) = 18.0;
     Kp(4) = 18.0;
     Kp(5) = 16.0;
-    Kp(6) = 10.0;
+    // 
+    Kp(6) = 20.0;
 
     Kd(3) = 2.5;
     Kd(4) = 2.5;
     Kd(5) = 2.0;
+    // 
     Kd(6) = 1.5;
 
     // ===================== 计算扭矩命令 =====================
