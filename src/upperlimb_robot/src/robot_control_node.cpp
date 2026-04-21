@@ -216,7 +216,10 @@ private:
 
     switch (old_mode)
     {
+
+    // 清零扭矩命令，再恢复位置模式
     case upperlimb_robot::MODE_ZERO_FORCE:
+    case upperlimb_robot::MODE_RIGHT_ZERO_FORCE:
     case upperlimb_robot::MODE_ACTIVE:
     case upperlimb_robot::MODE_PASSIVE_TORQUE:
       clearAllTorqueCommands();
@@ -225,15 +228,17 @@ private:
       invalidateAllPositionCommandCache();
       break;
 
+    // 停止当前残余位置运动，并清除位置命令缓存
     case upperlimb_robot::MODE_PASSIVE:
     case upperlimb_robot::MODE_PASSIVE_SINE_PD_FF:
+    case upperlimb_robot::MODE_LEFT_PRESET_POSITION:
+    case upperlimb_robot::MODE_RIGHT_PRESET_POSITION:
       stopAllAxesMotionOnly();
       invalidateAllPositionCommandCache();
       break;
 
-    case upperlimb_robot::MODE_LEFT_PRESET_POSITION:
-    case upperlimb_robot::MODE_RIGHT_PRESET_POSITION:
     case upperlimb_robot::MODE_IDLE:
+
     default:
       break;
     }
@@ -259,6 +264,19 @@ private:
       else
       {
         RCLCPP_WARN(this->get_logger(), "进入零力模式失败：当前传感器数据无效，未记录零偏");
+      }
+      break;
+    }
+    case upperlimb_robot::MODE_RIGHT_ZERO_FORCE:
+    {
+      const bool ok = captureForceSensorBias();
+      if (ok)
+      {
+        RCLCPP_INFO(this->get_logger(), "进入右臂零力模式，已记录六维力零偏");
+      }
+      else
+      {
+        RCLCPP_WARN(this->get_logger(), "进入右臂零力模式失败：当前传感器数据无效，未记录零偏");
       }
       break;
     }
@@ -840,34 +858,38 @@ private:
 
     switch (mode)
     {
+      // 左臂预设位置模式
     case upperlimb_robot::MODE_LEFT_PRESET_POSITION:
       upperlimb_robot::runLeftPresetPosition(state, output);
       break;
-
+      // 右臂预设位置模式
     case upperlimb_robot::MODE_RIGHT_PRESET_POSITION:
       upperlimb_robot::runRightPresetPosition(state, output);
       break;
-
+      // 左臂零力模式
     case upperlimb_robot::MODE_ZERO_FORCE:
       upperlimb_robot::runZeroForceMode(state, sensor_state, output);
       break;
-
+      // 右臂零力模式
+    case upperlimb_robot::MODE_RIGHT_ZERO_FORCE:
+      upperlimb_robot::runRightZeroForceMode(state, sensor_state, output);
+      break;
+      // 左臂主动模式
     case upperlimb_robot::MODE_ACTIVE:
       upperlimb_robot::runActiveMode(state, sensor_state, output);
       break;
-
+      // 左臂被动模式（PID 跟踪）
     case upperlimb_robot::MODE_PASSIVE:
       upperlimb_robot::runPassiveMode(state, sensor_state, output);
       break;
-
+      // 左臂被动模式（PD+前馈跟踪）
     case upperlimb_robot::MODE_PASSIVE_SINE_PD_FF:
       upperlimb_robot::runPassivePDFFMode(state, sensor_state, output);
       break;
-
+      // 左臂被动模式（扭矩输出）
     case upperlimb_robot::MODE_PASSIVE_TORQUE:
       upperlimb_robot::runPassiveTorqueMode(state, sensor_state, output);
       break;
-
     case upperlimb_robot::MODE_IDLE:
     default:
       upperlimb_robot::runIdle(state, output);

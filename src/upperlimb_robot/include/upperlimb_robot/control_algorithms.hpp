@@ -51,6 +51,9 @@ namespace upperlimb_robot
     // 左臂正弦被动模式（扭矩输出）
     MODE_PASSIVE_TORQUE = 7,
 
+    // 右臂零力模式
+    MODE_RIGHT_ZERO_FORCE = 8,
+
   };
 
   // ===================== 电机状态缓存 =====================
@@ -228,8 +231,10 @@ namespace upperlimb_robot
   // SensorStateCache        提供六维力传感器信息
   // ControlOutputCache      提供输出接口
 
-  // 零力模式
+  // 左边零力模式
   void runZeroForceMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
+  // 右边零力模式
+  void runRightZeroForceMode(const MotorStateCache &state, const SensorStateCache &sensor_state,ControlOutputCache &output);	
   // 主动模式
   void runActiveMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
   // 左边正弦被动模式（PID跟踪）

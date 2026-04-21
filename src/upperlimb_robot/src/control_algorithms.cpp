@@ -934,7 +934,7 @@ namespace upperlimb_robot
     output.valid = true;
   }
 
-  // ===================== 零力模式 =====================
+  // ===================== 左臂零力模式 =====================
   void runZeroForceMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output)
   {
     // ===================== 输出初始化 =====================
@@ -1355,6 +1355,400 @@ namespace upperlimb_robot
     output.target_acc[19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(20, 5.0);
     output.target_dec[19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(20, 0.25);
     output.target_smooth_time[19] = 25;
+
+    // ===================== 输出有效 =====================
+    output.valid = true;
+  }
+
+  // ===================== 右臂零力模式 =====================
+  void runRightZeroForceMode(const MotorStateCache &state, const SensorStateCache &sensor_state,ControlOutputCache &output)
+  {
+    // ===================== 输出初始化 =====================
+    //
+    // 每次进入先清空 output，
+    // 然后只对右臂需要控制的关节写入输出。
+    //
+    output = ControlOutputCache{};
+    output.valid = false;
+
+    // ===================== 右臂 joint11~joint20 的控制层索引 =====================
+    //
+    // 当前默认约定：
+    // 右臂控制层索引 0~9
+    //
+    // joint11 ~ joint17 : 可动关节
+    // joint18 ~ joint20 : 固定末端
+    //
+    constexpr std::size_t IDX_J11 = 0;
+    constexpr std::size_t IDX_J12 = 1;
+    constexpr std::size_t IDX_J13 = 2;
+    constexpr std::size_t IDX_J14 = 3;
+    constexpr std::size_t IDX_J15 = 4;
+    constexpr std::size_t IDX_J16 = 5;
+    constexpr std::size_t IDX_J17 = 6;
+    constexpr std::size_t IDX_J18 = 7;
+    constexpr std::size_t IDX_J19 = 8;
+    constexpr std::size_t IDX_J20 = 9;
+
+    // ===================== Pinocchio 懒加载上下文 =====================
+    //
+    // 第一次进入时加载右臂 URDF、查 frame id；
+    // 后续周期只做实时计算。
+    //
+    static bool pin_initialized = false;
+    static bool pin_init_failed = false;
+    static pinocchio::Model model;
+    static std::unique_ptr<pinocchio::Data> data;
+    static pinocchio::FrameIndex frame_id_arm = 0;
+    static pinocchio::FrameIndex frame_id_hand = 0;
+
+    if (!pin_initialized && !pin_init_failed)
+    {
+      try
+      {
+        // ===================== URDF 路径 =====================
+        //
+        // upperlimb_robot/urdf/right_arm_experiment.urdf
+        //
+        std::string urdf_path =
+            ament_index_cpp::get_package_share_directory("upperlimb_robot") +
+            "/urdf/right_arm_experiment.urdf";
+
+        // ===================== 加载 URDF =====================
+        //
+        // 当前右臂模型约定：
+        // joint11~joint17 为 revolute
+        // joint18~joint20 为 fixed
+        //
+        pinocchio::urdf::buildModel(urdf_path, model);
+        data = std::make_unique<pinocchio::Data>(model);
+
+        // ===================== 获取两个六维力传感器 frame =====================
+        //
+        // ft_rightsensor_frame     -> 大臂绑缚件
+        // ft_rightsensor_frame_2   -> 手部绑缚件
+        //
+        frame_id_arm = model.getFrameId("ft_rightsensor_frame");
+        frame_id_hand = model.getFrameId("ft_rightsensor_frame_2");
+
+        if (frame_id_arm >= model.frames.size())
+        {
+          std::cerr << "[runRightZeroForceMode] 没找到 frame: ft_rightsensor_frame" << std::endl;
+          pin_init_failed = true;
+        }
+        else if (frame_id_hand >= model.frames.size())
+        {
+          std::cerr << "[runRightZeroForceMode] 没找到 frame: ft_rightsensor_frame_2" << std::endl;
+          pin_init_failed = true;
+        }
+        else if (model.nq != 7 || model.nv != 7)
+        {
+          std::cerr
+              << "[runRightZeroForceMode] 当前 Pinocchio 模型自由度不是 7，"
+              << "请确认 right_arm_experiment.urdf 中 joint11~joint17 为 revolute，"
+              << "joint18~joint20 为 fixed。"
+              << " model.nq=" << model.nq
+              << " model.nv=" << model.nv
+              << std::endl;
+          pin_init_failed = true;
+        }
+        else
+        {
+          pin_initialized = true;
+          std::cout
+              << "[runRightZeroForceMode] Pinocchio 初始化成功。"
+              << " urdf_path=" << urdf_path
+              << " nq=" << model.nq
+              << " nv=" << model.nv
+              << std::endl;
+        }
+      }
+      catch (const std::exception &e)
+      {
+        std::cerr << "[runRightZeroForceMode] Pinocchio 初始化异常: " << e.what() << std::endl;
+        pin_init_failed = true;
+      }
+    }
+
+    if (!pin_initialized || pin_init_failed || !data)
+    {
+      output.valid = false;
+      return;
+    }
+
+    // ===================== 传感器有效性检查 =====================
+    //
+    // 当前传感器无效时，不输出扭矩。
+    //
+    if (!sensor_state.valid)
+    {
+      output.valid = false;
+      return;
+    }
+
+    // ===================== 组装 q / v =====================
+    //
+    // 注意：
+    // 1. state.position / velocity 的单位是 deg / deg/s
+    // 2. Pinocchio 这里使用 rad / rad/s
+    // 3. 当前右臂模型自由度为 7：
+    //    q = [joint11, joint12, joint13, joint14, joint15, joint16, joint17]
+    //
+    constexpr double DEG2RAD = M_PI / 180.0;
+
+    Eigen::VectorXd q = Eigen::VectorXd::Zero(model.nq);
+    Eigen::VectorXd v = Eigen::VectorXd::Zero(model.nv);
+
+    q(0) = state.position[IDX_J11] * DEG2RAD;
+    q(1) = state.position[IDX_J12] * DEG2RAD;
+    q(2) = state.position[IDX_J13] * DEG2RAD;
+    q(3) = state.position[IDX_J14] * DEG2RAD;
+    q(4) = state.position[IDX_J15] * DEG2RAD;
+    q(5) = state.position[IDX_J16] * DEG2RAD;
+    q(6) = state.position[IDX_J17] * DEG2RAD;
+
+    v(0) = state.velocity[IDX_J11] * DEG2RAD;
+    v(1) = state.velocity[IDX_J12] * DEG2RAD;
+    v(2) = state.velocity[IDX_J13] * DEG2RAD;
+    v(3) = state.velocity[IDX_J14] * DEG2RAD;
+    v(4) = state.velocity[IDX_J15] * DEG2RAD;
+    v(5) = state.velocity[IDX_J16] * DEG2RAD;
+    v(6) = state.velocity[IDX_J17] * DEG2RAD;
+
+    // ===================== 读取并去偏两个六维力传感器 =====================
+    //
+    // 右臂：
+    // SENSOR_RIGHT_HAND = 0
+    // SENSOR_RIGHT_ARM  = 1
+    //
+    const auto &raw_hand = sensor_state.sensor[SENSOR_RIGHT_HAND];
+    const auto &bias_hand = sensor_state.bias[SENSOR_RIGHT_HAND];
+
+    const auto &raw_arm = sensor_state.sensor[SENSOR_RIGHT_ARM];
+    const auto &bias_arm = sensor_state.bias[SENSOR_RIGHT_ARM];
+
+    double fx_arm = raw_arm.fx - bias_arm.fx;
+    double fy_arm = raw_arm.fy - bias_arm.fy;
+    double fz_arm = raw_arm.fz - bias_arm.fz;
+    double mx_arm = raw_arm.mx - bias_arm.mx;
+    double my_arm = raw_arm.my - bias_arm.my;
+    double mz_arm = raw_arm.mz - bias_arm.mz;
+
+    double fx_hand = raw_hand.fx - bias_hand.fx;
+    double fy_hand = raw_hand.fy - bias_hand.fy;
+    double fz_hand = raw_hand.fz - bias_hand.fz;
+    double mx_hand = raw_hand.mx - bias_hand.mx;
+    double my_hand = raw_hand.my - bias_hand.my;
+    double mz_hand = raw_hand.mz - bias_hand.mz;
+
+    // ===================== 传感器方向符号修正 =====================
+    //
+    // 顺序：
+    // [Fx, Fy, Fz, Mx, My, Mz]
+    //
+    // 这里先默认全 1。
+    // 如果右臂实机方向出现“人往前推，机械臂反而更顶住”的情况，
+    // 优先先改这里。
+    //
+    static const std::array<double, 6> arm_sign = {
+        1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0};
+
+    static const std::array<double, 6> hand_sign = {
+        1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0};
+
+    fx_arm *= arm_sign[0];
+    fy_arm *= arm_sign[1];
+    fz_arm *= arm_sign[2];
+    mx_arm *= arm_sign[3];
+    my_arm *= arm_sign[4];
+    mz_arm *= arm_sign[5];
+
+    fx_hand *= hand_sign[0];
+    fy_hand *= hand_sign[1];
+    fz_hand *= hand_sign[2];
+    mx_hand *= hand_sign[3];
+    my_hand *= hand_sign[4];
+    mz_hand *= hand_sign[5];
+
+    // ===================== 死区 =====================
+    //
+    // 力 / 力矩很小时直接置 0，防止噪声抖动。
+    //
+    const double force_deadzone = 1.0;   // N
+    const double torque_deadzone = 0.05; // Nm
+
+    auto apply_deadzone = [](double x, double dz) -> double
+    {
+      return (std::abs(x) < dz) ? 0.0 : x;
+    };
+
+    fx_arm = apply_deadzone(fx_arm, force_deadzone);
+    fy_arm = apply_deadzone(fy_arm, force_deadzone);
+    fz_arm = apply_deadzone(fz_arm, force_deadzone);
+    mx_arm = apply_deadzone(mx_arm, torque_deadzone);
+    my_arm = apply_deadzone(my_arm, torque_deadzone);
+    mz_arm = apply_deadzone(mz_arm, torque_deadzone);
+
+    fx_hand = apply_deadzone(fx_hand, force_deadzone);
+    fy_hand = apply_deadzone(fy_hand, force_deadzone);
+    fz_hand = apply_deadzone(fz_hand, force_deadzone);
+    mx_hand = apply_deadzone(mx_hand, torque_deadzone);
+    my_hand = apply_deadzone(my_hand, torque_deadzone);
+    mz_hand = apply_deadzone(mz_hand, torque_deadzone);
+
+    // ===================== 限幅 =====================
+    //
+    // 防止异常值把控制打飞。
+    //
+    const double force_limit = 80.0; // N
+    const double moment_limit = 8.0; // Nm
+
+    auto clamp_abs = [](double x, double lim) -> double
+    {
+      if (x > lim)
+        return lim;
+      if (x < -lim)
+        return -lim;
+      return x;
+    };
+
+    fx_arm = clamp_abs(fx_arm, force_limit);
+    fy_arm = clamp_abs(fy_arm, force_limit);
+    fz_arm = clamp_abs(fz_arm, force_limit);
+    mx_arm = clamp_abs(mx_arm, moment_limit);
+    my_arm = clamp_abs(my_arm, moment_limit);
+    mz_arm = clamp_abs(mz_arm, moment_limit);
+
+    fx_hand = clamp_abs(fx_hand, force_limit);
+    fy_hand = clamp_abs(fy_hand, force_limit);
+    fz_hand = clamp_abs(fz_hand, force_limit);
+    mx_hand = clamp_abs(mx_hand, moment_limit);
+    my_hand = clamp_abs(my_hand, moment_limit);
+    mz_hand = clamp_abs(mz_hand, moment_limit);
+
+    // ===================== 计算重力项 =====================
+    //
+    // g(q) 对应 joint11~joint17 的重力补偿力矩
+    //
+    Eigen::VectorXd g = pinocchio::computeGeneralizedGravity(model, *data, q);
+
+    // ===================== 计算两个传感器 frame 的 Jacobian =====================
+    //
+    Eigen::MatrixXd J_arm = Eigen::MatrixXd::Zero(6, model.nv);
+    Eigen::MatrixXd J_hand = Eigen::MatrixXd::Zero(6, model.nv);
+
+    pinocchio::computeFrameJacobian(model, *data, q, frame_id_arm, pinocchio::LOCAL, J_arm);
+    pinocchio::computeFrameJacobian(model, *data, q, frame_id_hand, pinocchio::LOCAL, J_hand);
+
+    // ===================== 构造 Pinocchio 空间力 =====================
+    //
+    // Force 顺序是 [angular; linear]
+    //
+    pinocchio::Force f_arm = pinocchio::Force::Zero();
+    f_arm.linear() << fx_arm, fy_arm, fz_arm;
+    f_arm.angular() << mx_arm, my_arm, mz_arm;
+
+    pinocchio::Force f_hand = pinocchio::Force::Zero();
+    f_hand.linear() << fx_hand, fy_hand, fz_hand;
+    f_hand.angular() << mx_hand, my_hand, mz_hand;
+
+    // ===================== 外力映射到关节扭矩 =====================
+    //
+    // tau_ext = J_arm^T * F_arm + J_hand^T * F_hand
+    //
+    Eigen::VectorXd tau_arm = J_arm.transpose() * f_arm.toVector();
+    Eigen::VectorXd tau_hand = J_hand.transpose() * f_hand.toVector();
+    Eigen::VectorXd tau_ext = tau_arm + tau_hand;
+
+    // ===================== 关节阻尼项 =====================
+    //
+    // 防止零力模式下出现漂、轻微自激或关节发飘。
+    //
+    Eigen::VectorXd damping = Eigen::VectorXd::Zero(model.nv);
+
+    // 先直接沿用左臂这套阻尼配置
+    damping(0) = 0.0;
+    damping(1) = 0.4;
+    damping(2) = 0.3;
+    damping(3) = 0.0;
+    damping(4) = 0.0;
+    damping(5) = 0.2;
+    damping(6) = 0.3;
+
+    Eigen::VectorXd tau_damping = -(damping.asDiagonal() * v);
+
+    // ===================== 最终关节扭矩 =====================
+    //
+    // tau = g(q) + tau_ext + tau_damping
+    //
+    Eigen::VectorXd tau = g + tau_ext + tau_damping;
+
+    // ===================== 最终扭矩限幅 =====================
+    //
+    // 这里按右臂 joint11~joint17 依次限幅。
+    //
+    const double joint_torque_limit_j11 = 30.0;
+    const double joint_torque_limit_j12 = 20.0;
+    const double joint_torque_limit_j13 = 16.0;
+    const double joint_torque_limit_j14 = 12.0;
+    const double joint_torque_limit_j15 = 12.0;
+    const double joint_torque_limit_j16 = 12.0;
+    const double joint_torque_limit_j17 = 8.0;
+
+    tau(0) = clamp_abs(tau(0), joint_torque_limit_j11);
+    tau(1) = clamp_abs(tau(1), joint_torque_limit_j12);
+    tau(2) = clamp_abs(tau(2), joint_torque_limit_j13);
+    tau(3) = clamp_abs(tau(3), joint_torque_limit_j14);
+    tau(4) = clamp_abs(tau(4), joint_torque_limit_j15);
+    tau(5) = clamp_abs(tau(5), joint_torque_limit_j16);
+    tau(6) = clamp_abs(tau(6), joint_torque_limit_j17);
+
+    // ===================== 输出到控制层 =====================
+    //
+    // joint11~joint17 走扭矩控制
+    //
+    output.use_torque[IDX_J11] = true;
+    output.use_torque[IDX_J12] = true;
+    output.use_torque[IDX_J13] = true;
+    output.use_torque[IDX_J14] = true;
+    output.use_torque[IDX_J15] = true;
+    output.use_torque[IDX_J16] = true;
+    output.use_torque[IDX_J17] = true;
+
+    output.target_torque[IDX_J11] = tau(0);
+    output.target_torque[IDX_J12] = tau(1);
+    output.target_torque[IDX_J13] = tau(2);
+    output.target_torque[IDX_J14] = tau(3);
+    output.target_torque[IDX_J15] = tau(4);
+    output.target_torque[IDX_J16] = tau(5);
+    output.target_torque[IDX_J17] = tau(6);
+
+    // ===================== 固定末端 joint18~joint20 =====================
+    //
+    // 避免切模式后末端几个轴乱晃。
+    //
+    output.use_position[IDX_J18] = true;
+    output.target_position[IDX_J18] = 0.0;
+    output.target_velocity[IDX_J18] = pulsePerMsToJointSpeedDegPerSecMagnitude(8, 1500.0);
+    output.target_acc[IDX_J18] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(8, 5.0);
+    output.target_dec[IDX_J18] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(8, 0.25);
+    output.target_smooth_time[IDX_J18] = 25;
+
+    output.use_position[IDX_J19] = true;
+    output.target_position[IDX_J19] = 0.0;
+    output.target_velocity[IDX_J19] = pulsePerMsToJointSpeedDegPerSecMagnitude(9, 1500.0);
+    output.target_acc[IDX_J19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(9, 5.0);
+    output.target_dec[IDX_J19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(9, 0.25);
+    output.target_smooth_time[IDX_J19] = 25;
+
+    output.use_position[IDX_J20] = true;
+    output.target_position[IDX_J20] = 0.0;
+    output.target_velocity[IDX_J20] = pulsePerMsToJointSpeedDegPerSecMagnitude(10, 1500.0);
+    output.target_acc[IDX_J20] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(10, 5.0);
+    output.target_dec[IDX_J20] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(10, 0.25);
+    output.target_smooth_time[IDX_J20] = 25;
 
     // ===================== 输出有效 =====================
     output.valid = true;

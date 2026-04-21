@@ -20,8 +20,14 @@ install(
 )
 
 add_executable(joint_deg_gui src/joint_deg_gui_cpp.cpp)
+add_executable(joint_deg_rightgui src/joint_deg_gui_right_cpp.cpp)
+
 
 ament_target_dependencies(joint_deg_gui
+  rclcpp
+  sensor_msgs
+)
+ament_target_dependencies(joint_deg_rightgui
   rclcpp
   sensor_msgs
 )
@@ -29,9 +35,12 @@ ament_target_dependencies(joint_deg_gui
 target_link_libraries(joint_deg_gui
   Qt5::Widgets
 )
+target_link_libraries(joint_deg_rightgui
+  Qt5::Widgets
+)
 
 install(
-  TARGETS joint_deg_gui
+  TARGETS joint_deg_gui joint_deg_rightgui
   DESTINATION lib/${PROJECT_NAME}
 )
 
