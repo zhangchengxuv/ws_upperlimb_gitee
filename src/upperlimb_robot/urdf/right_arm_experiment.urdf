@@ -209,7 +209,7 @@
         <parent link="link15" />
         <child link="link16" />
         <origin xyz="0.092667 0.0011397 -0.094019" rpy="-0.78866 0.78212 -0.94763" />
-        <axis xyz="0 0 -1" />
+        <axis xyz="0 0 1" />
         <limit lower="-3.1416" upper="3.1416" effort="50" velocity="2" />
     </joint>
 
@@ -238,7 +238,7 @@
         <parent link="link16" />
         <child link="link17" />
         <origin xyz="0.26899 0.0024866 -0.008" rpy="0 0 0.009244" />
-        <axis xyz="0 0 -1" />
+        <axis xyz="0 0 1" />
         <limit lower="-3.1416" upper="3.1416" effort="50" velocity="2" />
     </joint>
 
@@ -355,7 +355,7 @@
     <joint name="ft_rightsensor_joint_2" type="fixed">
         <parent link="link20" />
         <child link="ft_rightsensor_frame_2" />
-        <origin xyz="0.082 0.0287 -0.06447 " rpy="1.5708 0 3.14159" />
+        <origin xyz="0.082 0.0287 -0.06447 " rpy="1.5708 0 0" />
     </joint>
 
 </robot>

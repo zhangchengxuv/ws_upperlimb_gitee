@@ -1697,13 +1697,13 @@ namespace upperlimb_robot
     const double joint_torque_limit_j16 = 12.0;
     const double joint_torque_limit_j17 = 8.0;
 
-    tau(0) = clamp_abs(tau(0), joint_torque_limit_j11);
-    tau(1) = clamp_abs(tau(1), joint_torque_limit_j12);
-    tau(2) = clamp_abs(tau(2), joint_torque_limit_j13);
-    tau(3) = clamp_abs(tau(3), joint_torque_limit_j14);
-    tau(4) = clamp_abs(tau(4), joint_torque_limit_j15);
-    tau(5) = clamp_abs(tau(5), joint_torque_limit_j16);
-    tau(6) = clamp_abs(tau(6), joint_torque_limit_j17);
+    tau(0) = clamp_abs(-tau(0), joint_torque_limit_j11);
+    tau(1) = clamp_abs(-tau(1), joint_torque_limit_j12);
+    tau(2) = clamp_abs(-tau(2), joint_torque_limit_j13);
+    tau(3) = clamp_abs(-tau(3), joint_torque_limit_j14);
+    tau(4) = clamp_abs(-tau(4), joint_torque_limit_j15);
+    tau(5) = clamp_abs(-tau(5), joint_torque_limit_j16);
+    tau(6) = clamp_abs(-tau(6), joint_torque_limit_j17);
 
     // ===================== 输出到控制层 =====================
     //
@@ -2229,13 +2229,13 @@ void runBilateralZeroForceMode(const MotorStateCache &state, const SensorStateCa
   tau_left(6) = clamp_abs(tau_left(6), 8.0);
 
   // ===================== 右臂扭矩限幅 =====================
-  tau_right(0) = clamp_abs(tau_right(0), 30.0);
-  tau_right(1) = clamp_abs(tau_right(1), 20.0);
-  tau_right(2) = clamp_abs(tau_right(2), 16.0);
-  tau_right(3) = clamp_abs(tau_right(3), 12.0);
-  tau_right(4) = clamp_abs(tau_right(4), 12.0);
-  tau_right(5) = clamp_abs(tau_right(5), 12.0);
-  tau_right(6) = clamp_abs(tau_right(6), 8.0);
+  tau_right(0) = clamp_abs(-tau_right(0), 30.0);
+  tau_right(1) = clamp_abs(-tau_right(1), 20.0);
+  tau_right(2) = clamp_abs(-tau_right(2), 16.0);
+  tau_right(3) = clamp_abs(-tau_right(3), 12.0);
+  tau_right(4) = clamp_abs(-tau_right(4), 12.0);
+  tau_right(5) = clamp_abs(-tau_right(5), 12.0);
+  tau_right(6) = clamp_abs(-tau_right(6), 8.0);
 
   // ============================================================
   // ===================== 输出：左臂扭矩 ========================
