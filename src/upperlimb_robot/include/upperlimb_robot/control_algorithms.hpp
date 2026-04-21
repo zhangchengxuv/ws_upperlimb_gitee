@@ -54,6 +54,9 @@ namespace upperlimb_robot
     // 右臂零力模式
     MODE_RIGHT_ZERO_FORCE = 8,
 
+    // 双臂零力模式
+    MODE_BILATERAL_ZERO_FORCE = 9,
+
   };
 
   // ===================== 电机状态缓存 =====================
@@ -235,6 +238,8 @@ namespace upperlimb_robot
   void runZeroForceMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
   // 右边零力模式
   void runRightZeroForceMode(const MotorStateCache &state, const SensorStateCache &sensor_state,ControlOutputCache &output);	
+  // 双臂零力模式
+  void runBilateralZeroForceMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
   // 主动模式
   void runActiveMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
   // 左边正弦被动模式（PID跟踪）
