@@ -252,7 +252,27 @@ private:
   void onModeEnter(int old_mode, int new_mode)
   {
     (void)old_mode;
+    // 只要是从 Idle 进入其他模式，就先重新使能
+    if (old_mode == upperlimb_robot::MODE_IDLE &&
+        new_mode != upperlimb_robot::MODE_IDLE)
+    {
+      for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
+      {
+        const short axis = axis_ids_[i];
+        const short rtn = GTN_AxisOn(core_id_, axis);
 
+        if (rtn != 0)
+        {
+          RCLCPP_ERROR(
+              this->get_logger(),
+              "GTN_AxisOn 失败，axis=%d，错误码=%d",
+              axis,
+              rtn);
+        }
+      }
+
+      RCLCPP_INFO(this->get_logger(), "退出空闲模式：已重新使能所有电机");
+    }
     switch (new_mode)
     {
     case upperlimb_robot::MODE_ZERO_FORCE:
@@ -335,6 +355,38 @@ private:
     }
 
     case upperlimb_robot::MODE_IDLE:
+    {
+      // 先清掉可能残留的扭矩命令
+      clearAllTorqueCommands();
+
+      // 尽量先切回位置模式，避免驱动还停留在扭矩模式
+      restoreAllAxesToPositionMode();
+
+      // 停止所有轴当前运动
+      stopAllAxesMotionOnly();
+
+      // 关闭所有轴使能
+      for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
+      {
+        const short axis = axis_ids_[i];
+        const short rtn = GTN_AxisOff(core_id_, axis);
+
+        if (rtn != 0)
+        {
+          RCLCPP_ERROR(
+              this->get_logger(),
+              "GTN_AxisOff 失败，axis=%d，错误码=%d",
+              axis,
+              rtn);
+        }
+
+        axis_in_torque_mode_[i] = false;
+      }
+
+      RCLCPP_INFO(this->get_logger(), "进入空闲模式：已关闭所有电机使能");
+      break;
+    }
+
     default:
       break;
     }
