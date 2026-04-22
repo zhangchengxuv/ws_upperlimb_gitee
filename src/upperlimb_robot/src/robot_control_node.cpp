@@ -512,6 +512,14 @@ private:
         return false;
       }
 
+      // ===================== 同步 axis / profile / encoder =====================
+      rtn = GTN_SynchAxisPos(core_id_, static_cast<long>(1L << (axis - 1)));
+      if (rtn != 0)
+      {
+        RCLCPP_ERROR(this->get_logger(), "同步轴%d位置失败，错误码=%d", axis, rtn);
+        return false;
+      }
+
       rtn = GTN_AxisOn(core_id_, axis);
       if (rtn != 0)
       {
@@ -1029,7 +1037,7 @@ private:
       return false;
     }
 
-    unsigned short actual_mode = -1;
+    unsigned short actual_mode = static_cast<unsigned short>(-1);
     const short rtn_get_mode = GTN_GetEcatAxisMode(core_id_, axis, &actual_mode);
     if (rtn_get_mode != 0)
     {
@@ -1072,6 +1080,17 @@ private:
       RCLCPP_ERROR_THROTTLE(
           this->get_logger(), *this->get_clock(), 2000,
           "同步轴%d编码器位置失败，错误码=%d", axis, rtn_set_enc);
+      return false;
+    }
+
+    // ===================== 新增：同步 axis / profile / encoder =====================
+    const short rtn_sync =
+        GTN_SynchAxisPos(core_id_, static_cast<long>(1L << (axis - 1)));
+    if (rtn_sync != 0)
+    {
+      RCLCPP_ERROR_THROTTLE(
+          this->get_logger(), *this->get_clock(), 2000,
+          "同步轴%d axis/profile/encoder 失败，错误码=%d", axis, rtn_sync);
       return false;
     }
 
@@ -1236,7 +1255,7 @@ private:
     {
       const int axis = axis_ids_[i];
 
-      unsigned short actual_mode = -1;
+      unsigned short actual_mode = static_cast<unsigned short>(-1);
       const short rtn_get_mode = GTN_GetEcatAxisMode(core_id_, axis, &actual_mode);
       if (rtn_get_mode == 0)
       {
@@ -1323,6 +1342,16 @@ private:
           RCLCPP_ERROR_THROTTLE(
               this->get_logger(), *this->get_clock(), 2000,
               "同步轴%d编码器位置失败，错误码=%d", axis, rtn);
+          continue;
+        }
+
+        // ===================== 新增：同步 axis / profile / encoder =====================
+        rtn = GTN_SynchAxisPos(core_id_, static_cast<long>(1L << (axis - 1)));
+        if (rtn != 0)
+        {
+          RCLCPP_ERROR_THROTTLE(
+              this->get_logger(), *this->get_clock(), 2000,
+              "同步轴%d axis/profile/encoder 失败，错误码=%d", axis, rtn);
           continue;
         }
 

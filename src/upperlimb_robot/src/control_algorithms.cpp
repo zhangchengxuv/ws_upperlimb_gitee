@@ -1059,7 +1059,6 @@ namespace upperlimb_robot
 
     // ===================== 组装 q / dq =====================
     //
-    // 注意：
     // 1. state.position / velocity 的单位是 deg / deg/s
     // 2. Pinocchio 这里使用 rad / rad/s
     // 3. 当前模型自由度为 7：
