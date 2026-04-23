@@ -2627,7 +2627,7 @@ namespace upperlimb_robot
     const double q2 = state.position[IDX_J2];
     const double q3 = state.position[IDX_J3];
     (void)q1;
-    (void)q2; 
+    (void)q2;
     (void)q3; // 背部关节保持固定，当前值不参与控制计算
     const double q4 = state.position[IDX_J4];
     const double q5 = state.position[IDX_J5];
@@ -3793,15 +3793,14 @@ namespace upperlimb_robot
     Eigen::VectorXd Kp = Eigen::VectorXd::Zero(7);
     Eigen::VectorXd Kd = Eigen::VectorXd::Zero(7);
 
-    Kp << 3.0, 3.0, 3.0, 18.0, 18.0, 15.0, 10.0;
-    Kd << 0.3, 0.3, 0.3, 1.5, 1.5, 1.2, 0.8;
+    Kp << 3.0, 3.0, 3.0, 25, 25, 25, 25;
+    Kd << 0.3, 0.3, 0.3, 1.5, 1.5, 1.5, 1.5;
 
-    Eigen::VectorXd tau_cmd =
-        g + Kp.asDiagonal() * (q_ref - q_r) + Kd.asDiagonal() * (dq_ref - dq_r);
+    Eigen::VectorXd tau_cmd = -(g + Kp.asDiagonal() * (q_ref - q_r) + Kd.asDiagonal() * (dq_ref - dq_r));
 
     // ===================== 第六步：扭矩限幅 =====================
     std::array<double, 7> tau_limit = {
-        6.0, 6.0, 6.0, 10.0, 10.0, 8.0, 6.0};
+        15, 15, 15, 15, 15, 15, 15};
 
     for (int i = 0; i < 7; ++i)
     {
