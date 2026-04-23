@@ -57,6 +57,9 @@ namespace upperlimb_robot
     // 双臂零力模式
     MODE_BILATERAL_ZERO_FORCE = 9,
 
+    // 双臂镜像模式
+    MODE_MIRROR = 10,
+
   };
 
   // ===================== 电机状态缓存 =====================
@@ -223,10 +226,10 @@ namespace upperlimb_robot
   // 不需要需要传感器信息
 
   // 空闲模式
-  void runIdle(const MotorStateCache &state,ControlOutputCache &output);
+  void runIdle(const MotorStateCache &state, ControlOutputCache &output);
   // 预设位姿模式
-  void runLeftPresetPosition(const MotorStateCache &state,ControlOutputCache &output);
-  void runRightPresetPosition(const MotorStateCache &state,ControlOutputCache &output);
+  void runLeftPresetPosition(const MotorStateCache &state, ControlOutputCache &output);
+  void runRightPresetPosition(const MotorStateCache &state, ControlOutputCache &output);
 
   // 需要传感器信息的算法
 
@@ -235,18 +238,20 @@ namespace upperlimb_robot
   // ControlOutputCache      提供输出接口
 
   // 左边零力模式
-  void runZeroForceMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
+  void runZeroForceMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
   // 右边零力模式
-  void runRightZeroForceMode(const MotorStateCache &state, const SensorStateCache &sensor_state,ControlOutputCache &output);	
+  void runRightZeroForceMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
   // 双臂零力模式
-  void runBilateralZeroForceMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
+  void runBilateralZeroForceMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
   // 主动模式
-  void runActiveMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
+  void runActiveMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
   // 左边正弦被动模式（PID跟踪）
-  void runPassiveMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
+  void runPassiveMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
   // 左边正弦被动模式（PD+前馈跟踪）
-  void runPassivePDFFMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
+  void runPassivePDFFMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
   // 左边正弦被动模式（扭矩输出）
-  void runPassiveTorqueMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
+  void runPassiveTorqueMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
+  // 双臂镜像模式
+  void runMirrorMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
 
 } // namespace upperlimb_robot

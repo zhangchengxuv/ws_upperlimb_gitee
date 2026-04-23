@@ -223,6 +223,7 @@ private:
     case upperlimb_robot::MODE_BILATERAL_ZERO_FORCE:
     case upperlimb_robot::MODE_ACTIVE:
     case upperlimb_robot::MODE_PASSIVE_TORQUE:
+    case upperlimb_robot::MODE_MIRROR:
       clearAllTorqueCommands();
       stopAllAxesMotionOnly();
       restoreAllAxesToPositionMode();
@@ -326,6 +327,19 @@ private:
       else
       {
         RCLCPP_WARN(this->get_logger(), "进入主动模式失败：当前传感器数据无效，未记录零偏");
+      }
+      break;
+    }
+    case upperlimb_robot::MODE_MIRROR:
+    {
+      const bool ok = captureForceSensorBias();
+      if (ok)
+      {
+        RCLCPP_INFO(this->get_logger(), "进入镜像模式：已记录六维力零偏，左臂示教，右臂扭矩镜像跟踪");
+      }
+      else
+      {
+        RCLCPP_WARN(this->get_logger(), "进入镜像模式：当前传感器数据无效，左臂零力效果可能受影响");
       }
       break;
     }
@@ -968,6 +982,10 @@ private:
       // 双臂零力模式
     case upperlimb_robot::MODE_BILATERAL_ZERO_FORCE:
       upperlimb_robot::runBilateralZeroForceMode(state, sensor_state, output);
+      break;
+    // 镜像模式
+    case upperlimb_robot::MODE_MIRROR:
+      upperlimb_robot::runMirrorMode(state, sensor_state, output);
       break;
 
     case upperlimb_robot::MODE_IDLE:
