@@ -3793,14 +3793,14 @@ namespace upperlimb_robot
     Eigen::VectorXd Kp = Eigen::VectorXd::Zero(7);
     Eigen::VectorXd Kd = Eigen::VectorXd::Zero(7);
 
-    Kp << 3.0, 3.0, 3.0, 25, 25, 25, 25;
-    Kd << 0.3, 0.3, 0.3, 1.5, 1.5, 1.5, 1.5;
+    Kp << 12.0, 12.0, 10.0, 25, 25, 25, 25;
+    Kd << 1.2, 1.2, 1.0, 1.5, 1.5, 1.5, 1.5;
 
     Eigen::VectorXd tau_cmd = -(g + Kp.asDiagonal() * (q_ref - q_r) + Kd.asDiagonal() * (dq_ref - dq_r));
 
     // ===================== 第六步：扭矩限幅 =====================
     std::array<double, 7> tau_limit = {
-        15, 15, 15, 15, 15, 15, 15};
+        30, 25, 25, 15, 15, 15, 15};
 
     for (int i = 0; i < 7; ++i)
     {
@@ -3830,6 +3830,15 @@ namespace upperlimb_robot
     output.target_torque[IDX_R5] = tau_cmd(4);
     output.target_torque[IDX_R6] = tau_cmd(5);
     output.target_torque[IDX_R7] = tau_cmd(6);
+
+    // 调试输出，观察扭矩命令数值是否合理
+
+    std::cout
+        << "[runMirrorMode] tau_cmd123(Nm) = ["
+        << tau_cmd(0) << ", "
+        << tau_cmd(1) << ", "
+        << tau_cmd(2) << "]"
+        << std::endl;
 
     // ===================== 第八步：右臂末端固定 =====================
     //
