@@ -4039,4 +4039,400 @@ namespace upperlimb_robot
     // ===================== 最终输出有效 =====================
     output.valid = true;
   }
+
+  // 左臂主动右臂镜像模式
+  void runActiveMirrorMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output)
+  {
+    // ===================== 输出初始化 =====================
+    output = ControlOutputCache{};
+    output.valid = false;
+
+    // ===================== 左臂控制层索引 10~16 =====================
+    constexpr std::size_t IDX_L1 = 10;
+    constexpr std::size_t IDX_L2 = 11;
+    constexpr std::size_t IDX_L3 = 12;
+    constexpr std::size_t IDX_L4 = 13;
+    constexpr std::size_t IDX_L5 = 14;
+    constexpr std::size_t IDX_L6 = 15;
+    constexpr std::size_t IDX_L7 = 16;
+
+    // ===================== 右臂控制层索引 0~6 =====================
+    constexpr std::size_t IDX_R1 = 0;
+    constexpr std::size_t IDX_R2 = 1;
+    constexpr std::size_t IDX_R3 = 2;
+    constexpr std::size_t IDX_R4 = 3;
+    constexpr std::size_t IDX_R5 = 4;
+    constexpr std::size_t IDX_R6 = 5;
+    constexpr std::size_t IDX_R7 = 6;
+
+    // ===================== 右臂末端索引 =====================
+    constexpr std::size_t IDX_R9 = 8;
+    constexpr std::size_t IDX_R10 = 9;
+
+    // ===================== 左臂主动模式 =====================
+    ControlOutputCache left_output{};
+    runActiveMode(state, sensor_state, left_output);
+
+    if (left_output.valid)
+    {
+      for (std::size_t i = 10; i < 20; ++i)
+      {
+        output.use_position[i] = left_output.use_position[i];
+        output.target_position[i] = left_output.target_position[i];
+        output.target_velocity[i] = left_output.target_velocity[i];
+        output.target_acc[i] = left_output.target_acc[i];
+        output.target_dec[i] = left_output.target_dec[i];
+        output.target_smooth_time[i] = left_output.target_smooth_time[i];
+
+        output.use_torque[i] = left_output.use_torque[i];
+        output.target_torque[i] = left_output.target_torque[i];
+      }
+    }
+    else
+    {
+      // ===================== 左臂零力失败时的兜底 =====================
+      output.use_torque[IDX_L1] = true;
+      output.use_torque[IDX_L2] = true;
+      output.use_torque[IDX_L3] = true;
+      output.use_torque[IDX_L4] = true;
+      output.use_torque[IDX_L5] = true;
+      output.use_torque[IDX_L6] = true;
+      output.use_torque[IDX_L7] = true;
+
+      output.target_torque[IDX_L1] = 0.0;
+      output.target_torque[IDX_L2] = 0.0;
+      output.target_torque[IDX_L3] = 0.0;
+      output.target_torque[IDX_L4] = 0.0;
+      output.target_torque[IDX_L5] = 0.0;
+      output.target_torque[IDX_L6] = 0.0;
+      output.target_torque[IDX_L7] = 0.0;
+
+      output.use_position[17] = true;
+      output.target_position[17] = 0.0;
+      output.target_velocity[17] = pulsePerMsToJointSpeedDegPerSecMagnitude(18, 1500.0);
+      output.target_acc[17] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(18, 5.0);
+      output.target_dec[17] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(18, 0.25);
+      output.target_smooth_time[17] = 25;
+
+      output.use_position[18] = true;
+      output.target_position[18] = 0.0;
+      output.target_velocity[18] = pulsePerMsToJointSpeedDegPerSecMagnitude(19, 1500.0);
+      output.target_acc[18] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(19, 5.0);
+      output.target_dec[18] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(19, 0.25);
+      output.target_smooth_time[18] = 25;
+
+      output.use_position[19] = true;
+      output.target_position[19] = 0.0;
+      output.target_velocity[19] = pulsePerMsToJointSpeedDegPerSecMagnitude(20, 1500.0);
+      output.target_acc[19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(20, 5.0);
+      output.target_dec[19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(20, 0.25);
+      output.target_smooth_time[19] = 25;
+    }
+
+    // ===================== 第二步：右臂 Pinocchio 懒加载 =====================
+    static bool pin_initialized = false;
+    static bool pin_init_failed = false;
+    static pinocchio::Model model;
+    static std::unique_ptr<pinocchio::Data> data;
+
+    if (!pin_initialized && !pin_init_failed)
+    {
+      try
+      {
+        std::string urdf_path =
+            ament_index_cpp::get_package_share_directory("upperlimb_robot") +
+            "/urdf/right_arm_experiment.urdf";
+
+        pinocchio::urdf::buildModel(urdf_path, model);
+        data = std::make_unique<pinocchio::Data>(model);
+
+        if (model.nq != 7 || model.nv != 7)
+        {
+          std::cerr
+              << "[runMirrorMode] 当前右臂 Pinocchio 模型自由度不是 7，"
+              << "model.nq=" << model.nq
+              << " model.nv=" << model.nv
+              << std::endl;
+          pin_init_failed = true;
+        }
+        else
+        {
+          pin_initialized = true;
+          std::cout
+              << "[runMirrorMode] Pinocchio 初始化成功。"
+              << " nq=" << model.nq
+              << " nv=" << model.nv
+              << std::endl;
+        }
+      }
+      catch (const std::exception &e)
+      {
+        std::cerr << "[runMirrorMode] Pinocchio 初始化异常: " << e.what() << std::endl;
+        pin_init_failed = true;
+      }
+    }
+
+    if (!pin_initialized || pin_init_failed || !data)
+    {
+      output.valid = false;
+      return;
+    }
+
+    // ===================== 第三步：组装左参考 / 右当前状态 =====================
+    constexpr double DEG2RAD = M_PI / 180.0;
+
+    const std::array<std::size_t, 7> left_idx = {
+        IDX_L1, IDX_L2, IDX_L3, IDX_L4, IDX_L5, IDX_L6, IDX_L7};
+
+    const std::array<std::size_t, 7> right_idx = {
+        IDX_R1, IDX_R2, IDX_R3, IDX_R4, IDX_R5, IDX_R6, IDX_R7};
+
+    // ===================== 镜像方向与零位偏置 =====================
+    //
+    // 如果某个关节镜像方向反了，只改对应项为 -1.0
+    //
+    std::array<double, 7> mirror_sign = {
+        1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+
+    std::array<double, 7> mirror_offset_deg = {
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+    Eigen::VectorXd q_ref_raw = Eigen::VectorXd::Zero(7);
+    Eigen::VectorXd dq_ref_raw = Eigen::VectorXd::Zero(7);
+    Eigen::VectorXd q_r = Eigen::VectorXd::Zero(7);
+    Eigen::VectorXd dq_r_raw = Eigen::VectorXd::Zero(7);
+
+    for (int i = 0; i < 7; ++i)
+    {
+      const double q_left_deg = state.position[left_idx[i]];
+      const double dq_left_deg = state.velocity[left_idx[i]];
+      const double q_right_deg = state.position[right_idx[i]];
+      const double dq_right_deg = state.velocity[right_idx[i]];
+
+      const double q_ref_deg =
+          mirror_sign[i] * q_left_deg + mirror_offset_deg[i];
+      const double dq_ref_deg =
+          mirror_sign[i] * dq_left_deg;
+
+      q_ref_raw(i) = q_ref_deg * DEG2RAD;
+      dq_ref_raw(i) = dq_ref_deg * DEG2RAD;
+
+      q_r(i) = q_right_deg * DEG2RAD;
+      dq_r_raw(i) = dq_right_deg * DEG2RAD;
+    }
+
+    // ===================== 第四步：对参考和速度做低通滤波 =====================
+    //
+    // 左臂参考 q_ref / dq_ref 帧间跳变
+    // 右臂速度 dq_r 噪声大
+    //
+    static bool filter_initialized = false;
+    static Eigen::VectorXd q_ref_filt = Eigen::VectorXd::Zero(7);
+    static Eigen::VectorXd dq_ref_filt = Eigen::VectorXd::Zero(7);
+    static Eigen::VectorXd dq_r_filt = Eigen::VectorXd::Zero(7);
+    static Eigen::VectorXd tau_cmd_filt = Eigen::VectorXd::Zero(7);
+
+    if (!filter_initialized)
+    {
+      q_ref_filt = q_ref_raw;
+      dq_ref_filt = dq_ref_raw;
+      dq_r_filt = dq_r_raw;
+      tau_cmd_filt = Eigen::VectorXd::Zero(7);
+      filter_initialized = true;
+    }
+
+    // 越大越平滑，不容易抽搐
+    const double alpha_q_ref = 0.85;
+    const double alpha_dq_ref = 0.90;
+    const double alpha_dq_r = 0.90;
+    const double alpha_tau = 0.80;
+
+    q_ref_filt = alpha_q_ref * q_ref_filt + (1.0 - alpha_q_ref) * q_ref_raw;
+    dq_ref_filt = alpha_dq_ref * dq_ref_filt + (1.0 - alpha_dq_ref) * dq_ref_raw;
+    dq_r_filt = alpha_dq_r * dq_r_filt + (1.0 - alpha_dq_r) * dq_r_raw;
+
+    // ===================== 右臂重力补偿 =====================
+    const Eigen::VectorXd g =
+        pinocchio::computeGeneralizedGravity(model, *data, q_r);
+
+    // ===================== 第六步：关节空间 PD 扭矩跟踪 =====================
+    //
+    // 这里保留你当前整体负号方向。
+    // 但把 Kd 降下来，避免速度噪声导致随机抽搐。
+    //
+    Eigen::VectorXd Kp = Eigen::VectorXd::Zero(7);
+    Eigen::VectorXd Kd = Eigen::VectorXd::Zero(7);
+
+    // 先保持较强跟随，但不过分激进
+    Kp << 22.0, 14.0, 28.0, 28.0, 28.0, 23.0, 8.0;
+    Kd << 0.5, 0.4, 1.5, 1.5, 1.5, 1, 0.5;
+
+    Eigen::VectorXd tau_cmd_raw =
+        -(g +
+          Kp.asDiagonal() * (q_ref_filt - q_r) +
+          Kd.asDiagonal() * (dq_ref_filt - dq_r_filt));
+
+    // ===================== 第七步：扭矩限幅 =====================
+    //
+    // 按你前面那份右臂实测日志，给一个更贴近实际的限幅。
+    //
+    std::array<double, 7> tau_limit = {
+        30.0, 8.0, 6.0, 18, 18, 18, 6};
+
+    for (int i = 0; i < 7; ++i)
+    {
+      if (tau_cmd_raw(i) > tau_limit[i])
+      {
+        tau_cmd_raw(i) = tau_limit[i];
+      }
+      else if (tau_cmd_raw(i) < -tau_limit[i])
+      {
+        tau_cmd_raw(i) = -tau_limit[i];
+      }
+    }
+
+    // ===================== 第八步：对最终扭矩再做低通滤波 =====================
+    //
+    // 这一步对“突然抽一下”非常有效。
+    //
+    tau_cmd_filt = alpha_tau * tau_cmd_filt + (1.0 - alpha_tau) * tau_cmd_raw;
+
+    // 再做一次保护限幅，防止滤波后越界
+    for (int i = 0; i < 7; ++i)
+    {
+      if (tau_cmd_filt(i) > tau_limit[i])
+      {
+        tau_cmd_filt(i) = tau_limit[i];
+      }
+      else if (tau_cmd_filt(i) < -tau_limit[i])
+      {
+        tau_cmd_filt(i) = -tau_limit[i];
+      }
+    }
+
+    // ===================== 第九步：写入右臂扭矩输出 =====================
+    output.use_torque[IDX_R1] = true;
+    output.use_torque[IDX_R2] = true;
+    output.use_torque[IDX_R3] = true;
+    output.use_torque[IDX_R4] = true;
+    output.use_torque[IDX_R5] = true;
+    output.use_torque[IDX_R6] = true;
+    output.use_torque[IDX_R7] = true;
+
+    output.target_torque[IDX_R1] = tau_cmd_filt(0);
+    output.target_torque[IDX_R2] = tau_cmd_filt(1);
+    output.target_torque[IDX_R3] = tau_cmd_filt(2);
+    output.target_torque[IDX_R4] = tau_cmd_filt(3);
+    output.target_torque[IDX_R5] = tau_cmd_filt(4);
+    output.target_torque[IDX_R6] = tau_cmd_filt(5);
+    output.target_torque[IDX_R7] = tau_cmd_filt(6);
+
+    // ===================== 调试输出 =====================
+    //
+    //
+    std::cout
+        << "[runMirrorMode] tau_raw(Nm)= ["
+        << tau_cmd_raw(0) << ", "
+        << tau_cmd_raw(1) << ", "
+        << tau_cmd_raw(2) << ", "
+        << tau_cmd_raw(3) << ", "
+        << tau_cmd_raw(4) << ", "
+        << tau_cmd_raw(5) << ", "
+        << tau_cmd_raw(6) << "]  tau_filt(Nm)= ["
+        << tau_cmd_filt(0) << ", "
+        << tau_cmd_filt(1) << ", "
+        << tau_cmd_filt(2) << ", "
+        << tau_cmd_filt(3) << ", "
+        << tau_cmd_filt(4) << ", "
+        << tau_cmd_filt(5) << ", "
+        << tau_cmd_filt(6) << "]"
+        << std::endl;
+
+    // ===================== 保存 tau_cmd 到 CSV =====================
+    static std::ofstream csv_file;
+    static bool csv_initialized = false;
+    static int log_count = 0;
+
+    if (!csv_initialized)
+    {
+      csv_file.open("mirror_tau_log.csv", std::ios::out | std::ios::app);
+
+      if (csv_file.is_open())
+      {
+        csv_file << "wall_time,t,"
+                 << "tau_raw1,tau_raw2,tau_raw3,tau_raw4,tau_raw5,tau_raw6,tau_raw7,"
+                 << "tau_filt1,tau_filt2,tau_filt3,tau_filt4,tau_filt5,tau_filt6,tau_filt7\n";
+        csv_initialized = true;
+      }
+      else
+      {
+        std::cerr << "[runMirrorMode] 无法打开 mirror_tau_log.csv" << std::endl;
+      }
+    }
+
+    log_count++;
+
+    if (csv_initialized && (log_count % 4 == 0))
+    {
+      static auto t0 = std::chrono::steady_clock::now();
+
+      auto now_sys = std::chrono::system_clock::now();
+      auto now_steady = std::chrono::steady_clock::now();
+
+      double t =
+          std::chrono::duration<double>(now_steady - t0).count();
+
+      auto now_time_t = std::chrono::system_clock::to_time_t(now_sys);
+      auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    now_sys.time_since_epoch()) %
+                1000;
+
+      char time_str[64];
+      std::strftime(
+          time_str,
+          sizeof(time_str),
+          "%Y-%m-%d %H:%M:%S",
+          std::localtime(&now_time_t));
+
+      csv_file
+          << time_str << "."
+          << std::setw(3) << std::setfill('0') << ms.count() << ","
+          << t << ","
+          << tau_cmd_raw(0) << ","
+          << tau_cmd_raw(1) << ","
+          << tau_cmd_raw(2) << ","
+          << tau_cmd_raw(3) << ","
+          << tau_cmd_raw(4) << ","
+          << tau_cmd_raw(5) << ","
+          << tau_cmd_raw(6) << ","
+          << tau_cmd_filt(0) << ","
+          << tau_cmd_filt(1) << ","
+          << tau_cmd_filt(2) << ","
+          << tau_cmd_filt(3) << ","
+          << tau_cmd_filt(4) << ","
+          << tau_cmd_filt(5) << ","
+          << tau_cmd_filt(6) << "\n";
+    }
+
+    // ===================== 第十步：右臂末端固定 =====================
+    output.use_position[IDX_R9] = true;
+    output.target_position[IDX_R9] = 0.0;
+    output.target_velocity[IDX_R9] = pulsePerMsToJointSpeedDegPerSecMagnitude(9, 9000.0);
+    output.target_acc[IDX_R9] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(9, 5.0);
+    output.target_dec[IDX_R9] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(9, 0.25);
+    output.target_smooth_time[IDX_R9] = 25;
+
+    output.use_position[IDX_R10] = true;
+    output.target_position[IDX_R10] = 0.0;
+    output.target_velocity[IDX_R10] = pulsePerMsToJointSpeedDegPerSecMagnitude(10, 3000.0);
+    output.target_acc[IDX_R10] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(10, 5.0);
+    output.target_dec[IDX_R10] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(10, 0.25);
+    output.target_smooth_time[IDX_R10] = 25;
+
+    // ===================== 最终输出有效 =====================
+    output.valid = true;
+  }
+
 } // namespace upperlimb_robot
+
+//

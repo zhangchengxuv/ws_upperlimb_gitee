@@ -60,6 +60,9 @@ namespace upperlimb_robot
     // 双臂镜像模式
     MODE_MIRROR = 10,
 
+    // 左臂主动模式，右臂扭矩镜像跟踪
+    MODE_ACTIVE_MIRROR = 11,
+
   };
 
   // ===================== 电机状态缓存 =====================
@@ -253,5 +256,7 @@ namespace upperlimb_robot
   void runPassiveTorqueMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
   // 双臂镜像模式
   void runMirrorMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
+  // 主动镜像模式
+  void runActiveMirrorMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
 
 } // namespace upperlimb_robot
