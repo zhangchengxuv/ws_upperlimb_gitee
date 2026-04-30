@@ -3871,8 +3871,8 @@ namespace upperlimb_robot
     Eigen::VectorXd Kd = Eigen::VectorXd::Zero(7);
 
     // 先保持较强跟随，但不过分激进
-    Kp << 22.0, 14.0, 28.0, 28.0, 28.0, 23.0, 8.0;
-    Kd << 0.5, 0.4, 1.5, 1.5, 1.5, 1, 0.5;
+    Kp << 22.0, 14.0, 28.0, 30.0, 30.0, 23.0, 8.0;
+    Kd << 0.5, 0.4, 1.5, 1.9, 1.9, 1, 0.5;
 
     Eigen::VectorXd tau_cmd_raw =
         -(g +
