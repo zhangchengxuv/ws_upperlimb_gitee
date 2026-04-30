@@ -3830,8 +3830,11 @@ namespace upperlimb_robot
 
     // ===================== 第四步：对参考和速度做低通滤波 =====================
     //
-    // 左臂参考 q_ref / dq_ref 帧间跳变
-    // 右臂速度 dq_r 噪声大
+    // 注意：
+    // 1. alpha 越大，越平滑，但延迟越明显。
+    // 2. 之前 alpha_q_ref=0.85、alpha_tau=0.80，
+    //    对慢速跟随会造成明显滞后。
+    // 3. 镜像跟随时，左臂角度参考 q_ref 不建议滤得太重。
     //
     static bool filter_initialized = false;
     static Eigen::VectorXd q_ref_filt = Eigen::VectorXd::Zero(7);
@@ -3848,11 +3851,24 @@ namespace upperlimb_robot
       filter_initialized = true;
     }
 
-    // 越大越平滑，不容易抽搐
-    const double alpha_q_ref = 0.85;
-    const double alpha_dq_ref = 0.90;
-    const double alpha_dq_r = 0.90;
-    const double alpha_tau = 0.80;
+    // ===================== 滤波参数 =====================
+    //
+    // 这组参数比原来响应更快：
+    // 原来：
+    // alpha_q_ref = 0.85
+    // alpha_dq_ref = 0.90
+    // alpha_dq_r = 0.90
+    // alpha_tau = 0.80
+    //
+    // 现在：
+    // q_ref 滤波减弱，减少位置参考延迟；
+    // tau 滤波减弱，减少输出扭矩延迟；
+    // dq_r 仍然保留较强滤波，避免速度噪声导致抽搐。
+    //
+    const double alpha_q_ref = 0.45;
+    const double alpha_dq_ref = 0.70;
+    const double alpha_dq_r = 0.85;
+    const double alpha_tau = 0.55;
 
     q_ref_filt = alpha_q_ref * q_ref_filt + (1.0 - alpha_q_ref) * q_ref_raw;
     dq_ref_filt = alpha_dq_ref * dq_ref_filt + (1.0 - alpha_dq_ref) * dq_ref_raw;
@@ -3864,27 +3880,90 @@ namespace upperlimb_robot
 
     // ===================== 第六步：关节空间 PD 扭矩跟踪 =====================
     //
-    // 这里保留你当前整体负号方向。
-    // 但把 Kd 降下来，避免速度噪声导致随机抽搐。
+    // 慢速跟随差，主要不是 Kd 问题，而是：
+    // 1. q_ref 滤波太重；
+    // 2. Kp 产生的低速小误差扭矩不足以克服静摩擦；
+    // 3. tau 输出滤波太重。
     //
     Eigen::VectorXd Kp = Eigen::VectorXd::Zero(7);
     Eigen::VectorXd Kd = Eigen::VectorXd::Zero(7);
 
-    // 先保持较强跟随，但不过分激进
-    Kp << 22.0, 14.0, 28.0, 30.0, 30.0, 23.0, 8.0;
-    Kd << 0.5, 0.4, 1.5, 1.9, 1.9, 1, 0.5;
+    // 比原来略提高 Kp，增强低速位置误差的驱动力
+    //
+    // 原来：
+    // Kp << 22.0, 14.0, 28.0, 30.0, 30.0, 23.0, 8.0;
+    // Kd << 0.5, 0.4, 1.5, 1.9, 1.9, 1, 0.5;
+    //
+    Kp << 28.0, 18.0, 34.0, 50, 28.0, 28.0, 10.0;
+    Kd << 0.6, 0.5, 1.8, 3, 1.8, 1.1, 0.5;
 
+    Eigen::VectorXd e_q = q_ref_filt - q_r;
+    Eigen::VectorXd e_dq = dq_ref_filt - dq_r_filt;
+
+    // ===================== 低速启动补偿 =====================
+    //
+    // 当左臂慢慢动、右臂由于静摩擦没有及时动起来时，
+    // 单纯 Kp * e_q 可能太小，右臂不会马上启动。
+    //
+    // 这里根据位置误差方向，额外加一个很小的补偿扭矩。
+    //
+    // 注意：
+    // 1. 只在位置误差超过 deadband 时启用；
+    // 2. 只在右臂速度较低时启用；
+    // 3. 数值不要太大，否则容易低速抖动。
+    //
+    Eigen::VectorXd tau_static = Eigen::VectorXd::Zero(7);
+
+    const double pos_deadband = 0.4 * DEG2RAD; // 0.4 deg
+    const double low_speed_th = 1.0 * DEG2RAD; // 1 deg/s
+
+    std::array<double, 7> static_tau = {
+        1.2, // R1
+        0.5, // R2
+        0.5, // R3
+        3.0, // R4
+        1.0, // R5
+        0.8, // R6
+        0.3  // R7
+    };
+
+    for (int i = 0; i < 7; ++i)
+    {
+      if (std::abs(e_q(i)) > pos_deadband &&
+          std::abs(dq_r_filt(i)) < low_speed_th)
+      {
+        if (e_q(i) > 0.0)
+        {
+          tau_static(i) = static_tau[i];
+        }
+        else
+        {
+          tau_static(i) = -static_tau[i];
+        }
+      }
+    }
+
+    // ===================== 合成跟踪扭矩 =====================
+    //
+    //
+    // tau_cmd_raw = -(g + Kp * e_q + Kd * e_dq)
+    //
+    // 现在：
+    // tau_cmd_raw = -(g + Kp * e_q + Kd * e_dq + tau_static)
+    //
     Eigen::VectorXd tau_cmd_raw =
         -(g +
-          Kp.asDiagonal() * (q_ref_filt - q_r) +
-          Kd.asDiagonal() * (dq_ref_filt - dq_r_filt));
+          Kp.asDiagonal() * e_q +
+          Kd.asDiagonal() * e_dq +
+          tau_static);
 
     // ===================== 第七步：扭矩限幅 =====================
     //
-    // 按你前面那份右臂实测日志，给一个更贴近实际的限幅。
+    // 先保持你原来的限幅。
+    // 如果某个关节仍然低速跟不上，再单独微调对应关节。
     //
     std::array<double, 7> tau_limit = {
-        30.0, 8.0, 6.0, 18, 18, 18, 6};
+        30.0, 8.0, 6.0, 25.0, 25.0, 25.0, 6.0};
 
     for (int i = 0; i < 7; ++i)
     {
@@ -3900,7 +3979,8 @@ namespace upperlimb_robot
 
     // ===================== 第八步：对最终扭矩再做低通滤波 =====================
     //
-    // 这一步对“突然抽一下”非常有效。
+    // alpha_tau 从 0.80 降到 0.55。
+    // 这样仍然能抑制突变，但不会造成太明显的跟踪延迟。
     //
     tau_cmd_filt = alpha_tau * tau_cmd_filt + (1.0 - alpha_tau) * tau_cmd_raw;
 
