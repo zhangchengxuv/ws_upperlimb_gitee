@@ -224,7 +224,7 @@ private:
     case upperlimb_robot::MODE_ACTIVE:
     case upperlimb_robot::MODE_PASSIVE_TORQUE:
     case upperlimb_robot::MODE_MIRROR:
-    case upperlimb_robot::MODE_ACTIVE_MIRROR:
+    case upperlimb_robot::MODE_ACTIVE_SPRING:
       clearAllTorqueCommands();
       stopAllAxesMotionOnly();
       restoreAllAxesToPositionMode();
@@ -1005,6 +1005,10 @@ private:
       // 主动镜像模式(左臂主动示教，右臂扭矩镜像跟踪)
     case upperlimb_robot::MODE_ACTIVE_MIRROR:
       upperlimb_robot::runActiveMirrorMode(state, sensor_state, output);
+      break;
+      // 双手虚拟弹簧主动模式
+    case upperlimb_robot::MODE_ACTIVE_SPRING:
+      upperlimb_robot::runActiveSpringMode(state, sensor_state, output);
       break;
     case upperlimb_robot::MODE_IDLE:
     default:
