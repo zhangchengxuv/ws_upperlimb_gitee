@@ -1860,135 +1860,155 @@ namespace upperlimb_robot
     constexpr std::size_t IDX_L_J9 = 18;
     constexpr std::size_t IDX_L_J10 = 19;
 
-    // ===================== Pinocchio 懒加载：左臂 =====================
-    static bool left_pin_initialized = false;
-    static bool left_pin_init_failed = false;
-    static pinocchio::Model left_model;
-    static std::unique_ptr<pinocchio::Data> left_data;
+    // ===================== 双臂 Pinocchio 懒加载上下文 =====================
+    //
+    // 这里不再分别加载 left_arm_experiment.urdf 和 right_arm_experiment.urdf。
+    // 双臂零力模式只加载一个双臂整体 URDF。
+    //
+    // URDF 要求：
+    // 1. 左臂 joint1~joint7 为可动关节
+    // 2. 右臂 joint11~joint17 为可动关节
+    // 3. 左臂 joint8~joint10 固定
+    // 4. 右臂 joint18~joint20 固定
+    // 5. 模型总自由度 nq/nv 应为 14
+    //
+    static bool pin_initialized = false;
+    static bool pin_init_failed = false;
+    static pinocchio::Model model;
+    static std::unique_ptr<pinocchio::Data> data;
+
     static pinocchio::FrameIndex left_frame_id_arm = 0;
     static pinocchio::FrameIndex left_frame_id_hand = 0;
-
-    // ===================== Pinocchio 懒加载：右臂 =====================
-    static bool right_pin_initialized = false;
-    static bool right_pin_init_failed = false;
-    static pinocchio::Model right_model;
-    static std::unique_ptr<pinocchio::Data> right_data;
     static pinocchio::FrameIndex right_frame_id_arm = 0;
     static pinocchio::FrameIndex right_frame_id_hand = 0;
 
-    // ===================== 初始化左臂模型 =====================
-    if (!left_pin_initialized && !left_pin_init_failed)
+    // 每个关节在 Pinocchio q/v 向量中的索引。
+    // 不直接假定 URDF 中的关节顺序，避免双臂 URDF 排列变化后 q/v 对不上。
+    static std::array<int, 7> left_q_id = {-1, -1, -1, -1, -1, -1, -1};
+    static std::array<int, 7> left_v_id = {-1, -1, -1, -1, -1, -1, -1};
+    static std::array<int, 7> right_q_id = {-1, -1, -1, -1, -1, -1, -1};
+    static std::array<int, 7> right_v_id = {-1, -1, -1, -1, -1, -1, -1};
+
+    if (!pin_initialized && !pin_init_failed)
     {
       try
       {
+        // ===================== URDF 路径 =====================
         std::string urdf_path =
             ament_index_cpp::get_package_share_directory("upperlimb_robot") +
-            "/urdf/left_arm_experiment.urdf";
+            "/urdf/robot_arms.urdf";
 
-        pinocchio::urdf::buildModel(urdf_path, left_model);
-        left_data = std::make_unique<pinocchio::Data>(left_model);
+        pinocchio::urdf::buildModel(urdf_path, model);
+        data = std::make_unique<pinocchio::Data>(model);
 
-        left_frame_id_arm = left_model.getFrameId("ft_sensor_frame");
-        left_frame_id_hand = left_model.getFrameId("ft_sensor_frame_2");
+        left_frame_id_arm = model.getFrameId("ft_sensor_frame");
+        left_frame_id_hand = model.getFrameId("ft_sensor_frame_2");
+        right_frame_id_arm = model.getFrameId("ft_rightsensor_frame");
+        right_frame_id_hand = model.getFrameId("ft_rightsensor_frame_2");
 
-        if (left_frame_id_arm >= left_model.frames.size())
+        auto load_joint_index = [&](const std::string &joint_name, int &q_id, int &v_id) -> bool
         {
-          std::cerr << "[runBilateralZeroForceMode] 左臂没找到 frame: ft_sensor_frame" << std::endl;
-          left_pin_init_failed = true;
-        }
-        else if (left_frame_id_hand >= left_model.frames.size())
+          const pinocchio::JointIndex jid = model.getJointId(joint_name);
+
+          if (jid >= model.joints.size())
+          {
+            std::cerr
+                << "[runBilateralZeroForceMode] 双臂 URDF 没找到 joint: "
+                << joint_name << std::endl;
+            return false;
+          }
+
+          q_id = model.joints[jid].idx_q();
+          v_id = model.joints[jid].idx_v();
+
+          if (q_id < 0 || q_id >= model.nq || v_id < 0 || v_id >= model.nv)
+          {
+            std::cerr
+                << "[runBilateralZeroForceMode] joint 索引非法: "
+                << joint_name
+                << " q_id=" << q_id
+                << " v_id=" << v_id
+                << " nq=" << model.nq
+                << " nv=" << model.nv
+                << std::endl;
+            return false;
+          }
+
+          return true;
+        };
+
+        bool ok = true;
+
+        ok = ok && load_joint_index("joint1", left_q_id[0], left_v_id[0]);
+        ok = ok && load_joint_index("joint2", left_q_id[1], left_v_id[1]);
+        ok = ok && load_joint_index("joint3", left_q_id[2], left_v_id[2]);
+        ok = ok && load_joint_index("joint4", left_q_id[3], left_v_id[3]);
+        ok = ok && load_joint_index("joint5", left_q_id[4], left_v_id[4]);
+        ok = ok && load_joint_index("joint6", left_q_id[5], left_v_id[5]);
+        ok = ok && load_joint_index("joint7", left_q_id[6], left_v_id[6]);
+
+        ok = ok && load_joint_index("joint11", right_q_id[0], right_v_id[0]);
+        ok = ok && load_joint_index("joint12", right_q_id[1], right_v_id[1]);
+        ok = ok && load_joint_index("joint13", right_q_id[2], right_v_id[2]);
+        ok = ok && load_joint_index("joint14", right_q_id[3], right_v_id[3]);
+        ok = ok && load_joint_index("joint15", right_q_id[4], right_v_id[4]);
+        ok = ok && load_joint_index("joint16", right_q_id[5], right_v_id[5]);
+        ok = ok && load_joint_index("joint17", right_q_id[6], right_v_id[6]);
+
+        if (left_frame_id_arm >= model.frames.size())
         {
-          std::cerr << "[runBilateralZeroForceMode] 左臂没找到 frame: ft_sensor_frame_2" << std::endl;
-          left_pin_init_failed = true;
+          std::cerr << "[runBilateralZeroForceMode] 双臂 URDF 没找到 frame: ft_sensor_frame" << std::endl;
+          pin_init_failed = true;
         }
-        else if (left_model.nq != 7 || left_model.nv != 7)
+        else if (left_frame_id_hand >= model.frames.size())
+        {
+          std::cerr << "[runBilateralZeroForceMode] 双臂 URDF 没找到 frame: ft_sensor_frame_2" << std::endl;
+          pin_init_failed = true;
+        }
+        else if (right_frame_id_arm >= model.frames.size())
+        {
+          std::cerr << "[runBilateralZeroForceMode] 双臂 URDF 没找到 frame: ft_rightsensor_frame" << std::endl;
+          pin_init_failed = true;
+        }
+        else if (right_frame_id_hand >= model.frames.size())
+        {
+          std::cerr << "[runBilateralZeroForceMode] 双臂 URDF 没找到 frame: ft_rightsensor_frame_2" << std::endl;
+          pin_init_failed = true;
+        }
+        else if (!ok)
+        {
+          pin_init_failed = true;
+        }
+        else if (model.nq != 14 || model.nv != 14)
         {
           std::cerr
-              << "[runBilateralZeroForceMode] 左臂模型自由度不是 7，"
-              << "请确认 left_arm_experiment.urdf 中 joint1~joint7 为可动关节。"
-              << " nq=" << left_model.nq
-              << " nv=" << left_model.nv
+              << "[runBilateralZeroForceMode] 双臂整体模型自由度不是 14。"
+              << "请确认 joint1~joint7、joint11~joint17 为可动关节，"
+              << "joint8~joint10、joint18~joint20 为 fixed。"
+              << " nq=" << model.nq
+              << " nv=" << model.nv
               << std::endl;
-          left_pin_init_failed = true;
+          pin_init_failed = true;
         }
         else
         {
-          left_pin_initialized = true;
+          pin_initialized = true;
           std::cout
-              << "[runBilateralZeroForceMode] 左臂 Pinocchio 初始化成功。"
+              << "[runBilateralZeroForceMode] 双臂整体 Pinocchio 初始化成功。"
               << " urdf_path=" << urdf_path
-              << " nq=" << left_model.nq
-              << " nv=" << left_model.nv
+              << " nq=" << model.nq
+              << " nv=" << model.nv
               << std::endl;
         }
       }
       catch (const std::exception &e)
       {
-        std::cerr << "[runBilateralZeroForceMode] 左臂 Pinocchio 初始化异常: " << e.what() << std::endl;
-        left_pin_init_failed = true;
+        std::cerr << "[runBilateralZeroForceMode] 双臂 Pinocchio 初始化异常: " << e.what() << std::endl;
+        pin_init_failed = true;
       }
     }
 
-    // ===================== 初始化右臂模型 =====================
-    if (!right_pin_initialized && !right_pin_init_failed)
-    {
-      try
-      {
-        std::string urdf_path =
-            ament_index_cpp::get_package_share_directory("upperlimb_robot") +
-            "/urdf/right_arm_experiment.urdf";
-
-        pinocchio::urdf::buildModel(urdf_path, right_model);
-        right_data = std::make_unique<pinocchio::Data>(right_model);
-
-        right_frame_id_arm = right_model.getFrameId("ft_rightsensor_frame");
-        right_frame_id_hand = right_model.getFrameId("ft_rightsensor_frame_2");
-
-        if (right_frame_id_arm >= right_model.frames.size())
-        {
-          std::cerr << "[runBilateralZeroForceMode] 右臂没找到 frame: ft_rightsensor_frame" << std::endl;
-          right_pin_init_failed = true;
-        }
-        else if (right_frame_id_hand >= right_model.frames.size())
-        {
-          std::cerr << "[runBilateralZeroForceMode] 右臂没找到 frame: ft_rightsensor_frame_2" << std::endl;
-          right_pin_init_failed = true;
-        }
-        else if (right_model.nq != 7 || right_model.nv != 7)
-        {
-          std::cerr
-              << "[runBilateralZeroForceMode] 右臂模型自由度不是 7，"
-              << "请确认 right_arm_experiment.urdf 中 joint11~joint17 为可动关节。"
-              << " nq=" << right_model.nq
-              << " nv=" << right_model.nv
-              << std::endl;
-          right_pin_init_failed = true;
-        }
-        else
-        {
-          right_pin_initialized = true;
-          std::cout
-              << "[runBilateralZeroForceMode] 右臂 Pinocchio 初始化成功。"
-              << " urdf_path=" << urdf_path
-              << " nq=" << right_model.nq
-              << " nv=" << right_model.nv
-              << std::endl;
-        }
-      }
-      catch (const std::exception &e)
-      {
-        std::cerr << "[runBilateralZeroForceMode] 右臂 Pinocchio 初始化异常: " << e.what() << std::endl;
-        right_pin_init_failed = true;
-      }
-    }
-
-    if (!left_pin_initialized || left_pin_init_failed || !left_data)
-    {
-      output.valid = false;
-      return;
-    }
-
-    if (!right_pin_initialized || right_pin_init_failed || !right_data)
+    if (!pin_initialized || pin_init_failed || !data)
     {
       output.valid = false;
       return;
@@ -2003,135 +2023,81 @@ namespace upperlimb_robot
 
     constexpr double DEG2RAD = M_PI / 180.0;
 
-    // ============================================================
-    // ===================== 左臂：组装 q / v ======================
-    // ============================================================
-    Eigen::VectorXd q_left = Eigen::VectorXd::Zero(left_model.nq);
-    Eigen::VectorXd v_left = Eigen::VectorXd::Zero(left_model.nv);
+    const std::array<std::size_t, 7> left_ctrl_id = {
+        IDX_L_J1, IDX_L_J2, IDX_L_J3, IDX_L_J4, IDX_L_J5, IDX_L_J6, IDX_L_J7};
 
-    q_left(0) = state.position[IDX_L_J1] * DEG2RAD;
-    q_left(1) = state.position[IDX_L_J2] * DEG2RAD;
-    q_left(2) = state.position[IDX_L_J3] * DEG2RAD;
-    q_left(3) = state.position[IDX_L_J4] * DEG2RAD;
-    q_left(4) = state.position[IDX_L_J5] * DEG2RAD;
-    q_left(5) = state.position[IDX_L_J6] * DEG2RAD;
-    q_left(6) = state.position[IDX_L_J7] * DEG2RAD;
+    const std::array<std::size_t, 7> right_ctrl_id = {
+        IDX_R_J11, IDX_R_J12, IDX_R_J13, IDX_R_J14, IDX_R_J15, IDX_R_J16, IDX_R_J17};
 
-    v_left(0) = state.velocity[IDX_L_J1] * DEG2RAD;
-    v_left(1) = state.velocity[IDX_L_J2] * DEG2RAD;
-    v_left(2) = state.velocity[IDX_L_J3] * DEG2RAD;
-    v_left(3) = state.velocity[IDX_L_J4] * DEG2RAD;
-    v_left(4) = state.velocity[IDX_L_J5] * DEG2RAD;
-    v_left(5) = state.velocity[IDX_L_J6] * DEG2RAD;
-    v_left(6) = state.velocity[IDX_L_J7] * DEG2RAD;
-
-    // ============================================================
-    // ===================== 右臂：组装 q / v ======================
-    // ============================================================
-    Eigen::VectorXd q_right = Eigen::VectorXd::Zero(right_model.nq);
-    Eigen::VectorXd v_right = Eigen::VectorXd::Zero(right_model.nv);
-
-    q_right(0) = state.position[IDX_R_J11] * DEG2RAD;
-    q_right(1) = state.position[IDX_R_J12] * DEG2RAD;
-    q_right(2) = state.position[IDX_R_J13] * DEG2RAD;
-    q_right(3) = state.position[IDX_R_J14] * DEG2RAD;
-    q_right(4) = state.position[IDX_R_J15] * DEG2RAD;
-    q_right(5) = state.position[IDX_R_J16] * DEG2RAD;
-    q_right(6) = state.position[IDX_R_J17] * DEG2RAD;
-
-    v_right(0) = state.velocity[IDX_R_J11] * DEG2RAD;
-    v_right(1) = state.velocity[IDX_R_J12] * DEG2RAD;
-    v_right(2) = state.velocity[IDX_R_J13] * DEG2RAD;
-    v_right(3) = state.velocity[IDX_R_J14] * DEG2RAD;
-    v_right(4) = state.velocity[IDX_R_J15] * DEG2RAD;
-    v_right(5) = state.velocity[IDX_R_J16] * DEG2RAD;
-    v_right(6) = state.velocity[IDX_R_J17] * DEG2RAD;
-
-    // ============================================================
-    // ===================== 读取并去偏：左臂 ======================
-    // ============================================================
-    const auto &raw_left_hand = sensor_state.sensor[SENSOR_LEFT_HAND];
-    const auto &bias_left_hand = sensor_state.bias[SENSOR_LEFT_HAND];
-
-    const auto &raw_left_arm = sensor_state.sensor[SENSOR_LEFT_ARM];
-    const auto &bias_left_arm = sensor_state.bias[SENSOR_LEFT_ARM];
-
-    double fx_left_arm = raw_left_arm.fx - bias_left_arm.fx;
-    double fy_left_arm = raw_left_arm.fy - bias_left_arm.fy;
-    double fz_left_arm = raw_left_arm.fz - bias_left_arm.fz;
-    double mx_left_arm = raw_left_arm.mx - bias_left_arm.mx;
-    double my_left_arm = raw_left_arm.my - bias_left_arm.my;
-    double mz_left_arm = raw_left_arm.mz - bias_left_arm.mz;
-
-    double fx_left_hand = raw_left_hand.fx - bias_left_hand.fx;
-    double fy_left_hand = raw_left_hand.fy - bias_left_hand.fy;
-    double fz_left_hand = raw_left_hand.fz - bias_left_hand.fz;
-    double mx_left_hand = raw_left_hand.mx - bias_left_hand.mx;
-    double my_left_hand = raw_left_hand.my - bias_left_hand.my;
-    double mz_left_hand = raw_left_hand.mz - bias_left_hand.mz;
-
-    // ============================================================
-    // ===================== 读取并去偏：右臂 ======================
-    // ============================================================
-    const auto &raw_right_hand = sensor_state.sensor[SENSOR_RIGHT_HAND];
-    const auto &bias_right_hand = sensor_state.bias[SENSOR_RIGHT_HAND];
-
-    const auto &raw_right_arm = sensor_state.sensor[SENSOR_RIGHT_ARM];
-    const auto &bias_right_arm = sensor_state.bias[SENSOR_RIGHT_ARM];
-
-    double fx_right_arm = raw_right_arm.fx - bias_right_arm.fx;
-    double fy_right_arm = raw_right_arm.fy - bias_right_arm.fy;
-    double fz_right_arm = raw_right_arm.fz - bias_right_arm.fz;
-    double mx_right_arm = raw_right_arm.mx - bias_right_arm.mx;
-    double my_right_arm = raw_right_arm.my - bias_right_arm.my;
-    double mz_right_arm = raw_right_arm.mz - bias_right_arm.mz;
-
-    double fx_right_hand = raw_right_hand.fx - bias_right_hand.fx;
-    double fy_right_hand = raw_right_hand.fy - bias_right_hand.fy;
-    double fz_right_hand = raw_right_hand.fz - bias_right_hand.fz;
-    double mx_right_hand = raw_right_hand.mx - bias_right_hand.mx;
-    double my_right_hand = raw_right_hand.my - bias_right_hand.my;
-    double mz_right_hand = raw_right_hand.mz - bias_right_hand.mz;
-
-    // ===================== 传感器方向符号修正 =====================
+    // ===================== 组装双臂整体 q / v =====================
     //
+    // q / v 是双臂整体模型的状态向量，不再拆成 q_left / q_right。
+    //
+    Eigen::VectorXd q = Eigen::VectorXd::Zero(model.nq);
+    Eigen::VectorXd v = Eigen::VectorXd::Zero(model.nv);
+
+    for (std::size_t i = 0; i < 7; ++i)
+    {
+      q(left_q_id[i]) = state.position[left_ctrl_id[i]] * DEG2RAD;
+      v(left_v_id[i]) = state.velocity[left_ctrl_id[i]] * DEG2RAD;
+
+      q(right_q_id[i]) = state.position[right_ctrl_id[i]] * DEG2RAD;
+      v(right_v_id[i]) = state.velocity[right_ctrl_id[i]] * DEG2RAD;
+    }
+
+    // ===================== Wrench 读取、符号修正、死区、限幅 =====================
+    struct Wrench6
+    {
+      double fx;
+      double fy;
+      double fz;
+      double mx;
+      double my;
+      double mz;
+    };
+
+    auto read_wrench = [&](int sensor_id) -> Wrench6
+    {
+      const auto &raw = sensor_state.sensor[sensor_id];
+      const auto &bias = sensor_state.bias[sensor_id];
+
+      return {
+          raw.fx - bias.fx,
+          raw.fy - bias.fy,
+          raw.fz - bias.fz,
+          raw.mx - bias.mx,
+          raw.my - bias.my,
+          raw.mz - bias.mz};
+    };
+
+    Wrench6 left_arm = read_wrench(SENSOR_LEFT_ARM);
+    Wrench6 left_hand = read_wrench(SENSOR_LEFT_HAND);
+    Wrench6 right_arm = read_wrench(SENSOR_RIGHT_ARM);
+    Wrench6 right_hand = read_wrench(SENSOR_RIGHT_HAND);
+
     // 顺序：[Fx, Fy, Fz, Mx, My, Mz]
-    //
+    // 如果实机出现方向反了，优先改这里。
     static const std::array<double, 6> left_arm_sign = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
     static const std::array<double, 6> left_hand_sign = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
 
     static const std::array<double, 6> right_arm_sign = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
     static const std::array<double, 6> right_hand_sign = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
 
-    fx_left_arm *= left_arm_sign[0];
-    fy_left_arm *= left_arm_sign[1];
-    fz_left_arm *= left_arm_sign[2];
-    mx_left_arm *= left_arm_sign[3];
-    my_left_arm *= left_arm_sign[4];
-    mz_left_arm *= left_arm_sign[5];
+    auto apply_sign = [](Wrench6 &w, const std::array<double, 6> &sign)
+    {
+      w.fx *= sign[0];
+      w.fy *= sign[1];
+      w.fz *= sign[2];
+      w.mx *= sign[3];
+      w.my *= sign[4];
+      w.mz *= sign[5];
+    };
 
-    fx_left_hand *= left_hand_sign[0];
-    fy_left_hand *= left_hand_sign[1];
-    fz_left_hand *= left_hand_sign[2];
-    mx_left_hand *= left_hand_sign[3];
-    my_left_hand *= left_hand_sign[4];
-    mz_left_hand *= left_hand_sign[5];
+    apply_sign(left_arm, left_arm_sign);
+    apply_sign(left_hand, left_hand_sign);
+    apply_sign(right_arm, right_arm_sign);
+    apply_sign(right_hand, right_hand_sign);
 
-    fx_right_arm *= right_arm_sign[0];
-    fy_right_arm *= right_arm_sign[1];
-    fz_right_arm *= right_arm_sign[2];
-    mx_right_arm *= right_arm_sign[3];
-    my_right_arm *= right_arm_sign[4];
-    mz_right_arm *= right_arm_sign[5];
-
-    fx_right_hand *= right_hand_sign[0];
-    fy_right_hand *= right_hand_sign[1];
-    fz_right_hand *= right_hand_sign[2];
-    mx_right_hand *= right_hand_sign[3];
-    my_right_hand *= right_hand_sign[4];
-    mz_right_hand *= right_hand_sign[5];
-
-    // ===================== 死区 =====================
     const double force_deadzone = 1.0;   // N
     const double torque_deadzone = 0.05; // Nm
 
@@ -2140,39 +2106,24 @@ namespace upperlimb_robot
       return (std::abs(x) < dz) ? 0.0 : x;
     };
 
-    // 左臂
-    fx_left_arm = apply_deadzone(fx_left_arm, force_deadzone);
-    fy_left_arm = apply_deadzone(fy_left_arm, force_deadzone);
-    fz_left_arm = apply_deadzone(fz_left_arm, force_deadzone);
-    mx_left_arm = apply_deadzone(mx_left_arm, torque_deadzone);
-    my_left_arm = apply_deadzone(my_left_arm, torque_deadzone);
-    mz_left_arm = apply_deadzone(mz_left_arm, torque_deadzone);
+    auto apply_wrench_deadzone = [&](Wrench6 &w)
+    {
+      w.fx = apply_deadzone(w.fx, force_deadzone);
+      w.fy = apply_deadzone(w.fy, force_deadzone);
+      w.fz = apply_deadzone(w.fz, force_deadzone);
 
-    fx_left_hand = apply_deadzone(fx_left_hand, force_deadzone);
-    fy_left_hand = apply_deadzone(fy_left_hand, force_deadzone);
-    fz_left_hand = apply_deadzone(fz_left_hand, force_deadzone);
-    mx_left_hand = apply_deadzone(mx_left_hand, torque_deadzone);
-    my_left_hand = apply_deadzone(my_left_hand, torque_deadzone);
-    mz_left_hand = apply_deadzone(mz_left_hand, torque_deadzone);
+      w.mx = apply_deadzone(w.mx, torque_deadzone);
+      w.my = apply_deadzone(w.my, torque_deadzone);
+      w.mz = apply_deadzone(w.mz, torque_deadzone);
+    };
 
-    // 右臂
-    fx_right_arm = apply_deadzone(fx_right_arm, force_deadzone);
-    fy_right_arm = apply_deadzone(fy_right_arm, force_deadzone);
-    fz_right_arm = apply_deadzone(fz_right_arm, force_deadzone);
-    mx_right_arm = apply_deadzone(mx_right_arm, torque_deadzone);
-    my_right_arm = apply_deadzone(my_right_arm, torque_deadzone);
-    mz_right_arm = apply_deadzone(mz_right_arm, torque_deadzone);
+    apply_wrench_deadzone(left_arm);
+    apply_wrench_deadzone(left_hand);
+    apply_wrench_deadzone(right_arm);
+    apply_wrench_deadzone(right_hand);
 
-    fx_right_hand = apply_deadzone(fx_right_hand, force_deadzone);
-    fy_right_hand = apply_deadzone(fy_right_hand, force_deadzone);
-    fz_right_hand = apply_deadzone(fz_right_hand, force_deadzone);
-    mx_right_hand = apply_deadzone(mx_right_hand, torque_deadzone);
-    my_right_hand = apply_deadzone(my_right_hand, torque_deadzone);
-    mz_right_hand = apply_deadzone(mz_right_hand, torque_deadzone);
-
-    // ===================== 限幅 =====================
-    const double force_limit = 80.0; // N
-    const double moment_limit = 8.0; // Nm
+    const double force_limit = 80.0;  // N
+    const double moment_limit = 8.0;  // Nm
 
     auto clamp_abs = [](double x, double lim) -> double
     {
@@ -2183,161 +2134,105 @@ namespace upperlimb_robot
       return x;
     };
 
-    // 左臂
-    fx_left_arm = clamp_abs(fx_left_arm, force_limit);
-    fy_left_arm = clamp_abs(fy_left_arm, force_limit);
-    fz_left_arm = clamp_abs(fz_left_arm, force_limit);
-    mx_left_arm = clamp_abs(mx_left_arm, moment_limit);
-    my_left_arm = clamp_abs(my_left_arm, moment_limit);
-    mz_left_arm = clamp_abs(mz_left_arm, moment_limit);
+    auto clamp_wrench = [&](Wrench6 &w)
+    {
+      w.fx = clamp_abs(w.fx, force_limit);
+      w.fy = clamp_abs(w.fy, force_limit);
+      w.fz = clamp_abs(w.fz, force_limit);
 
-    fx_left_hand = clamp_abs(fx_left_hand, force_limit);
-    fy_left_hand = clamp_abs(fy_left_hand, force_limit);
-    fz_left_hand = clamp_abs(fz_left_hand, force_limit);
-    mx_left_hand = clamp_abs(mx_left_hand, moment_limit);
-    my_left_hand = clamp_abs(my_left_hand, moment_limit);
-    mz_left_hand = clamp_abs(mz_left_hand, moment_limit);
+      w.mx = clamp_abs(w.mx, moment_limit);
+      w.my = clamp_abs(w.my, moment_limit);
+      w.mz = clamp_abs(w.mz, moment_limit);
+    };
 
-    // 右臂
-    fx_right_arm = clamp_abs(fx_right_arm, force_limit);
-    fy_right_arm = clamp_abs(fy_right_arm, force_limit);
-    fz_right_arm = clamp_abs(fz_right_arm, force_limit);
-    mx_right_arm = clamp_abs(mx_right_arm, moment_limit);
-    my_right_arm = clamp_abs(my_right_arm, moment_limit);
-    mz_right_arm = clamp_abs(mz_right_arm, moment_limit);
+    clamp_wrench(left_arm);
+    clamp_wrench(left_hand);
+    clamp_wrench(right_arm);
+    clamp_wrench(right_hand);
 
-    fx_right_hand = clamp_abs(fx_right_hand, force_limit);
-    fy_right_hand = clamp_abs(fy_right_hand, force_limit);
-    fz_right_hand = clamp_abs(fz_right_hand, force_limit);
-    mx_right_hand = clamp_abs(mx_right_hand, moment_limit);
-    my_right_hand = clamp_abs(my_right_hand, moment_limit);
-    mz_right_hand = clamp_abs(mz_right_hand, moment_limit);
+    // ===================== 双臂整体动力学计算 =====================
+    //
+    // g 的维度为 14，对应双臂整体模型的全部可动关节。
+    // 这一步是和以前分开算 left_model/right_model 的本质区别。
+    //
+    Eigen::VectorXd g = pinocchio::computeGeneralizedGravity(model, *data, q);
 
-    // ============================================================
-    // ===================== 左臂：动力学计算 ======================
-    // ============================================================
-    Eigen::VectorXd g_left = pinocchio::computeGeneralizedGravity(left_model, *left_data, q_left);
+    Eigen::MatrixXd J_left_arm = Eigen::MatrixXd::Zero(6, model.nv);
+    Eigen::MatrixXd J_left_hand = Eigen::MatrixXd::Zero(6, model.nv);
+    Eigen::MatrixXd J_right_arm = Eigen::MatrixXd::Zero(6, model.nv);
+    Eigen::MatrixXd J_right_hand = Eigen::MatrixXd::Zero(6, model.nv);
 
-    Eigen::MatrixXd J_left_arm = Eigen::MatrixXd::Zero(6, left_model.nv);
-    Eigen::MatrixXd J_left_hand = Eigen::MatrixXd::Zero(6, left_model.nv);
+    pinocchio::computeFrameJacobian(model, *data, q, left_frame_id_arm, pinocchio::LOCAL, J_left_arm);
+    pinocchio::computeFrameJacobian(model, *data, q, left_frame_id_hand, pinocchio::LOCAL, J_left_hand);
+    pinocchio::computeFrameJacobian(model, *data, q, right_frame_id_arm, pinocchio::LOCAL, J_right_arm);
+    pinocchio::computeFrameJacobian(model, *data, q, right_frame_id_hand, pinocchio::LOCAL, J_right_hand);
 
-    pinocchio::computeFrameJacobian(left_model, *left_data, q_left, left_frame_id_arm, pinocchio::LOCAL, J_left_arm);
-    pinocchio::computeFrameJacobian(left_model, *left_data, q_left, left_frame_id_hand, pinocchio::LOCAL, J_left_hand);
+    auto make_force = [](const Wrench6 &w) -> pinocchio::Force
+    {
+      pinocchio::Force f = pinocchio::Force::Zero();
+      f.linear() << w.fx, w.fy, w.fz;
+      f.angular() << w.mx, w.my, w.mz;
+      return f;
+    };
 
-    pinocchio::Force f_left_arm = pinocchio::Force::Zero();
-    f_left_arm.linear() << fx_left_arm, fy_left_arm, fz_left_arm;
-    f_left_arm.angular() << mx_left_arm, my_left_arm, mz_left_arm;
+    pinocchio::Force f_left_arm = make_force(left_arm);
+    pinocchio::Force f_left_hand = make_force(left_hand);
+    pinocchio::Force f_right_arm = make_force(right_arm);
+    pinocchio::Force f_right_hand = make_force(right_hand);
 
-    pinocchio::Force f_left_hand = pinocchio::Force::Zero();
-    f_left_hand.linear() << fx_left_hand, fy_left_hand, fz_left_hand;
-    f_left_hand.angular() << mx_left_hand, my_left_hand, mz_left_hand;
+    Eigen::VectorXd tau_ext =
+        J_left_arm.transpose() * f_left_arm.toVector() +
+        J_left_hand.transpose() * f_left_hand.toVector() +
+        J_right_arm.transpose() * f_right_arm.toVector() +
+        J_right_hand.transpose() * f_right_hand.toVector();
 
-    Eigen::VectorXd tau_left_arm = J_left_arm.transpose() * f_left_arm.toVector();
-    Eigen::VectorXd tau_left_hand = J_left_hand.transpose() * f_left_hand.toVector();
-    Eigen::VectorXd tau_left_ext = tau_left_arm + tau_left_hand;
+    // ===================== 关节阻尼项 =====================
+    //
+    // 阻尼仍按左右臂各 7 个主动关节设置，但写入同一个 14 维向量。
+    //
+    Eigen::VectorXd damping = Eigen::VectorXd::Zero(model.nv);
 
-    Eigen::VectorXd damping_left = Eigen::VectorXd::Zero(left_model.nv);
-    damping_left(0) = 0.0;
-    damping_left(1) = 0.4;
-    damping_left(2) = 0.3;
-    damping_left(3) = 0.0;
-    damping_left(4) = 0.0;
-    damping_left(5) = 0.2;
-    damping_left(6) = 0.3;
+    const std::array<double, 7> damping_value = {
+        0.0, 0.4, 0.3, 0.0, 0.0, 0.2, 0.3};
 
-    Eigen::VectorXd tau_left_damping = -(damping_left.asDiagonal() * v_left);
-    Eigen::VectorXd tau_left = g_left + tau_left_ext + tau_left_damping;
+    for (std::size_t i = 0; i < 7; ++i)
+    {
+      damping(left_v_id[i]) = damping_value[i];
+      damping(right_v_id[i]) = damping_value[i];
+    }
 
-    // ============================================================
-    // ===================== 右臂：动力学计算 ======================
-    // ============================================================
-    Eigen::VectorXd g_right = pinocchio::computeGeneralizedGravity(right_model, *right_data, q_right);
+    Eigen::VectorXd tau_damping = -(damping.asDiagonal() * v);
 
-    Eigen::MatrixXd J_right_arm = Eigen::MatrixXd::Zero(6, right_model.nv);
-    Eigen::MatrixXd J_right_hand = Eigen::MatrixXd::Zero(6, right_model.nv);
+    // ===================== 最终关节扭矩 =====================
+    //
+    // tau 是双臂整体模型下的 14 维关节力矩。
+    //
+    Eigen::VectorXd tau = g + tau_ext + tau_damping;
 
-    pinocchio::computeFrameJacobian(right_model, *right_data, q_right, right_frame_id_arm, pinocchio::LOCAL, J_right_arm);
-    pinocchio::computeFrameJacobian(right_model, *right_data, q_right, right_frame_id_hand, pinocchio::LOCAL, J_right_hand);
+    const std::array<double, 7> torque_limit = {
+        30.0, 20.0, 16.0, 12.0, 12.0, 12.0, 8.0};
 
-    pinocchio::Force f_right_arm = pinocchio::Force::Zero();
-    f_right_arm.linear() << fx_right_arm, fy_right_arm, fz_right_arm;
-    f_right_arm.angular() << mx_right_arm, my_right_arm, mz_right_arm;
+    auto write_torque = [&](std::size_t ctrl_id, int v_id, double sign, double limit)
+    {
+      output.use_torque[ctrl_id] = true;
+      output.target_torque[ctrl_id] = clamp_abs(sign * tau(v_id), limit);
+    };
 
-    pinocchio::Force f_right_hand = pinocchio::Force::Zero();
-    f_right_hand.linear() << fx_right_hand, fy_right_hand, fz_right_hand;
-    f_right_hand.angular() << mx_right_hand, my_right_hand, mz_right_hand;
+    // ===================== 输出：左臂扭矩 =====================
+    for (std::size_t i = 0; i < 7; ++i)
+    {
+      write_torque(left_ctrl_id[i], left_v_id[i], 1.0, torque_limit[i]);
+    }
 
-    Eigen::VectorXd tau_right_arm = J_right_arm.transpose() * f_right_arm.toVector();
-    Eigen::VectorXd tau_right_hand = J_right_hand.transpose() * f_right_hand.toVector();
-    Eigen::VectorXd tau_right_ext = tau_right_arm + tau_right_hand;
-
-    Eigen::VectorXd damping_right = Eigen::VectorXd::Zero(right_model.nv);
-    damping_right(0) = 0.0;
-    damping_right(1) = 0.4;
-    damping_right(2) = 0.3;
-    damping_right(3) = 0.0;
-    damping_right(4) = 0.0;
-    damping_right(5) = 0.2;
-    damping_right(6) = 0.3;
-
-    Eigen::VectorXd tau_right_damping = -(damping_right.asDiagonal() * v_right);
-    Eigen::VectorXd tau_right = g_right + tau_right_ext + tau_right_damping;
-
-    // ===================== 左臂扭矩限幅 =====================
-    tau_left(0) = clamp_abs(tau_left(0), 30.0);
-    tau_left(1) = clamp_abs(tau_left(1), 20.0);
-    tau_left(2) = clamp_abs(tau_left(2), 16.0);
-    tau_left(3) = clamp_abs(tau_left(3), 12.0);
-    tau_left(4) = clamp_abs(tau_left(4), 12.0);
-    tau_left(5) = clamp_abs(tau_left(5), 12.0);
-    tau_left(6) = clamp_abs(tau_left(6), 8.0);
-
-    // ===================== 右臂扭矩限幅 =====================
-    tau_right(0) = clamp_abs(-tau_right(0), 30.0);
-    tau_right(1) = clamp_abs(-tau_right(1), 20.0);
-    tau_right(2) = clamp_abs(-tau_right(2), 16.0);
-    tau_right(3) = clamp_abs(-tau_right(3), 12.0);
-    tau_right(4) = clamp_abs(-tau_right(4), 12.0);
-    tau_right(5) = clamp_abs(-tau_right(5), 12.0);
-    tau_right(6) = clamp_abs(-tau_right(6), 8.0);
-
-    // ============================================================
-    // ===================== 输出：左臂扭矩 ========================
-    // ============================================================
-    output.use_torque[IDX_L_J1] = true;
-    output.use_torque[IDX_L_J2] = true;
-    output.use_torque[IDX_L_J3] = true;
-    output.use_torque[IDX_L_J4] = true;
-    output.use_torque[IDX_L_J5] = true;
-    output.use_torque[IDX_L_J6] = true;
-    output.use_torque[IDX_L_J7] = true;
-
-    output.target_torque[IDX_L_J1] = tau_left(0);
-    output.target_torque[IDX_L_J2] = tau_left(1);
-    output.target_torque[IDX_L_J3] = tau_left(2);
-    output.target_torque[IDX_L_J4] = tau_left(3);
-    output.target_torque[IDX_L_J5] = tau_left(4);
-    output.target_torque[IDX_L_J6] = tau_left(5);
-    output.target_torque[IDX_L_J7] = tau_left(6);
-
-    // ============================================================
-    // ===================== 输出：右臂扭矩 ========================
-    // ============================================================
-    output.use_torque[IDX_R_J11] = true;
-    output.use_torque[IDX_R_J12] = true;
-    output.use_torque[IDX_R_J13] = true;
-    output.use_torque[IDX_R_J14] = true;
-    output.use_torque[IDX_R_J15] = true;
-    output.use_torque[IDX_R_J16] = true;
-    output.use_torque[IDX_R_J17] = true;
-
-    output.target_torque[IDX_R_J11] = tau_right(0);
-    output.target_torque[IDX_R_J12] = tau_right(1);
-    output.target_torque[IDX_R_J13] = tau_right(2);
-    output.target_torque[IDX_R_J14] = tau_right(3);
-    output.target_torque[IDX_R_J15] = tau_right(4);
-    output.target_torque[IDX_R_J16] = tau_right(5);
-    output.target_torque[IDX_R_J17] = tau_right(6);
+    // ===================== 输出：右臂扭矩 =====================
+    //
+    // 这里保留你原来双臂零力里对右臂力矩取负的处理。
+    // 如果改成整体 URDF 后右臂方向已经完全统一，实机测试时可把 -1.0 改为 1.0。
+    //
+    for (std::size_t i = 0; i < 7; ++i)
+    {
+      write_torque(right_ctrl_id[i], right_v_id[i], -1.0, torque_limit[i]);
+    }
 
     // ===================== 固定右臂末端 joint18~joint20 =====================
     output.use_position[IDX_R_J18] = true;
@@ -4829,4 +4724,4 @@ namespace upperlimb_robot
 
 } // namespace upperlimb_robot
 
-//
+//git pull --tags upperlimb main
