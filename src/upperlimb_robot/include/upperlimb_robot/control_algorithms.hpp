@@ -228,6 +228,9 @@ namespace upperlimb_robot
   // 用于“下发驱动扭矩命令”
   double torqueNmToRaw(int axis, double torque_nm);
 
+  // 重置双手虚拟弹簧模式的状态
+  void resetActiveSpringMode();
+
   // ===================== 控制算法接口 =====================
   // 不需要需要传感器信息
 

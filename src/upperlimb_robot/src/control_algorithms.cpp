@@ -2122,8 +2122,8 @@ namespace upperlimb_robot
     apply_wrench_deadzone(right_arm);
     apply_wrench_deadzone(right_hand);
 
-    const double force_limit = 80.0;  // N
-    const double moment_limit = 8.0;  // Nm
+    const double force_limit = 80.0; // N
+    const double moment_limit = 8.0; // Nm
 
     auto clamp_abs = [](double x, double lim) -> double
     {
@@ -4416,9 +4416,36 @@ namespace upperlimb_robot
     output.valid = true;
   }
 
+  // ===================== 双臂弹簧模式状态 =====================
+  // 这里的状态会在 runActiveSpringMode 内部被修改，
+  //
+  namespace
+  {
+    bool spring_initialized = false;
+    double spring_d0 = 0.0;
+    double spring_gain_scale = 0.0;
+    int spring_debug_counter = 0;
+  }
 
-  // 左臂右臂弹簧模式
-  void runActiveSpringMode( const MotorStateCache &state, const SensorStateCache &sensor_state,ControlOutputCache &output)
+  void resetActiveSpringMode()
+  {
+    spring_initialized = false;
+    spring_d0 = 0.0;
+    spring_gain_scale = 0.0;
+    spring_debug_counter = 0;
+
+    std::cout << "[resetActiveSpringMode] 弹簧模式状态已重置" << std::endl;
+  }
+
+  // ===================== 左臂右臂弹簧模式 =====================
+  //    
+  // 1. 只做双手之间 X 方向的一维虚拟弹簧
+  // 2. RViz/world 坐标系：+X 向左，-X 向右，+Z 向上
+  // 3. 进入模式瞬间，把当前两手 X 向距离作为弹簧原长
+  // 4. 弹簧力通过 J^T F 映射为关节力矩
+  // 5. 输出：tau_cmd = g + tau_spring - Dq
+  //
+  void runActiveSpringMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output)
   {
     (void)sensor_state;
 
@@ -4428,7 +4455,10 @@ namespace upperlimb_robot
     constexpr double DEG2RAD = M_PI / 180.0;
 
     // ===================== 控制层索引 =====================
-    // 右臂 joint11~joint17 -> 0~6
+    //
+    // 右臂 joint11~joint17 -> 控制层索引 0~6
+    // 右臂 joint18~joint20 -> 控制层索引 7~9，末端保持
+    //
     constexpr std::size_t IDX_R_J11 = 0;
     constexpr std::size_t IDX_R_J12 = 1;
     constexpr std::size_t IDX_R_J13 = 2;
@@ -4436,8 +4466,12 @@ namespace upperlimb_robot
     constexpr std::size_t IDX_R_J15 = 4;
     constexpr std::size_t IDX_R_J16 = 5;
     constexpr std::size_t IDX_R_J17 = 6;
+    constexpr std::size_t IDX_R_J18 = 7;
+    constexpr std::size_t IDX_R_J19 = 8;
+    constexpr std::size_t IDX_R_J20 = 9;
 
-    // 左臂 joint1~joint7 -> 10~16
+    // 左臂 joint1~joint7 -> 控制层索引 10~16
+    // 左臂 joint8~joint10 -> 控制层索引 17~19，末端保持
     constexpr std::size_t IDX_L_J1 = 10;
     constexpr std::size_t IDX_L_J2 = 11;
     constexpr std::size_t IDX_L_J3 = 12;
@@ -4445,6 +4479,19 @@ namespace upperlimb_robot
     constexpr std::size_t IDX_L_J5 = 14;
     constexpr std::size_t IDX_L_J6 = 15;
     constexpr std::size_t IDX_L_J7 = 16;
+    constexpr std::size_t IDX_L_J8 = 17;
+    constexpr std::size_t IDX_L_J9 = 18;
+    constexpr std::size_t IDX_L_J10 = 19;
+
+    // ===================== 小工具函数 =====================
+    auto clamp_abs = [](double x, double lim) -> double
+    {
+      if (x > lim)
+        return lim;
+      if (x < -lim)
+        return -lim;
+      return x;
+    };
 
     // ===================== Pinocchio 模型 =====================
     static bool pin_initialized = false;
@@ -4471,25 +4518,28 @@ namespace upperlimb_robot
 
         if (frame_id_left_hand >= model.frames.size())
         {
-          std::cerr << "[runActiveSpringMode] 没找到 ft_sensor_frame_2" << std::endl;
+          std::cerr << "[runActiveSpringMode] 没找到 frame: ft_sensor_frame_2" << std::endl;
           pin_init_failed = true;
         }
         else if (frame_id_right_hand >= model.frames.size())
         {
-          std::cerr << "[runActiveSpringMode] 没找到 ft_rightsensor_frame_2" << std::endl;
+          std::cerr << "[runActiveSpringMode] 没找到 frame: ft_rightsensor_frame_2" << std::endl;
           pin_init_failed = true;
         }
         else
         {
           pin_initialized = true;
 
-          std::cout << "[runActiveSpringMode] Pinocchio 初始化成功，nq="
-                    << model.nq << " nv=" << model.nv << std::endl;
+          std::cout << "[runActiveSpringMode] Pinocchio 初始化成功。"
+                    << " urdf_path=" << urdf_path
+                    << " nq=" << model.nq
+                    << " nv=" << model.nv
+                    << std::endl;
 
           // 第一次调试时打印关节顺序，确认 joint1~7 / joint11~17 的 idx_q、idx_v
           for (pinocchio::JointIndex jid = 1; jid < model.joints.size(); ++jid)
           {
-            std::cout << "joint name=" << model.names[jid]
+            std::cout << "[runActiveSpringMode] joint name=" << model.names[jid]
                       << " idx_q=" << model.joints[jid].idx_q()
                       << " idx_v=" << model.joints[jid].idx_v()
                       << std::endl;
@@ -4511,6 +4561,13 @@ namespace upperlimb_robot
     }
 
     // ===================== 组装 q / v =====================
+    //
+    // 注意：
+    // 1. state.position 单位是 deg
+    // 2. state.velocity 单位是 deg/s
+    // 3. Pinocchio 使用 rad / rad/s
+    // 4. 不假设 joint 顺序，全部通过 joint name 找 idx_q / idx_v
+    //
     Eigen::VectorXd q = Eigen::VectorXd::Zero(model.nq);
     Eigen::VectorXd v = Eigen::VectorXd::Zero(model.nv);
 
@@ -4560,22 +4617,34 @@ namespace upperlimb_robot
     Eigen::Vector3d p_right =
         data->oMf[frame_id_right_hand].translation();
 
-    // ===================== 选择水平弹簧方向 =====================
-    Eigen::Vector3d axis_world(1.0, 0.0, 0.0); 
+    // ===================== 选择弹簧方向 =====================
+    //
+    // 你的 RViz/world 坐标系：
+    // +X 红色：朝左
+    // +Y 绿色：向后
+    // +Z 蓝色：向上
+    //
+    // 所以双手左右方向弹簧使用 X 轴。
+    //
+    Eigen::Vector3d axis_world(1.0, 0.0, 0.0);
 
-    double x_left = axis_world.dot(p_left);
-    double x_right = axis_world.dot(p_right);
+    // 左手相对右手的 X 向距离：
+    // 左手在左侧时，一般 x_left > x_right，所以 d 为正。
+    double d = axis_world.dot(p_left - p_right);
 
-    double dx = x_left - x_right;
-
-    // ===================== 初始距离作为弹簧原长 =====================
-    static bool spring_initialized = false;
-    static double dx0 = 0.0;
-
+    // ===================== 弹簧原长初始化 =====================
+    //
+    // 每次进入弹簧模式时，外部必须调用 resetActiveSpringMode()。
+    // reset 后第一次进入本函数，会把当前 d 记录为 spring_d0。
+    //
     if (!spring_initialized)
     {
-      dx0 = dx;
+      spring_d0 = d;
+      spring_gain_scale = 0.0;
       spring_initialized = true;
+
+      std::cout << "[runActiveSpringMode] 初始化弹簧原长 spring_d0="
+                << spring_d0 << " m" << std::endl;
     }
 
     // ===================== 手部速度 =====================
@@ -4587,38 +4656,51 @@ namespace upperlimb_robot
         pinocchio::getFrameVelocity(
             model, *data, frame_id_right_hand, pinocchio::WORLD);
 
-    double dx_dot =
-        axis_world.dot(v_left.linear() - v_right.linear());
+    // 左手相对右手在 X 方向上的速度
+    double d_dot = axis_world.dot(v_left.linear() - v_right.linear());
 
     // ===================== 虚拟弹簧-阻尼 =====================
-    double e = dx - dx0;
+    //
+    // e > 0：两手在 X 方向距离比进入模式时更大
+    //        左手应受到 -X 方向力，右手受到 +X 方向力
+    //
+    // e < 0：两手在 X 方向距离比进入模式时更小
+    //        左手应受到 +X 方向力，右手受到 -X 方向力
+    //
+    double e = d - spring_d0;
 
-    const double deadband = 0.005; // 5 mm 死区
+    // 5 mm 死区，避免微小抖动产生弹簧力
+    const double deadband = 0.005;
     if (std::abs(e) < deadband)
     {
       e = 0.0;
     }
 
-    const double Kx = 30.0;     // N/m，
-    const double Bx = 4.0;      // N/(m/s)
-    const double F_limit = 8.0; // N，
+    // 调试阶段先用小参数。
+    // 稳定后可以逐步改为 Kx=10、20、30，F_limit=3、5、8。
+    const double Kx = 5.0;      // N/m
+    const double Bx = 0.5;      // N/(m/s)
+    const double F_limit = 1.5; // N
 
-    auto clamp_abs = [](double x, double lim) -> double
-    {
-      if (x > lim)
-        return lim;
-      if (x < -lim)
-        return -lim;
-      return x;
-    };
-
-    double f_left_scalar = -Kx * e - Bx * dx_dot;
+    // 左手弹簧力标量。
+    // 这里使用负号，是因为 d = x_left - x_right。
+    double f_left_scalar = -Kx * e - Bx * d_dot;
     f_left_scalar = clamp_abs(f_left_scalar, F_limit);
+
+    // 1 秒渐入，避免切入模式瞬间突然给力
+    const double dt = 1.0 / 90.0;
+    spring_gain_scale = std::min(1.0, spring_gain_scale + dt / 1.0);
+    f_left_scalar *= spring_gain_scale;
 
     Eigen::Vector3d F_left_world = f_left_scalar * axis_world;
     Eigen::Vector3d F_right_world = -F_left_world;
 
     // ===================== 计算左右手 Jacobian =====================
+    //
+    // 注意：
+    // 这里使用 pinocchio::WORLD，因此 F_left_world / F_right_world
+    // 也必须是 WORLD 坐标系下的力。
+    //
     Eigen::MatrixXd J_left = Eigen::MatrixXd::Zero(6, model.nv);
     Eigen::MatrixXd J_right = Eigen::MatrixXd::Zero(6, model.nv);
 
@@ -4646,7 +4728,17 @@ namespace upperlimb_robot
 
     // ===================== 虚拟弹簧力映射为关节扭矩 =====================
     Eigen::VectorXd tau_spring =
-        J_left.transpose() * f_left.toVector() + J_right.transpose() * f_right.toVector();
+        J_left.transpose() * f_left.toVector() +
+        J_right.transpose() * f_right.toVector();
+
+    // 调试开关：
+    // 如果打开后右手仍会上抬，问题不在弹簧项；
+    // 如果打开后不再上抬，问题就在 tau_spring 方向/参数/初始化。
+    const bool debug_disable_spring = false;
+    if (debug_disable_spring)
+    {
+      tau_spring.setZero();
+    }
 
     // ===================== 重力补偿 + 虚拟弹簧 + 关节阻尼 =====================
     Eigen::VectorXd g =
@@ -4654,15 +4746,91 @@ namespace upperlimb_robot
 
     Eigen::VectorXd tau_cmd = g + tau_spring;
 
-    // 加一点关节阻尼，防止弹簧模式抖动
+    // 关节阻尼，避免弹簧模式发散或抖动
     const double joint_damping = 0.3;
     tau_cmd += -joint_damping * v;
 
-    // ===================== 扭矩限幅 =====================
-    const double tau_limit = 8.0;
+    // ===================== 调试打印 =====================
+    //
+    // 30 帧打印一次，90 Hz 下约 0.33 s 一次。
+    // 刚进入模式时，应满足：
+    // e ≈ 0
+    // f_left_scalar ≈ 0
+    // tau_spring 较小
+    //
+    if ((spring_debug_counter++ % 30) == 0)
+    {
+      std::cout << "[spring_debug] "
+                << "p_left=" << p_left.transpose()
+                << " p_right=" << p_right.transpose()
+                << " d=" << d
+                << " d0=" << spring_d0
+                << " e=" << e
+                << " d_dot=" << d_dot
+                << " gain=" << spring_gain_scale
+                << " f_left=" << f_left_scalar
+                << " F_left=" << F_left_world.transpose()
+                << " F_right=" << F_right_world.transpose()
+                << std::endl;
+
+      std::cout << "[spring_debug] "
+                << "tau_spring=" << tau_spring.transpose()
+                << std::endl;
+
+      std::cout << "[spring_debug] "
+                << "g=" << g.transpose()
+                << std::endl;
+
+      std::cout << "[spring_debug] "
+                << "tau_cmd_before_limit=" << tau_cmd.transpose()
+                << std::endl;
+    }
+
+    // ===================== 分关节扭矩限幅 =====================
+    //
+    // 不再所有关节统一 8 Nm。
+    // 大关节需要更高限幅，否则左臂可能表现为“动不了”。
+    //
+    Eigen::VectorXd tau_limit_vec =
+        Eigen::VectorXd::Constant(model.nv, 8.0);
+
+    auto set_tau_limit = [&](const std::string &joint_name, double lim)
+    {
+      pinocchio::JointIndex jid = model.getJointId(joint_name);
+      if (jid >= model.joints.size())
+      {
+        return;
+      }
+
+      int iv = model.joints[jid].idx_v();
+      tau_limit_vec(iv) = lim;
+    };
+
+    // 左臂
+    set_tau_limit("joint1", 24.0);
+    set_tau_limit("joint2", 20.0);
+    set_tau_limit("joint3", 16.0);
+    set_tau_limit("joint4", 12.0);
+    set_tau_limit("joint5", 12.0);
+    set_tau_limit("joint6", 10.0);
+    set_tau_limit("joint7", 8.0);
+
+    // 右臂
+    set_tau_limit("joint11", 24.0);
+    set_tau_limit("joint12", 20.0);
+    set_tau_limit("joint13", 16.0);
+    set_tau_limit("joint14", 12.0);
+    set_tau_limit("joint15", 12.0);
+    set_tau_limit("joint16", 10.0);
+    set_tau_limit("joint17", 8.0);
+
+    // 调试阶段整体保守一些。
+    // 如果感觉太软，可以先改成 0.7，再改成 1.0。
+    const double safety_scale = 0.5;
+
     for (int i = 0; i < tau_cmd.size(); ++i)
     {
-      tau_cmd(i) = clamp_abs(tau_cmd(i), tau_limit);
+      tau_cmd(i) = clamp_abs(tau_cmd(i), safety_scale * tau_limit_vec(i));
     }
 
     // ===================== 输出到控制层 =====================
@@ -4699,29 +4867,41 @@ namespace upperlimb_robot
     write_torque("joint16", IDX_R_J16);
     write_torque("joint17", IDX_R_J17);
 
+    // ===================== 末端实际电机轴位置保持 =====================
+    //
+    // 你的 URDF 里 joint8~10 / joint18~20 是 fixed，
+    // 但实机仍然有对应电机轴。
+    //
+    // 这里建议保持“当前角度”，不要强行发 0.0，
+    // 避免切入模式时末端电机突然回零。
+    //
+    auto hold_current_position = [&](std::size_t ctrl_idx, int axis)
+    {
+      output.use_position[ctrl_idx] = true;
+      output.target_position[ctrl_idx] = state.position[ctrl_idx];
 
-    // 末端 fixed 对应的实际电机轴仍建议位置保持，防止模式切换后发飘
-    output.use_position[7] = true;
-    output.target_position[7] = 0.0;
+      output.target_velocity[ctrl_idx] =
+          pulsePerMsToJointSpeedDegPerSecMagnitude(axis, 1500.0);
+      output.target_acc[ctrl_idx] =
+          pulsePerMs2ToJointAccelDegPerSec2Magnitude(axis, 5.0);
+      output.target_dec[ctrl_idx] =
+          pulsePerMs2ToJointAccelDegPerSec2Magnitude(axis, 0.25);
+      output.target_smooth_time[ctrl_idx] = 25;
+    };
 
-    output.use_position[8] = true;
-    output.target_position[8] = 0.0;
+    // 右臂末端轴：物理轴 8、9、10
+    hold_current_position(IDX_R_J18, 8);
+    hold_current_position(IDX_R_J19, 9);
+    hold_current_position(IDX_R_J20, 10);
 
-    output.use_position[9] = true;
-    output.target_position[9] = 0.0;
-
-    output.use_position[17] = true;
-    output.target_position[17] = 0.0;
-
-    output.use_position[18] = true;
-    output.target_position[18] = 0.0;
-
-    output.use_position[19] = true;
-    output.target_position[19] = 0.0;
+    // 左臂末端轴：物理轴 18、19、20
+    hold_current_position(IDX_L_J8, 18);
+    hold_current_position(IDX_L_J9, 19);
+    hold_current_position(IDX_L_J10, 20);
 
     output.valid = true;
   }
 
 } // namespace upperlimb_robot
 
-//git pull --tags upperlimb main
+// git pull --tags upperlimb main
