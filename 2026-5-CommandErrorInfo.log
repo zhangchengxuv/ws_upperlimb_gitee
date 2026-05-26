@@ -199,3 +199,147 @@
 //---------------------------//
 2026-5-4 21:4:23:481  The g_pSlaveListExV1 is 0
 2026-5-4 21:4:23:481  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-5 10:44:19:552  Host open all device failed
+2026-5-5 10:44:19:571  HostOpenAllDevice(1,&deviceCount(0)) = -6
+2026-5-5 10:44:19:571  GT_IN_OpenAllDevice(5,1,NULL,&actDeviceCount(499614490)) = -6
+2026-5-5 10:44:19:606  GTN_OpenAllDevice(5,1,&count) =  -6
+2026-5-5 10:44:19:606  TryLock()=-8.gDev[0]=-1
+//---------------------------//
+2026-5-5 10:45:26:435  The g_pSlaveListExV1 is 0
+2026-5-5 10:45:26:435  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-5 11:2:37:913  The g_pSlaveListExV1 is 0
+2026-5-5 11:2:37:913  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-5 11:2:50:688  The g_pSlaveListExV1 is 0
+2026-5-5 11:2:50:688  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-5 11:7:13:108  The g_pSlaveListExV1 is 0
+2026-5-5 11:7:13:108  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-5 11:7:20:509  The g_pSlaveListExV1 is 0
+2026-5-5 11:7:20:509  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 10:59:0:507  The g_pSlaveListExV1 is 0
+2026-5-2 10:59:0:516  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:8:52:851  The g_pSlaveListExV1 is 0
+2026-5-2 11:8:52:851  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:8:57:282  The g_pSlaveListExV1 is 0
+2026-5-2 11:8:57:282  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:9:16:44  The g_pSlaveListExV1 is 0
+2026-5-2 11:9:16:44  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:9:21:747  The g_pSlaveListExV1 is 0
+2026-5-2 11:9:21:747  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:9:42:739  The g_pSlaveListExV1 is 0
+2026-5-2 11:9:42:739  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:9:49:640  The g_pSlaveListExV1 is 0
+2026-5-2 11:9:49:640  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:10:42:402  The g_pSlaveListExV1 is 0
+2026-5-2 11:10:42:402  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:11:32:768  The g_pSlaveListExV1 is 0
+2026-5-2 11:11:32:769  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:14:0:758  The g_pSlaveListExV1 is 0
+2026-5-2 11:14:0:758  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:14:5:978  The g_pSlaveListExV1 is 0
+2026-5-2 11:14:5:978  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:14:54:470  The g_pSlaveListExV1 is 0
+2026-5-2 11:14:54:470  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:17:54:934  The g_pSlaveListExV1 is 0
+2026-5-2 11:17:54:934  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:18:32:141  The g_pSlaveListExV1 is 0
+2026-5-2 11:18:32:141  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:26:10:919  The g_pSlaveListExV1 is 0
+2026-5-2 11:26:10:919  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:31:12:250  The g_pSlaveListExV1 is 0
+2026-5-2 11:31:12:250  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:37:27:301  The g_pSlaveListExV1 is 0
+2026-5-2 11:37:27:301  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:38:6:997  The g_pSlaveListExV1 is 0
+2026-5-2 11:38:6:997  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 11:38:42:102  The g_pSlaveListExV1 is 0
+2026-5-2 11:38:42:102  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:8:1:220  The g_pSlaveListExV1 is 0
+2026-5-2 12:8:1:220  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:8:10:436  The g_pSlaveListExV1 is 0
+2026-5-2 12:8:10:436  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:8:50:141  The g_pSlaveListExV1 is 0
+2026-5-2 12:8:50:141  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:9:1:524  The g_pSlaveListExV1 is 0
+2026-5-2 12:9:1:524  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:10:35:549  The g_pSlaveListExV1 is 0
+2026-5-2 12:10:35:549  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:12:27:580  The g_pSlaveListExV1 is 0
+2026-5-2 12:12:27:580  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:12:32:167  The g_pSlaveListExV1 is 0
+2026-5-2 12:12:32:167  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:14:41:329  The g_pSlaveListExV1 is 0
+2026-5-2 12:14:41:329  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:14:44:231  The g_pSlaveListExV1 is 0
+2026-5-2 12:14:44:231  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:15:49:245  The g_pSlaveListExV1 is 0
+2026-5-2 12:15:49:245  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:20:56:117  The g_pSlaveListExV1 is 0
+2026-5-2 12:20:56:117  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:21:0:25  The g_pSlaveListExV1 is 0
+2026-5-2 12:21:0:25  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:21:42:307  The g_pSlaveListExV1 is 0
+2026-5-2 12:21:42:307  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:21:50:483  The g_pSlaveListExV1 is 0
+2026-5-2 12:21:50:483  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:22:19:432  The g_pSlaveListExV1 is 0
+2026-5-2 12:22:19:432  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:23:39:171  The g_pSlaveListExV1 is 0
+2026-5-2 12:23:39:171  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:23:56:435  The g_pSlaveListExV1 is 0
+2026-5-2 12:23:56:435  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:25:10:910  The g_pSlaveListExV1 is 0
+2026-5-2 12:25:10:910  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:25:31:828  The g_pSlaveListExV1 is 0
+2026-5-2 12:25:31:828  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:45:18:363  The g_pSlaveListExV1 is 0
+2026-5-2 12:45:18:363  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:45:27:348  The g_pSlaveListExV1 is 0
+2026-5-2 12:45:27:348  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-5-2 12:46:17:21  The g_pSlaveListExV1 is 0
+2026-5-2 12:46:17:21  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
