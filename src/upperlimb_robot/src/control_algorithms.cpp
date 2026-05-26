@@ -5048,9 +5048,7 @@ namespace upperlimb_robot
       }
 
       ddq_adm(i) =
-          (tau_input(i)
-           - D_a(i) * active_spring_dq_adm(i)
-           - K_a(i) * (active_spring_q_adm(i) - q(i))) /
+          (tau_input(i) - D_a(i) * active_spring_dq_adm(i) - K_a(i) * (active_spring_q_adm(i) - q(i))) /
           M_a(i);
     }
 
@@ -5267,6 +5265,160 @@ namespace upperlimb_robot
       std::cout << "[active_spring_debug] "
                 << "tau_cmd=" << tau_cmd.transpose()
                 << std::endl;
+    }
+    // ===================== CSV 调试日志 =====================
+    static std::ofstream active_spring_csv;
+    static bool active_spring_csv_initialized = false;
+    static int active_spring_csv_counter = 0;
+    static auto active_spring_t0 = std::chrono::steady_clock::now();
+
+    if (!active_spring_csv_initialized)
+    {
+      auto now_sys = std::chrono::system_clock::now();
+      auto now_time_t = std::chrono::system_clock::to_time_t(now_sys);
+
+      char file_time[64];
+      std::strftime(
+          file_time,
+          sizeof(file_time),
+          "%Y%m%d_%H%M%S",
+          std::localtime(&now_time_t));
+
+      std::string csv_path =
+          std::string("/tmp/active_spring_debug_") +
+          file_time +
+          ".csv";
+
+      active_spring_csv.open(csv_path, std::ios::out);
+
+      if (active_spring_csv.is_open())
+      {
+        active_spring_csv
+            << "wall_time,t,"
+            << "p_left_x,p_left_y,p_left_z,"
+            << "p_right_x,p_right_y,p_right_z,"
+            << "dx,dy,dz,"
+            << "d,d0,e,d_dot,gain,"
+            << "f_left,"
+            << "F_left_x,F_left_y,F_left_z,"
+            << "F_right_x,F_right_y,F_right_z";
+
+        for (int i = 0; i < model.nv; ++i)
+        {
+          active_spring_csv << ",tau_ext_" << i;
+        }
+
+        for (int i = 0; i < model.nv; ++i)
+        {
+          active_spring_csv << ",tau_spring_" << i;
+        }
+
+        for (int i = 0; i < model.nv; ++i)
+        {
+          active_spring_csv << ",tau_active_" << i;
+        }
+
+        for (int i = 0; i < model.nv; ++i)
+        {
+          active_spring_csv << ",tau_cmd_" << i;
+        }
+
+        for (std::size_t i = 0; i < AXIS_NUM; ++i)
+        {
+          active_spring_csv << ",output_torque_" << i;
+        }
+
+        active_spring_csv << "\n";
+        active_spring_csv_initialized = true;
+
+        std::cout << "[runActiveSpringMode] CSV 日志文件: "
+                  << csv_path << std::endl;
+      }
+      else
+      {
+        std::cerr << "[runActiveSpringMode] 无法创建 CSV 日志文件" << std::endl;
+      }
+    }
+
+    active_spring_csv_counter++;
+
+    if (active_spring_csv_initialized && (active_spring_csv_counter % 3 == 0))
+    {
+      auto now_sys = std::chrono::system_clock::now();
+      auto now_steady = std::chrono::steady_clock::now();
+
+      double t =
+          std::chrono::duration<double>(now_steady - active_spring_t0).count();
+
+      auto now_time_t = std::chrono::system_clock::to_time_t(now_sys);
+      auto ms =
+          std::chrono::duration_cast<std::chrono::milliseconds>(
+              now_sys.time_since_epoch()) %
+          1000;
+
+      char time_str[64];
+      std::strftime(
+          time_str,
+          sizeof(time_str),
+          "%Y-%m-%d %H:%M:%S",
+          std::localtime(&now_time_t));
+
+      Eigen::Vector3d delta_p = p_left - p_right;
+
+      active_spring_csv
+          << time_str << "."
+          << std::setfill('0') << std::setw(3) << ms.count()
+          << std::setfill(' ')
+          << "," << t
+          << "," << p_left.x()
+          << "," << p_left.y()
+          << "," << p_left.z()
+          << "," << p_right.x()
+          << "," << p_right.y()
+          << "," << p_right.z()
+          << "," << delta_p.x()
+          << "," << delta_p.y()
+          << "," << delta_p.z()
+          << "," << d
+          << "," << active_spring_d0
+          << "," << e
+          << "," << d_dot
+          << "," << active_spring_gain
+          << "," << f_left_scalar
+          << "," << F_left_world.x()
+          << "," << F_left_world.y()
+          << "," << F_left_world.z()
+          << "," << F_right_world.x()
+          << "," << F_right_world.y()
+          << "," << F_right_world.z();
+
+      for (int i = 0; i < tau_ext.size(); ++i)
+      {
+        active_spring_csv << "," << tau_ext(i);
+      }
+
+      for (int i = 0; i < tau_spring.size(); ++i)
+      {
+        active_spring_csv << "," << tau_spring(i);
+      }
+
+      for (int i = 0; i < tau_active.size(); ++i)
+      {
+        active_spring_csv << "," << tau_active(i);
+      }
+
+      for (int i = 0; i < tau_cmd.size(); ++i)
+      {
+        active_spring_csv << "," << tau_cmd(i);
+      }
+
+      for (std::size_t i = 0; i < AXIS_NUM; ++i)
+      {
+        active_spring_csv << "," << output.target_torque[i];
+      }
+
+      active_spring_csv << "\n";
+      active_spring_csv.flush();
     }
 
     output.valid = true;
