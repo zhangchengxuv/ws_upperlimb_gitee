@@ -225,6 +225,7 @@ private:
     case upperlimb_robot::MODE_PASSIVE_TORQUE:
     case upperlimb_robot::MODE_MIRROR:
     case upperlimb_robot::MODE_ACTIVE_SPRING:
+    case upperlimb_robot::MODE_BILATERAL_ACTIVE:
       clearAllTorqueCommands();
       stopAllAxesMotionOnly();
       restoreAllAxesToPositionMode();
@@ -341,6 +342,38 @@ private:
       else
       {
         RCLCPP_WARN(this->get_logger(), "进入主动镜像模式失败：当前传感器数据无效，未记录零偏");
+      }
+      break;
+    }
+
+    case upperlimb_robot::MODE_ACTIVE_SPRING:
+    {
+      const bool ok = captureForceSensorBias();
+      upperlimb_robot::resetActiveSpringMode();
+
+      if (ok)
+      {
+        RCLCPP_INFO(this->get_logger(), "进入双手虚拟弹簧主动模式，已记录六维力零偏并重置弹簧状态");
+      }
+      else
+      {
+        RCLCPP_WARN(this->get_logger(), "进入双手虚拟弹簧主动模式失败：当前传感器数据无效，未记录零偏");
+      }
+      break;
+    }
+
+    case upperlimb_robot::MODE_BILATERAL_ACTIVE:
+    {
+      const bool ok = captureForceSensorBias();
+      upperlimb_robot::resetBilateralActiveMode();
+
+      if (ok)
+      {
+        RCLCPP_INFO(this->get_logger(), "进入双侧主动模式，已记录六维力零偏并重置双侧主动导纳状态");
+      }
+      else
+      {
+        RCLCPP_WARN(this->get_logger(), "进入双侧主动模式失败：当前传感器数据无效，未记录零偏");
       }
       break;
     }
@@ -1009,6 +1042,10 @@ private:
       // 双手虚拟弹簧主动模式
     case upperlimb_robot::MODE_ACTIVE_SPRING:
       upperlimb_robot::runActiveSpringMode(state, sensor_state, output);
+      break;
+      // 双侧主动模式
+    case upperlimb_robot::MODE_BILATERAL_ACTIVE:
+      upperlimb_robot::runBilateralActiveMode(state, sensor_state, output);
       break;
     case upperlimb_robot::MODE_IDLE:
     default:
