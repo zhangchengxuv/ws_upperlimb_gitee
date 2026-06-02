@@ -48,7 +48,7 @@ namespace upperlimb_robot
     constexpr double SZO10 = 249.46;
     constexpr double SZO20 = 12172.4808;
     constexpr double SZO30 = -12.1935;
-    constexpr double SZO40 = -1354.3904;
+    constexpr double SZO40 = 0;
     constexpr double SZO50 = 23313.27;
     constexpr double SZO60 = -728.71;
     constexpr double SZO70 = -119.21;
@@ -2195,7 +2195,7 @@ namespace upperlimb_robot
     Eigen::VectorXd damping = Eigen::VectorXd::Zero(model.nv);
 
     const std::array<double, 7> damping_value = {
-        0.0, 0.4, 0.3, 0.0, 0.0, 0.2, 0.3};
+        0.0, -0.4, -0.3, -0.3, -0.4, -0.2, -0.3};
 
     for (std::size_t i = 0; i < 7; ++i)
     {
@@ -2212,7 +2212,7 @@ namespace upperlimb_robot
     Eigen::VectorXd tau = g + tau_ext + tau_damping;
 
     const std::array<double, 7> torque_limit = {
-        30.0, 20.0, 16.0, 12.0, 12.0, 12.0, 8.0};
+        30.0, 30.0, 30.0, 18.0, 18.0, 18.0, 10.0};
 
     auto write_torque = [&](std::size_t ctrl_id, int v_id, double sign, double limit)
     {
@@ -4905,9 +4905,9 @@ namespace upperlimb_robot
 
     // 第一版参数保守一些。
     // 因为本版弹簧进入导纳输入，会被导纳滤波，不需要像直接 tau_spring 前馈那样追求很强的瞬时力。
-    const double Kx = 20.0;     // N/m
+    const double Kx = 40.0;     // N/m
     const double Bx = 1.0;      // N/(m/s)
-    const double F_limit = 8.0; // N
+    const double F_limit = 40; // N
 
     // d = x_left - x_right
     // e > 0：左大臂相对右大臂在 world +X 方向距离变大。
@@ -5193,7 +5193,7 @@ namespace upperlimb_robot
       output.target_smooth_time[ctrl_idx] = 25;
     };
 
-    // 右臂末端轴：物理轴 8、9、10
+    // 右臂末端轴：物理轴 8、9、10双
     hold_current_position(IDX_R_J18, 8);
     hold_current_position(IDX_R_J19, 9);
     hold_current_position(IDX_R_J20, 10);
