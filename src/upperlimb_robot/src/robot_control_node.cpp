@@ -11,6 +11,7 @@
 #include "upperlimb_robot/gxn.h"
 #include "upperlimb_robot/control_algorithms.hpp"
 
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -224,8 +225,8 @@ private:
     case upperlimb_robot::MODE_ACTIVE:
     case upperlimb_robot::MODE_PASSIVE_TORQUE:
     case upperlimb_robot::MODE_MIRROR:
-    case upperlimb_robot::MODE_ACTIVE_SPRING:
     case upperlimb_robot::MODE_BILATERAL_ACTIVE:
+    case upperlimb_robot::MODE_ACTIVE_SPRING:
       clearAllTorqueCommands();
       stopAllAxesMotionOnly();
       restoreAllAxesToPositionMode();
@@ -332,6 +333,50 @@ private:
       }
       break;
     }
+    case upperlimb_robot::MODE_BILATERAL_ACTIVE:
+    {
+      const bool bias_ok = captureForceSensorBias();
+      upperlimb_robot::resetBilateralActiveMode();
+
+      const bool torque_ok = enterDualArmTorqueModeOnce();
+
+      if (bias_ok && torque_ok)
+      {
+        RCLCPP_INFO(this->get_logger(), "进入双侧主动模式：已记录六维力零偏，14 个主动轴已切到扭矩模式");
+      }
+      else
+      {
+        RCLCPP_WARN(
+            this->get_logger(),
+            "进入双侧主动模式：bias_ok=%d, torque_ok=%d，请检查传感器有效性和轴模式切换",
+            static_cast<int>(bias_ok),
+            static_cast<int>(torque_ok));
+      }
+      break;
+    }
+
+    case upperlimb_robot::MODE_ACTIVE_SPRING:
+    {
+      const bool bias_ok = captureForceSensorBias();
+      upperlimb_robot::resetActiveSpringMode();
+
+      const bool torque_ok = enterDualArmTorqueModeOnce();
+
+      if (bias_ok && torque_ok)
+      {
+        RCLCPP_INFO(this->get_logger(), "进入主动弹簧模式：已记录六维力零偏，已重置弹簧状态，14 个主动轴已切到扭矩模式");
+      }
+      else
+      {
+        RCLCPP_WARN(
+            this->get_logger(),
+            "进入主动弹簧模式：bias_ok=%d, torque_ok=%d，请检查传感器有效性和轴模式切换",
+            static_cast<int>(bias_ok),
+            static_cast<int>(torque_ok));
+      }
+      break;
+    }
+
     case upperlimb_robot::MODE_ACTIVE_MIRROR:
     {
       const bool ok = captureForceSensorBias();
@@ -342,38 +387,6 @@ private:
       else
       {
         RCLCPP_WARN(this->get_logger(), "进入主动镜像模式失败：当前传感器数据无效，未记录零偏");
-      }
-      break;
-    }
-
-    case upperlimb_robot::MODE_ACTIVE_SPRING:
-    {
-      const bool ok = captureForceSensorBias();
-      upperlimb_robot::resetActiveSpringMode();
-
-      if (ok)
-      {
-        RCLCPP_INFO(this->get_logger(), "进入双手虚拟弹簧主动模式，已记录六维力零偏并重置弹簧状态");
-      }
-      else
-      {
-        RCLCPP_WARN(this->get_logger(), "进入双手虚拟弹簧主动模式失败：当前传感器数据无效，未记录零偏");
-      }
-      break;
-    }
-
-    case upperlimb_robot::MODE_BILATERAL_ACTIVE:
-    {
-      const bool ok = captureForceSensorBias();
-      upperlimb_robot::resetBilateralActiveMode();
-
-      if (ok)
-      {
-        RCLCPP_INFO(this->get_logger(), "进入双侧主动模式，已记录六维力零偏并重置双侧主动导纳状态");
-      }
-      else
-      {
-        RCLCPP_WARN(this->get_logger(), "进入双侧主动模式失败：当前传感器数据无效，未记录零偏");
       }
       break;
     }
@@ -451,6 +464,81 @@ private:
 
     default:
       break;
+    }
+  }
+
+  // ===================== 双臂扭矩模式辅助函数 =====================
+  //
+  // 双侧主动 / 主动弹簧模式同时控制 14 个主动关节。
+  // 这类模式不建议在 90 Hz 控制循环内反复执行
+  // “位置模式 <-> 扭矩模式”切换。
+  //
+  // 策略：
+  // 1. 进入模式时一次性切 14 个主动轴到扭矩模式。
+  // 2. 控制循环中只发送 PT 扭矩。
+  // 3. 算法本轮无效时，只清零 PT，不立刻切回位置模式。
+  // 4. 退出模式时再统一恢复位置模式。
+  //
+  bool isDualArmTorqueMode(int mode) const
+  {
+    return mode == upperlimb_robot::MODE_BILATERAL_ACTIVE ||
+           mode == upperlimb_robot::MODE_ACTIVE_SPRING;
+  }
+
+  std::array<std::size_t, 14> dualArmActiveTorqueIndices() const
+  {
+    return {
+        // 右臂 joint11~joint17 -> 控制层索引 0~6
+        0, 1, 2, 3, 4, 5, 6,
+        // 左臂 joint1~joint7 -> 控制层索引 10~16
+        10, 11, 12, 13, 14, 15, 16};
+  }
+
+  bool enterDualArmTorqueModeOnce()
+  {
+    bool all_ok = true;
+
+    for (const std::size_t i : dualArmActiveTorqueIndices())
+    {
+      if (i >= upperlimb_robot::AXIS_NUM)
+      {
+        all_ok = false;
+        continue;
+      }
+
+      if (!ensureAxisInTorqueMode(i))
+      {
+        all_ok = false;
+        continue;
+      }
+
+      last_target_torque_[i] = 0.0;
+      command_sent_[i] = false;
+      position_profile_configured_[i] = false;
+    }
+
+    return all_ok;
+  }
+
+  void clearDualArmTorqueCommandsNoModeSwitch()
+  {
+    for (const std::size_t i : dualArmActiveTorqueIndices())
+    {
+      if (i >= upperlimb_robot::AXIS_NUM)
+      {
+        continue;
+      }
+
+      const int axis = axis_ids_[i];
+      const short rtn = GTN_SetEcatAxisPT(core_id_, axis, 0);
+      if (rtn != 0)
+      {
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "双臂扭矩模式清零 PT 失败，轴%d，错误码=%d", axis, rtn);
+      }
+
+      last_target_torque_[i] = 0.0;
     }
   }
 
@@ -955,8 +1043,17 @@ private:
       }
       else
       {
-        clearAllTorqueCommands();
-        restoreAllAxesToPositionMode();
+        if (isDualArmTorqueMode(applied_mode_))
+        {
+          // 双侧主动 / 主动弹簧模式下，算法单帧无效时只清零 PT。
+          // 不在控制循环中频繁切回位置模式，避免下一帧又切回扭矩模式导致底层报错。
+          clearDualArmTorqueCommandsNoModeSwitch();
+        }
+        else
+        {
+          clearAllTorqueCommands();
+          restoreAllAxesToPositionMode();
+        }
       }
 
       auto cycle_end = std::chrono::steady_clock::now();
@@ -1039,13 +1136,13 @@ private:
     case upperlimb_robot::MODE_ACTIVE_MIRROR:
       upperlimb_robot::runActiveMirrorMode(state, sensor_state, output);
       break;
-      // 双手虚拟弹簧主动模式
-    case upperlimb_robot::MODE_ACTIVE_SPRING:
-      upperlimb_robot::runActiveSpringMode(state, sensor_state, output);
-      break;
       // 双侧主动模式
     case upperlimb_robot::MODE_BILATERAL_ACTIVE:
       upperlimb_robot::runBilateralActiveMode(state, sensor_state, output);
+      break;
+      // 双手虚拟弹簧主动模式
+    case upperlimb_robot::MODE_ACTIVE_SPRING:
+      upperlimb_robot::runActiveSpringMode(state, sensor_state, output);
       break;
     case upperlimb_robot::MODE_IDLE:
     default:
@@ -1327,9 +1424,27 @@ private:
   void applyPositionOutput(const upperlimb_robot::ControlOutputCache &output)
   {
     long update_mask = 0;
+    const bool dual_arm_torque_mode = isDualArmTorqueMode(applied_mode_);
 
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
     {
+      // 双侧主动 / 主动弹簧模式下，算法层只输出 14 个主动轴扭矩。
+      // 末端 fixed 轴 8~10 / 18~20 不在控制循环内做位置保持、模式读取或 PT 清理，
+      // 避免继续触发 SetPos / SetTrapPrm / SetVel / SyncAxisPos 类错误。
+      if (dual_arm_torque_mode && output.use_torque[i])
+      {
+        command_sent_[i] = false;
+        position_profile_configured_[i] = false;
+        continue;
+      }
+
+      if (dual_arm_torque_mode && !output.use_position[i])
+      {
+        command_sent_[i] = false;
+        position_profile_configured_[i] = false;
+        continue;
+      }
+
       const int axis = axis_ids_[i];
 
       unsigned short actual_mode = static_cast<unsigned short>(-1);
@@ -1518,8 +1633,18 @@ private:
   //
   void applyTorqueOutput(const upperlimb_robot::ControlOutputCache &output)
   {
+    const bool dual_arm_torque_mode = isDualArmTorqueMode(applied_mode_);
+
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
     {
+      // 双侧主动 / 主动弹簧模式下，非 14 个主动扭矩轴完全跳过。
+      // 不读模式、不清 PT、不切位置模式，避免轴8~10/18~20继续干扰主控制。
+      if (dual_arm_torque_mode && !output.use_torque[i])
+      {
+        last_target_torque_[i] = 0.0;
+        continue;
+      }
+
       const int axis = axis_ids_[i];
 
       unsigned short actual_mode = -1;
@@ -1541,7 +1666,10 @@ private:
                 "GTN_SetEcatAxisPT 清零失败，轴%d，错误码=%d", axis, rtn_zero);
           }
 
-          (void)ensureAxisInPositionMode(i);
+          if (!dual_arm_torque_mode)
+          {
+            (void)ensureAxisInPositionMode(i);
+          }
         }
 
         last_target_torque_[i] = 0.0;
@@ -1566,6 +1694,15 @@ private:
 
       if (!axis_in_torque_mode_[i])
       {
+        if (dual_arm_torque_mode)
+        {
+          RCLCPP_ERROR_THROTTLE(
+              this->get_logger(), *this->get_clock(), 2000,
+              "双臂扭矩模式下轴%d 未处于扭矩模式，本轮跳过 PT；不在控制循环内反复切模式",
+              axis);
+          continue;
+        }
+
         if (!ensureAxisInTorqueMode(i))
         {
           continue;

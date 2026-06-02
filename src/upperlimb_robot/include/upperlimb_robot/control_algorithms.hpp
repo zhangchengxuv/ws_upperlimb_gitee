@@ -66,7 +66,7 @@ namespace upperlimb_robot
     // 双手虚拟弹簧主动模式
     MODE_ACTIVE_SPRING = 12,
 
-    // 双侧主动模式
+    // 双侧主动导纳模式
     MODE_BILATERAL_ACTIVE = 13,
 
   };
@@ -260,8 +260,6 @@ namespace upperlimb_robot
   void runBilateralZeroForceMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
   // 主动模式
   void runActiveMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
-  // 双侧主动模式
-  void runBilateralActiveMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
   // 左边正弦被动模式（PID跟踪）
   void runPassiveMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
   // 左边正弦被动模式（PD+前馈跟踪）
@@ -272,7 +270,9 @@ namespace upperlimb_robot
   void runMirrorMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
   // 主动镜像模式
   void runActiveMirrorMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
+  // 双侧主动导纳模式
+  void runBilateralActiveMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
   // 双手虚拟弹簧主动模式
-  void runActiveSpringMode(const MotorStateCache &state,const SensorStateCache &sensor_state,ControlOutputCache &output);
+  void runActiveSpringMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
 
 } // namespace upperlimb_robot
