@@ -28,7 +28,7 @@ EtherCAT 0-20: Slave alias is 0
 EtherCAT 0-21: Slave alias is 0
 EtherCAT 0-22: Slave alias is 0
 EtherCAT 0-23: Slave alias is 0
-EtherCAT 0: Bus scanning completed in 352 ms.
+EtherCAT 0: Bus scanning completed in 361 ms.
 EtherCAT 0: Config each slave SDO config info ...
 EtherCAT 0: Config each slave PDO sync info ...
 EtherCAT 0: Registering PDO entries...
@@ -67,12 +67,9 @@ EtherCAT 0-20: Now in OP. Finished configuration.
 EtherCAT 0-21: Now in OP. Finished configuration.
 EtherCAT 0-22: Now in OP. Finished configuration.
 EtherCAT 0-23: Now in OP. Finished configuration.
-EtherCAT 0-0: Now in OP. Finished configuration.
-EtherCAT 0-3: Now in OP. Finished configuration.
 EtherCAT 0-1: Now in OP. Finished configuration.
+EtherCAT 0-0: Now in OP. Finished configuration.
 EtherCAT 0-2: Now in OP. Finished configuration.
+EtherCAT 0-3: Now in OP. Finished configuration.
 EtherCAT 0: All slaves are in OP mode
 EtherCAT 0: Slave states: OP .
-EtherCAT 0: Releasing master...
-EtherCAT 0: Released.
-EtherCAT: Master module cleaned up.
