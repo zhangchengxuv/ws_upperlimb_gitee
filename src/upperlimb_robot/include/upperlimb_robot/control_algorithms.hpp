@@ -69,6 +69,9 @@ namespace upperlimb_robot
     // 双侧主动导纳模式
     MODE_BILATERAL_ACTIVE = 13,
 
+    // 右臂主动导纳模式
+    MODE_RIGHT_ACTIVE = 14,
+
   };
 
   // ===================== 电机状态缓存 =====================
@@ -237,6 +240,9 @@ namespace upperlimb_robot
   // 重置双侧主动模式的状态
   void resetBilateralActiveMode();
 
+  // 重置右臂主动模式的导纳状态
+  void resetRightActiveMode();
+
   // ===================== 控制算法接口 =====================
   // 不需要需要传感器信息
 
@@ -260,6 +266,8 @@ namespace upperlimb_robot
   void runBilateralZeroForceMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
   // 主动模式
   void runActiveMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
+  // 右臂主动模式
+  void runRightActiveMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
   // 左边正弦被动模式（PID跟踪）
   void runPassiveMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
   // 左边正弦被动模式（PD+前馈跟踪）

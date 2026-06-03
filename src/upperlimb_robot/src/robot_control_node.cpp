@@ -223,6 +223,7 @@ private:
     case upperlimb_robot::MODE_RIGHT_ZERO_FORCE:
     case upperlimb_robot::MODE_BILATERAL_ZERO_FORCE:
     case upperlimb_robot::MODE_ACTIVE:
+    case upperlimb_robot::MODE_RIGHT_ACTIVE:
     case upperlimb_robot::MODE_PASSIVE_TORQUE:
     case upperlimb_robot::MODE_MIRROR:
     case upperlimb_robot::MODE_BILATERAL_ACTIVE:
@@ -330,6 +331,20 @@ private:
       else
       {
         RCLCPP_WARN(this->get_logger(), "进入主动模式失败：当前传感器数据无效，未记录零偏");
+      }
+      break;
+    }
+    case upperlimb_robot::MODE_RIGHT_ACTIVE:
+    {
+      const bool ok = captureForceSensorBias();
+      upperlimb_robot::resetRightActiveMode();
+      if (ok)
+      {
+        RCLCPP_INFO(this->get_logger(), "进入右臂主动模式，已记录六维力零偏，已重置右臂导纳状态");
+      }
+      else
+      {
+        RCLCPP_WARN(this->get_logger(), "进入右臂主动模式失败：当前传感器数据无效，未记录零偏");
       }
       break;
     }
@@ -1111,6 +1126,10 @@ private:
       // 左臂主动模式
     case upperlimb_robot::MODE_ACTIVE:
       upperlimb_robot::runActiveMode(state, sensor_state, output);
+      break;
+      // 右臂主动模式
+    case upperlimb_robot::MODE_RIGHT_ACTIVE:
+      upperlimb_robot::runRightActiveMode(state, sensor_state, output);
       break;
       // 左臂被动模式（PID 跟踪）
     case upperlimb_robot::MODE_PASSIVE:
