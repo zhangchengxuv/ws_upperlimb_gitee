@@ -207,6 +207,33 @@ private:
     return fn();
   }
 
+  // ===================== 模式进入失败回退 =====================
+  //
+  // onModeEnter() 内部不能直接修改 applied_mode_，但可以请求状态机回退。
+  // 状态机随后会把 applied_mode_ 和 current_mode_ 统一改到 fallback_mode，
+  // 防止进入失败后仍短暂执行失败模式的控制输出。
+  //
+  void requestModeEnterFallback(int fallback_mode)
+  {
+    mode_enter_failed_ = true;
+    mode_enter_fallback_mode_ = fallback_mode;
+  }
+
+  // ===================== 主动控制轴过滤 =====================
+  //
+  // 机械结构中每条臂最后 3 个关节暂不参与控制：
+  // 右臂 joint18~joint20 -> 控制层索引 7~9 / 物理轴 8~10
+  // 左臂 joint8~joint10  -> 控制层索引 17~19 / 物理轴 18~20
+  //
+  // 当前执行层只控制 14 个主动关节：
+  // 右臂 joint11~joint17 -> 控制层索引 0~6
+  // 左臂 joint1~joint7   -> 控制层索引 10~16
+  //
+  bool isControlledAxisIndex(std::size_t i) const
+  {
+    return (i <= 6) || (i >= 10 && i <= 16);
+  }
+
   // ===================== 控制命令回调 =====================
   //
   // 这里仅记录“请求模式”。
@@ -242,7 +269,28 @@ private:
     const int old_mode = applied_mode_;
 
     onModeExit(old_mode, requested_mode);
+
+    // onModeEnter() 可能因为轴模式切换失败而要求回退。
+    // 进入失败时不能把 applied_mode_ 仍然设置成 requested_mode，
+    // 否则控制循环会短暂以失败模式继续计算/下发，造成一帧错误 PT。
+    mode_enter_failed_ = false;
+    mode_enter_fallback_mode_ = requested_mode;
+
     onModeEnter(old_mode, requested_mode);
+
+    if (mode_enter_failed_)
+    {
+      applied_mode_ = mode_enter_fallback_mode_;
+      current_mode_.store(mode_enter_fallback_mode_);
+
+      RCLCPP_WARN(
+          this->get_logger(),
+          "模式进入失败: old=%d requested=%d fallback=%d",
+          old_mode,
+          requested_mode,
+          mode_enter_fallback_mode_);
+      return;
+    }
 
     applied_mode_ = requested_mode;
 
@@ -312,6 +360,12 @@ private:
     {
       for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
       {
+        if (!isControlledAxisIndex(i))
+        {
+          axis_enabled_[i] = false;
+          continue;
+        }
+
         const short axis = axis_ids_[i];
         const short rtn = GTN_AxisOn(core_id_, axis);
 
@@ -323,9 +377,13 @@ private:
               axis,
               rtn);
         }
+        else
+        {
+          axis_enabled_[i] = true;
+        }
       }
 
-      RCLCPP_INFO(this->get_logger(), "退出空闲模式：已重新使能所有电机");
+      RCLCPP_INFO(this->get_logger(), "退出空闲模式：已重新使能 14 个主动轴，末端 6 个关节不参与控制");
     }
     switch (new_mode)
     {
@@ -376,7 +434,7 @@ private:
         clearDualArmTorqueCommandsNoModeSwitch();
         stopAllAxesMotionOnly();
         restoreAllAxesToPositionMode();
-        current_mode_.store(upperlimb_robot::MODE_IDLE);
+        requestModeEnterFallback(upperlimb_robot::MODE_IDLE);
       }
       break;
     }
@@ -717,6 +775,17 @@ private:
     {
       const int axis = axis_ids_[i];
 
+      if (!isControlledAxisIndex(i))
+      {
+        enc_pos_[i] = 0;
+        axis_enabled_[i] = false;
+        RCLCPP_INFO(
+            this->get_logger(),
+            "轴%d 为末端非控制关节，初始化阶段跳过使能、同步和模式控制",
+            axis);
+        continue;
+      }
+
       rtn = GTN_GetEcatEncPos(core_id_, axis, &enc_pos_[i]);
       if (rtn != 0)
       {
@@ -949,6 +1018,15 @@ private:
       for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
       {
         const int axis = axis_ids_[i];
+
+        if (!isControlledAxisIndex(i))
+        {
+          local_state.enable[i] = false;
+          local_state.position[i] = 0.0;
+          local_state.velocity[i] = 0.0;
+          local_state.torque[i] = 0.0;
+          continue;
+        }
 
         short rtn = 0;
         int32_t sts = 0;
@@ -1260,6 +1338,11 @@ private:
       return false;
     }
 
+    if (!isControlledAxisIndex(i))
+    {
+      return false;
+    }
+
     const int axis = axis_ids_[i];
 
     const short rtn_stop =
@@ -1292,20 +1375,38 @@ private:
     }
 
     unsigned short actual_mode = static_cast<unsigned short>(-1);
-    const short rtn_get_mode = GTN_GetEcatAxisMode(core_id_, axis, &actual_mode);
-    if (rtn_get_mode != 0)
+    short rtn_get_mode = 0;
+    bool mode_ok = false;
+
+    // EtherCAT 轴模式切换不是严格同步完成的。
+    // SetEcatAxisMode 返回成功后，立即 GetEcatAxisMode 可能仍读到旧模式。
+    // 因此这里短暂轮询，避免把正常的切换延迟误判为失败。
+    for (int retry = 0; retry < 8; ++retry)
     {
-      RCLCPP_ERROR_THROTTLE(
-          this->get_logger(), *this->get_clock(), 2000,
-          "读取轴%d当前模式失败，错误码=%d", axis, rtn_get_mode);
-      return false;
+      rtn_get_mode = GTN_GetEcatAxisMode(core_id_, axis, &actual_mode);
+      if (rtn_get_mode == 0 && actual_mode == 8)
+      {
+        mode_ok = true;
+        break;
+      }
+
+      std::this_thread::sleep_for(5ms);
     }
 
-    if (actual_mode != 8)
+    if (!mode_ok)
     {
-      RCLCPP_ERROR_THROTTLE(
-          this->get_logger(), *this->get_clock(), 2000,
-          "轴%d 期望切到位置模式，但当前模式=%d", axis, actual_mode);
+      if (rtn_get_mode != 0)
+      {
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "读取轴%d当前模式失败，错误码=%d", axis, rtn_get_mode);
+      }
+      else
+      {
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "轴%d 期望切到位置模式，但当前模式=%d", axis, actual_mode);
+      }
       return false;
     }
 
@@ -1363,6 +1464,11 @@ private:
       return false;
     }
 
+    if (!isControlledAxisIndex(i))
+    {
+      return false;
+    }
+
     const int axis = axis_ids_[i];
 
     const short rtn_stop =
@@ -1385,21 +1491,38 @@ private:
       return false;
     }
 
-    unsigned short actual_mode = -1;
-    const short rtn_get_mode = GTN_GetEcatAxisMode(core_id_, axis, &actual_mode);
-    if (rtn_get_mode != 0)
+    unsigned short actual_mode = static_cast<unsigned short>(-1);
+    short rtn_get_mode = 0;
+    bool mode_ok = false;
+
+    // EtherCAT 轴模式切换有生效延迟。
+    // 日志中出现“先读到 8，随后恢复时又读到 10”，说明不能只读一次就判失败。
+    for (int retry = 0; retry < 8; ++retry)
     {
-      RCLCPP_ERROR_THROTTLE(
-          this->get_logger(), *this->get_clock(), 2000,
-          "读取轴%d当前模式失败，错误码=%d", axis, rtn_get_mode);
-      return false;
+      rtn_get_mode = GTN_GetEcatAxisMode(core_id_, axis, &actual_mode);
+      if (rtn_get_mode == 0 && actual_mode == 10)
+      {
+        mode_ok = true;
+        break;
+      }
+
+      std::this_thread::sleep_for(5ms);
     }
 
-    if (actual_mode != 10)
+    if (!mode_ok)
     {
-      RCLCPP_ERROR_THROTTLE(
-          this->get_logger(), *this->get_clock(), 2000,
-          "轴%d 期望切到扭矩模式，但当前模式=%d", axis, actual_mode);
+      if (rtn_get_mode != 0)
+      {
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "读取轴%d当前模式失败，错误码=%d", axis, rtn_get_mode);
+      }
+      else
+      {
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "轴%d 期望切到扭矩模式，但当前模式=%d", axis, actual_mode);
+      }
       return false;
     }
 
@@ -1436,6 +1559,11 @@ private:
 
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
     {
+      if (!isControlledAxisIndex(i))
+      {
+        continue;
+      }
+
       if (!axis_enabled_[i])
       {
         continue;
@@ -1471,6 +1599,14 @@ private:
   {
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
     {
+      if (!isControlledAxisIndex(i))
+      {
+        axis_in_torque_mode_[i] = false;
+        command_sent_[i] = false;
+        position_profile_configured_[i] = false;
+        continue;
+      }
+
       const int axis = axis_ids_[i];
 
       unsigned short actual_mode = -1;
@@ -1508,6 +1644,14 @@ private:
 
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
     {
+      if (!isControlledAxisIndex(i))
+      {
+        command_sent_[i] = false;
+        position_profile_configured_[i] = false;
+        last_target_torque_[i] = 0.0;
+        continue;
+      }
+
       // 双臂零力 / 双侧主动 / 主动弹簧模式下，算法层只输出 14 个主动轴扭矩。
       // 末端 fixed 轴 8~10 / 18~20 不在控制循环内做位置保持、模式读取或 PT 清理，
       // 避免继续触发 SetPos / SetTrapPrm / SetVel / SyncAxisPos 类错误。
@@ -1717,6 +1861,13 @@ private:
 
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
     {
+      if (!isControlledAxisIndex(i))
+      {
+        axis_in_torque_mode_[i] = false;
+        last_target_torque_[i] = 0.0;
+        continue;
+      }
+
       // 双臂零力 / 双侧主动 / 主动弹簧模式下，非 14 个主动扭矩轴完全跳过。
       // 不读模式、不清 PT、不切位置模式，避免轴8~10/18~20继续干扰主控制。
       if (dual_arm_torque_mode && !output.use_torque[i])
@@ -1813,6 +1964,13 @@ private:
   {
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
     {
+      if (!isControlledAxisIndex(i))
+      {
+        axis_in_torque_mode_[i] = false;
+        last_target_torque_[i] = 0.0;
+        continue;
+      }
+
       const int axis = axis_ids_[i];
 
       unsigned short actual_mode = -1;
@@ -1851,6 +2009,11 @@ private:
 
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
     {
+      if (!isControlledAxisIndex(i))
+      {
+        continue;
+      }
+
       const int axis = axis_ids_[i];
 
       if (!axis_enabled_[i])
@@ -1959,6 +2122,9 @@ private:
 
   std::atomic<int> current_mode_{upperlimb_robot::MODE_IDLE};
   int applied_mode_{upperlimb_robot::MODE_IDLE};
+
+  bool mode_enter_failed_ = false;
+  int mode_enter_fallback_mode_ = upperlimb_robot::MODE_IDLE;
 
   std::atomic<int> state_hz_{50};
   std::atomic<int> control_hz_{50};

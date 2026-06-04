@@ -154,3 +154,42 @@
 //---------------------------//
 2026-6-3 19:55:18:627  The g_pSlaveListExV1 is 0
 2026-6-3 19:55:18:627  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-6-4 10:26:11:674  The g_pSlaveListExV1 is 0
+2026-6-4 10:26:11:674  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-6-4 10:27:15:519  The g_pSlaveListExV1 is 0
+2026-6-4 10:27:15:519  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-6-4 10:35:52:656  The g_pSlaveListExV1 is 0
+2026-6-4 10:35:52:656  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-6-4 10:45:17:270  The g_pSlaveListExV1 is 0
+2026-6-4 10:45:17:270  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-6-4 10:47:35:162  The g_pSlaveListExV1 is 0
+2026-6-4 10:47:35:162  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-6-4 10:48:17:866  The g_pSlaveListExV1 is 0
+2026-6-4 10:48:17:867  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-6-4 12:1:13:148  The g_pSlaveListExV1 is 0
+2026-6-4 12:1:13:162  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-6-4 12:1:52:986  The g_pSlaveListExV1 is 0
+2026-6-4 12:1:52:986  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-6-4 12:2:37:809  The g_pSlaveListExV1 is 0
+2026-6-4 12:2:37:809  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-6-4 12:3:52:150  The g_pSlaveListExV1 is 0
+2026-6-4 12:3:52:151  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-6-4 15:42:39:193  The g_pSlaveListExV1 is 0
+2026-6-4 15:42:39:291  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-6-4 16:49:35:989  The g_pSlaveListExV1 is 0
+2026-6-4 16:49:35:999  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-6-4 17:0:44:622  The g_pSlaveListExV1 is 0
+2026-6-4 17:0:44:622  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2

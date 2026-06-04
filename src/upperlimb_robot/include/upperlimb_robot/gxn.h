@@ -1,28 +1,34 @@
 #pragma once
 
 #ifdef __linux__
-// LinuxÆ½Ì¨ÏÂGT_APIµÄ¶¨Òå
+// LinuxÆ½Ì¨ï¿½ï¿½GT_APIï¿½Ä¶ï¿½ï¿½ï¿½
 #define GT_API extern "C" short
-
+typedef void* HANDLE;
 /*
-WindowsÆ½Ì¨ÏÂ£¬²¿·Öº¯ÊýÊ¹ÓÃÁËlongÊý¾ÝÀàÐÍµÄº¯Êý²ÎÊý
-ÔÚlinuxÆ½Ì¨ÏÂ£¬ÄÇÐ©º¯ÊýµÄlongÀàÐÍ²ÎÊý¸ÄÎªint32_tÀàÐÍ
-LinuxÆ½Ì¨Ê¹ÓÃÏµÍ³Ìá¹©µÄstdint.hÍ·ÎÄ¼þÀ´¶¨Òåint32_t
+WindowsÆ½Ì¨ï¿½Â£ï¿½ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½longï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÍµÄºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½linuxÆ½Ì¨ï¿½Â£ï¿½ï¿½ï¿½Ð©ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½longï¿½ï¿½ï¿½Í²ï¿½ï¿½ï¿½ï¿½ï¿½Îªint32_tï¿½ï¿½ï¿½ï¿½
+LinuxÆ½Ì¨Ê¹ï¿½ï¿½ÏµÍ³ï¿½á¹©ï¿½ï¿½stdint.hÍ·ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½int32_t
 */
 #include <stdint.h>
 
-typedef int64_t			__int64;
+typedef int64_t __int64;
 #else
-// WindowsÆ½Ì¨ÏÂGT_APIµÄ¶¨Òå
+// WindowsÆ½Ì¨ï¿½ï¿½GT_APIï¿½Ä¶ï¿½ï¿½ï¿½
 #define GT_API extern "C" short __stdcall
+#include "windows.h"
 #endif
 
 /*------------------------------------------------------------------------*/
 /*------------------------------------------------------------------------*/
-/*                        ±ê×¼·¢²¼¹¦ÄÜº¯Êý		                          */
+/*                        ï¿½ï¿½×¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Üºï¿½ï¿½ï¿½                                */
 /*------------------------------------------------------------------------*/
 /*------------------------------------------------------------------------*/
 
+/*-----------------------------------------------------------*/
+/* GVNï¿½ï¿½ï¿½ÙºËºï¿½Í¨ï¿½ÃºËºê¶¨ï¿½ï¿½                                    */
+/*-----------------------------------------------------------*/
+#define GP_CORE                  (1)
+#define HS_CORE                  (2)
 
 /*-----------------------------------------------------------*/
 /* Channel of Command                                        */
@@ -40,33 +46,33 @@ typedef int64_t			__int64;
 /*-----------------------------------------------------------*/
 #define CMD_SUCCESS                     (0)
 
-#define CMD_ERROR_READ_LEN              (-2)     /* ¶ÁÈ¡Êý¾Ý³¤¶È´íÎó */
-#define CMD_ERROR_READ_CHECKSUM         (-3)     /* ¶ÁÈ¡Êý¾ÝÐ£ÑéºÍ´íÎó */
+#define CMD_ERROR_READ_LEN              (-2)     /* ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ý³ï¿½ï¿½È´ï¿½ï¿½ï¿½ */
+#define CMD_ERROR_READ_CHECKSUM         (-3)     /* ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ð£ï¿½ï¿½Í´ï¿½ï¿½ï¿½ */
 
-#define CMD_ERROR_WRITE_BLOCK           (-4)     /* Ð´ÈëÊý¾Ý¿é´íÎó */
-#define CMD_ERROR_READ_BLOCK            (-5)     /* ¶ÁÈ¡Êý¾Ý¿é´íÎó */
+#define CMD_ERROR_WRITE_BLOCK           (-4)     /* Ð´ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½ */
+#define CMD_ERROR_READ_BLOCK            (-5)     /* ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½ */
 
-#define CMD_ERROR_OPEN                  (-6)     /* ´ò¿ªÉè±¸´íÎó */
-#define CMD_ERROR_CLOSE                 (-6)     /* ¹Ø±ÕÉè±¸´íÎó */
+#define CMD_ERROR_OPEN                  (-6)     /* ï¿½ï¿½ï¿½è±¸ï¿½ï¿½ï¿½ï¿½ */
+#define CMD_ERROR_CLOSE                 (-6)     /* ï¿½Ø±ï¿½ï¿½è±¸ï¿½ï¿½ï¿½ï¿½ */
 #define CMD_ERROR_DSP_BUSY              (-7)     /* DSPÃ¦ */
 
-#define CMD_LOCK_ERROR                  (-8)     /* ¶àÏß³Ì×ÊÔ´Ã¦ */
-#define CMD_DMA_ERROR                   (-9)     /* DMA´«Êä´íÎó */
-#define CMD_COMM_ERROR                  (-10)    /* pcieÍ¨Ñ¶Ê§°Ü */
-#define CMD_LOAD_RINGNET_DLL_ERROR      (-11)    /* µÈ»·Íø¿â¼ÓÔØÊ§°Ü */
-#define CMD_RINGNET_STIME_ERROR         (-12)    /* µÈ»·Íø¿â¼ÓÔØÊ§°Ü */
+#define CMD_LOCK_ERROR                  (-8)     /* ï¿½ï¿½ï¿½ß³ï¿½ï¿½ï¿½Ô´Ã¦ */
+#define CMD_DMA_ERROR                   (-9)     /* DMAï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
+#define CMD_COMM_ERROR                  (-10)    /* pcieÍ¨Ñ¶Ê§ï¿½ï¿½ */
+#define CMD_LOAD_RINGNET_DLL_ERROR      (-11)    /* ï¿½È»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½ */
+#define CMD_RINGNET_STIME_ERROR         (-12)    /* ï¿½È»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½ */
 
-#define CMD_RINGNET_ENC0_ERROR          (-13)    /* core1±àÂëÆ÷³õÊ¼»¯Ê§°Ü */
+#define CMD_RINGNET_ENC0_ERROR          (-13)    /* core1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ê§ï¿½ï¿½ */
 
-#define CMD_RINGNET_ENC1_ERROR          (-14)    /* core2±àÂëÆ÷³õÊ¼»¯Ê§°Ü */
+#define CMD_RINGNET_ENC1_ERROR          (-14)    /* core2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ê§ï¿½ï¿½ */
 
-#define CMD_LOAD_RINGNET_ERROR          (-17)    /* µÈ»·Íø¿âAPI¼ÓÔØÊ§°Ü */
-#define CMD_MCVERSION_MATCH_ERROR       (-15)    /* µÈ»·ÍøÆ¥ÅäÊ§°Ü£¬ÐèÒª¸üÐÂ¿â */
-#define CMD_LOCK_NULL				    (-20)    /* ¶àÏß³Ì±£»¤´ò¿ª¾ä±úÊ§°Ü */
-#define CMD_MCVERSION_MATCH_WARNING     (15)     /* ÔË¿Ø°æ±¾Æ¥ÅäÊ§°Ü£¬Ä³Ð©¹¦ÄÜ²»¾ß±¸ */
-#define CMD_DSPVERSION_MATCH_WARNING    (16)     /* ÔË¿ØDSP°æ±¾½ÏÀÏ,²»¾ß±¸°æ±¾Æ¥Åä¹¦ÄÜ */
+#define CMD_LOAD_RINGNET_ERROR          (-17)    /* ï¿½È»ï¿½ï¿½ï¿½ï¿½ï¿½APIï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½ */
+#define CMD_MCVERSION_MATCH_ERROR       (-15)    /* ï¿½È»ï¿½ï¿½ï¿½Æ¥ï¿½ï¿½Ê§ï¿½Ü£ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½Â¿ï¿½ */
+#define CMD_LOCK_NULL                   (-20)    /* ï¿½ï¿½ï¿½ß³Ì±ï¿½ï¿½ï¿½ï¿½ò¿ª¾ï¿½ï¿½Ê§ï¿½ï¿½ */
+#define CMD_MCVERSION_MATCH_WARNING     (15)     /* ï¿½Ë¿Ø°æ±¾Æ¥ï¿½ï¿½Ê§ï¿½Ü£ï¿½Ä³Ð©ï¿½ï¿½ï¿½Ü²ï¿½ï¿½ß±ï¿½ */
+#define CMD_DSPVERSION_MATCH_WARNING    (16)     /* ï¿½Ë¿ï¿½DSPï¿½æ±¾ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ß±ï¿½ï¿½æ±¾Æ¥ï¿½ä¹¦ï¿½ï¿½ */
 
-#define CMD_FILE_MATCH_WARNING          (17)     /* ÅäÖÃÎÄ¼þ¸ñÊ½»òÈÕÆÚ²»Æ¥Åä */
+#define CMD_FILE_MATCH_WARNING          (17)     /* ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½ï¿½Ú²ï¿½Æ¥ï¿½ï¿½ */
 
 #define CMD_ERROR_EXECUTE               (1)
 #define CMD_ERROR_VERSION_NOT_MATCH     (3)
@@ -91,9 +97,9 @@ typedef int64_t			__int64;
 #define MC_GPO                          (12)
 // #define MC_EGPO0                     (13)
 // #define MC_EGPO1                     (14)
-#define MC_AU_ADC						(17)
+#define MC_AU_ADC                       (17)
 #define MC_HSO                          (18)
-#define MC_AU_DAC						(19)
+#define MC_AU_DAC                       (19)
 
 
 #define MC_DAC                          (20)
@@ -109,18 +115,25 @@ typedef int64_t			__int64;
 #define MC_AXIS                         (30)
 #define MC_PROFILE                      (31)
 #define MC_CONTROL                      (32)
-
+#define MC_ACTVEL                       (33)
+#define MC_PRF_VEL                      (34)
+#define MC_PRF_POS                      (35)
+#define MC_CRD                          (36)
+#define MC_DR_FOLLOW_ERROR              (37) // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define MC_COMBINE_AXES                 (38)
+#define MC_SERVO_READY                  (39) //ï¿½Å·ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½
 #define MC_TRIGGER                      (40)
 
-#define MC_AU_TRIGGER			        (44)
-
-#define MC_TERMINAL                     (50)                                   // ´ÓÕ¾Ä£¿éÀàÐÍ×ÊÔ´
-#define MC_NET_PORT	                    (51)
-#define MC_AU_ENCODER_EX								(52)
-#define MC_MPG_ENCODER									(53)
-#define MC_SERIAL_NUMBER                (55)                                   // Ä£¿éµÄÐòÁÐºÅ×ÊÔ´±êÊ¶
-#define MC_SLOTS_NUMBER                 (56)                                   // Ä£¿éÖ§³ÖµÄ²ÛÊýÐÅÏ¢×ÊÔ´±êÊ¶
-#define MC_SUB_TERMINAL                 (57)                                   // ´ÓÕ¾Ä£¿é×Ó°åÀàÐÍ×ÊÔ´
+#define MC_AU_TRIGGER                   (44)
+#define MC_SERVO_READY_TO_SWITCH_ON     (49) //ï¿½Å·ï¿½×¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½
+#define MC_TERMINAL                     (50)                                   // ï¿½ï¿½Õ¾Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´
+#define MC_NET_PORT                     (51)
+#define MC_AU_ENCODER_EX                (52)
+#define MC_MPG_ENCODER                  (53)
+#define MC_SERIAL_NUMBER                (55)                                   // Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ðºï¿½ï¿½ï¿½Ô´ï¿½ï¿½Ê¶
+#define MC_REMOTE_AU_ENCODER            (55)
+#define MC_SLOTS_NUMBER                 (56)                                   // Ä£ï¿½ï¿½Ö§ï¿½ÖµÄ²ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½Ô´ï¿½ï¿½Ê¶
+#define MC_SUB_TERMINAL                 (57)                                   // ï¿½ï¿½Õ¾Ä£ï¿½ï¿½ï¿½Ó°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´
 #define MC_EXT_MODULE                   (60)
 #define MC_EXT_DI                       (61)
 #define MC_EXT_DO                       (62)
@@ -128,27 +141,74 @@ typedef int64_t			__int64;
 #define MC_EXT_AO                       (64)
 #define MC_EHMI_DI                      (65)
 #define MC_EHMI_DO                      (66)
-#define MC_LOCAL_TERMINAL_NO_RESOURCE		(67)
-#define MC_AXIS_CONNECT				   				(68)
+#define MC_LOCAL_TERMINAL_NO_RESOURCE   (67)
+#define MC_AXIS_CONNECT                 (68)
 
 #define MC_SCAN_CRD                     (70)
-#define MC_LASER		                (71)
+#define MC_LASER                        (71)
+#define MC_LASER_AO                     (72)
 
 #define MC_POS_COMPARE                  (80)
 
 #define MC_WATCH_VAR                    (200)
 #define MC_WATCH_EVENT                  (201)
+#define MC_LIMIT_POSITIVE_RAW           (250)
+#define MC_LIMIT_NEGATIVE_RAW           (251)
+#define MC_ALARM_RAW                    (252)
+#define MC_HOME_RAW                     (253)
+#define MC_GPI_RAW                      (254)
+#define MC_ARRIVE_RAW                   (255)
+#define MC_MPG_RAW                      (259)
 
-typedef struct
+#define MC_GROUP                        (500)
+#define MC_GROUP_PROFILE                (501)
+#define MC_GROUP_SYNTHESIS              (505)
+#define MC_GROUP_RTCP                   (510)
+
+#define PROFILE_MODE_NONE               (-1)
+#define PROFILE_MODE_TRAP               (0)
+#define PROFILE_MODE_JOG                (1)
+#define PROFILE_MODE_PT                 (2)
+#define PROFILE_MODE_GEAR               (3)
+#define PROFILE_MODE_FOLLOW             (4)
+#define PROFILE_MODE_CRD                (5)
+#define PROFILE_MODE_PVT                (6)
+#define PROFILE_MODE_CAM                (7)
+
+#define PROFILE_MODE_FOLLOW_EX          (10)
+#define PROFILE_MODE_MOVE_ABSOLUTE      (20)
+#define PROFILE_MODE_MOVE_VELOCITY      (30)
+
+#define PROFILE_MODE_MOVE_CONTINUOUS               (40)
+#define PROFILE_MODE_MOVE_JOG                      (41)
+#define PROFILE_MODE_MOVE_SYNCHRONIZATION          (42)
+#define PROFILE_MODE_MOVE_POS                      (48)
+
+#define PROFILE_MODE_GROUP_MOVE_NONE               (100)
+#define PROFILE_MODE_GROUP_MOVE_CONTINUOUS         (140)
+#define PROFILE_MODE_GROUP_MOVE_JOG                (141)
+#define PROFILE_MODE_GROUP_MOVE_SYNCHRONIZATION    (142)
+#define PROFILE_MODE_GROUP_MOVE_POS                (148)
+#define PROFILE_MODE_GROUP_MOVE_PATH               (150)
+
+#define LIMIT_MODE_EXTERMAL          (0)
+#define LIMIT_MODE_SOFT              (1)
+#define LIMIT_MODE_ALL              (-1)
+
+#define LIMIT_TYPE_POS              (0)
+#define LIMIT_TYPE_NEG              (1)
+#define LIMIT_TYPE_ALL              (-1)
+
+typedef struct  
 {
-	short year;
-	short month;
-	short day;
-	short version;
-	short user;
-	short reserve1;
-	short reserve2;
-	short chip;
+    short year;
+    short month;
+    short day;
+    short version;
+    short user;
+    short reserve1;
+    short reserve2;
+    short chip;
 } TVersion;
 
 #define CORE_MODE_TIMER					(0)
@@ -171,55 +231,61 @@ typedef struct
 
 typedef enum
 {
-	TIME_ELAPSE_PROFILE = 1000,
+    TIME_ELAPSE_PROFILE = 1000,
 
-	TIME_ELAPSE_INTERRUPT_ERROR_COUNT = 1100,
+    TIME_ELAPSE_INTERRUPT_ERROR_COUNT = 1100,
 
-	TIME_ELAPSE_HOST_COMMAND_EXECUTE = 1220,
-	TIME_ELAPSE_ETHER_COMMAND_EXECUTE,
+    TIME_ELAPSE_HOST_COMMAND_EXECUTE = 1220,
+    TIME_ELAPSE_ETHER_COMMAND_EXECUTE,
 
-	TIME_ELAPSE_PROFILE_CALCULATE = 6000,
+    TIME_ELAPSE_PROFILE_CALCULATE = 6000,
+    TIME_ELAPSE_BEFOR_PROFILE_CALCULATE = 6001,
 
-	TIME_ELAPSE_SCAN = 18000,
+    TIME_ELAPSE_GROUP_CALCULATE = 9100,
 
-	TIME_ELAPSE_AXIS_CHECK = 20000,
-	TIME_ELAPSE_AXIS_CALCULATE,
-	TIME_ELAPSE_AXIS_FILTER,
+    TIME_ELAPSE_FORWARD_KINEMATIC = 9101,
+    TIME_ELAPSE_INVERSE_KINEMATIC = 9102,
 
-	TIME_ELAPSE_ENCODER = 30000,
+    TIME_ELAPSE_SCAN = 18000,
 
-	TIME_ELAPSE_DI = 31000,
+    TIME_ELAPSE_AXIS_CHECK = 20000,
+    TIME_ELAPSE_AXIS_CALCULATE,
+    TIME_ELAPSE_AXIS_FILTER,
 
-	TIME_ELAPSE_DO = 32000,
+    TIME_ELAPSE_ENCODER = 30000,
 
-	TIME_ELAPSE_AI = 33000,
+    TIME_ELAPSE_DI = 31000,
 
-	TIME_ELAPSE_AO = 34000,
+    TIME_ELAPSE_DO = 32000,
 
-	TIME_ELAPSE_TRIGGER = 38000,
+    TIME_ELAPSE_AI = 33000,
 
-	TIME_ELAPSE_CONTROL = 40000,
+    TIME_ELAPSE_AO = 34000,
 
-	TIME_ELAPSE_WATCH = 52000,
+    TIME_ELAPSE_TRIGGER = 38000,
 
-	TIME_ELAPSE_TERMINAL = 53000,
+    TIME_ELAPSE_CONTROL = 40000,
 
-	TIME_ELAPSE_TERMINAL_OPERATION = 53001,
+    TIME_ELAPSE_WATCH = 52000,
 
-	TIME_ELAPSE_READ_ADC = 54000,
+    TIME_ELAPSE_TERMINAL = 53000,
+
+    TIME_ELAPSE_TERMINAL_OPERATION = 53001,
+
+    TIME_ELAPSE_READ_ADC = 54000,
 
 } ETimeElapse;
 
 typedef struct Pid
 {
-	double kp;
-	double ki;
-	double kd;
-	double kvff;
-	double kaff;
-	int32_t   integralLimit;
-	int32_t   derivativeLimit;
-	short  limit;
+    double kp;
+    double ki;
+    double kd;
+    double kvff;
+    double kaff;
+    int32_t   integralLimit;
+    int32_t   derivativeLimit;
+    short  limit;
 } TPid;
 
 #define RESET_TYPE_NONE			(-1)
@@ -227,27 +293,50 @@ typedef struct Pid
 
 typedef struct
 {
-	short mode;		// modeÎª1±íÊ¾±£³Ö£¬Îª0±íÊ¾¸´Î»µ½³õÊ¼×´Ì¬
+    short mode;		// modeÎª1ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Ö£ï¿½Îª0ï¿½ï¿½Ê¾ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½Ê¼×´Ì¬
 }TResetIo;
 
 typedef union
 {
-	TResetIo resetIo;
-	double data[7];
+    TResetIo resetIo;
+    double data[7];
 }TResetModePrmUnion;
 
 typedef struct
 {
-	short axisIndex[2];
-	short reserve1[2];
-	double radius;
-	double center[2];
+    short axisIndex[2];
+    short reserve1[2];
+    double radius;
+    double center[2];
 }TAxisCircularSafetyZone;
 
-GT_API GTN_Open(short channel=5,short param=1);
+typedef struct
+{
+    short refType;           // ï¿½ï¿½È«ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½Í£ï¿½MC_ENCODER/MC_AU_ENCODER/MC_AU_ENCODER_EX/MC_MPG_ENCODER
+    short refIndex;          // ï¿½ï¿½È«ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½Í¶ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short reserve1[2];
+    double refRatio;         // ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½refRatio = (ï¿½ï¿½1mmï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)/(ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½1mmï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+    double limitPositive;    // ï¿½ï¿½È«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î§ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double limitNegative;    // ï¿½ï¿½È«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î§ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+}TProfileReferenceSafetyZone;
+
+typedef struct
+{
+    short hwLmtPositiveEnable;         // ï¿½ï¿½Ó²ï¿½ï¿½Î»Ê¹ï¿½ï¿½×´Ì¬ï¿½ï¿½0ï¿½ï¿½ï¿½Ø±Õ£ï¿½1ï¿½ï¿½ï¿½ï¿½
+    short hwLmtNegativeEnable;         // ï¿½ï¿½Ó²ï¿½ï¿½Î»Ê¹ï¿½ï¿½×´Ì¬ï¿½ï¿½0ï¿½ï¿½ï¿½Ø±Õ£ï¿½1ï¿½ï¿½ï¿½ï¿½
+    short swLmtPositiveEnable;         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»Ê¹ï¿½ï¿½×´Ì¬ï¿½ï¿½0ï¿½ï¿½ï¿½Ø±Õ£ï¿½1ï¿½ï¿½ï¿½ï¿½
+    short swLmtNegativeEnable;         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»Ê¹ï¿½ï¿½×´Ì¬ï¿½ï¿½0ï¿½ï¿½ï¿½Ø±Õ£ï¿½1ï¿½ï¿½ï¿½ï¿½
+
+    short hwLmtPositiveStatus;         // ï¿½ï¿½Ó²ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½0ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short hwLmtNegativeStatus;         // ï¿½ï¿½Ó²ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½0ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short swLmtPositiveStatus;         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½0ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short swLmtNegativeStatus;         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½0ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+}TLimitInfo;
+
+GT_API GTN_Open(short channel = 5, short param = 2);
 GT_API GTN_Close(void);
 
-GT_API GTN_OpenRingNet(short channel=5,short param=1,char *pFile=NULL,short index=1,int32_t count=1);
+GT_API GTN_OpenRingNet(short channel=5,short param=2,char *pFile=NULL,short index=1,int32_t count=1);
 GT_API GTN_RingNetInit(short mode,char *pFile,short index);
 
 GT_API GTN_GetChannel(short *pChannel);
@@ -305,6 +394,7 @@ GT_API GTN_SetSoftLimit(short core,short axis,int32_t positive,int32_t negative)
 GT_API GTN_GetSoftLimit(short core,short axis,int32_t *pPositive,int32_t *pNegative);
 GT_API GTN_SetSoftLimitEx(short core,short axis,double positive,double negative);
 GT_API GTN_GetSoftLimitEx(short core,short axis,double *pPositive,double *pNegative);
+GT_API GTN_GetLimitInfo(short core,short axis,TLimitInfo *pInfo);
 GT_API GTN_SetSoftLimitTrimMode(short core,short enable);
 GT_API GTN_SetAxisBand(short core,short axis,int32_t band,int32_t time);
 GT_API GTN_GetAxisBand(short core,short axis,int32_t *pBand,int32_t *pTime);
@@ -334,6 +424,21 @@ GT_API GTN_DelayHighPrecision(short core,unsigned short profile);
 GT_API GTN_SetLimit(short core,short axis,short type,void *pPrm);
 GT_API GTN_GetLimit(short core,short axis,short type,void *pPrm);
 
+/**
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È±ï¿½ï¿½ï¿½Ä£Ê½
+ * @param core ï¿½Ëºï¿½
+ * @param mode Ä£Ê½ï¿½ï¿½ï¿½ï¿½
+ * @return 17056ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+*/
+GT_API GTN_SetFeedOverrideMode(short core,short mode);
+
+/**
+ * @brief ï¿½ï¿½È¡ï¿½Ù¶È±ï¿½ï¿½ï¿½Ä£Ê½
+ * @param core ï¿½Ëºï¿½
+ * @param pMode Ä£Ê½ï¿½ï¿½ï¿½ï¿½
+ * @return
+ */
+GT_API GTN_GetFeedOverrideMode(short core,short *pMode);
 
 #define STEP_DIR                        (0)
 #define STEP_PULSE                      (1)
@@ -344,16 +449,15 @@ GT_API GTN_AlarmOn(short core,short axis);
 GT_API GTN_AlarmOff(short core,short axis);
 GT_API GTN_ClearAlarm(short core,short axis,short count,unsigned short delayTime);
 
-#define MC_LIMIT_POSITIVE               (0)
-#define MC_LIMIT_NEGATIVE               (1)
+
 #define LIMIT_MODE_EXTERMAL     				(0)
 #define LIMIT_MODE_SOFT         				(1)
 #define LIMIT_MODE_ALL          				(-1)
 
 GT_API GTN_LmtsOn(short core,short axis,short limitType=-1);
-GT_API GTN_LmtsOnEx(short core,short axis,short limitType,short limitMode);
+GT_API GTN_LmtsOnEx(short core,short axis,short limitType=-1,short limitMode=-1);
 GT_API GTN_LmtsOff(short core,short axis,short limitType=-1);
-GT_API GTN_LmtsOffEx(short core,short axis,short limitType,short limitMode);
+GT_API GTN_LmtsOffEx(short core,short axis,short limitType=-1,short limitMode=-1);
 GT_API GTN_StepDir(short core,short step);
 GT_API GTN_StepPulse(short core,short step);
 GT_API GTN_StepOrthogonal(short core,short step);
@@ -389,7 +493,7 @@ GT_API GTN_SetAuEncoderScale(short core,short i,int32_t alpha,int32_t beta);
 GT_API GTN_GetAuEncoderScale(short core,short i,int32_t *pAlhpa,int32_t *pBeta);
 GT_API GTN_SetEncoderMapRelation(short core,short masterEncType,short masterEncIndex,short mapEncType,short mapEncIndex);
 GT_API GTN_GetEncoderMapRelation(short core,short masterEncType,short masterEncIndex,short *pMapEncType,short *pMapEncIndex);
-
+GT_API GTN_SetProfilePpr(short core,short profile,double ppr);
 
 /*-----------------------------------------------------------*/
 /* Capture and Triggr                                        */
@@ -403,96 +507,119 @@ GT_API GTN_GetEncoderMapRelation(short core,short masterEncType,short masterEncI
 
 typedef struct Trigger
 {
-	short encoder;
-	short probeType;
-	short probeIndex;
-	short sense;
-	int32_t  offset;
-	uint32_t loop;
-	short windowOnly;
-	int32_t firstPosition;
-	int32_t lastPosition;
+    short encoder;
+    short probeType;
+    short probeIndex;
+    short sense;
+    int32_t  offset;
+    uint32_t loop;
+    short windowOnly;
+    int32_t firstPosition;
+    int32_t lastPosition;
 }TTrigger;
 
 typedef struct TriggerEx
 {
-	short latchType;
-	short latchIndex;
-	short probeType;
-	short probeIndex;
-	short sense;
-	int32_t  offset;
-	uint32_t loop;
-	short windowOnly;
-	int32_t firstPosition;
-	int32_t lastPosition;
+    short latchType;
+    short latchIndex;
+    short probeType;
+    short probeIndex;
+    short sense;
+    int32_t  offset;
+    uint32_t loop;
+    short windowOnly;
+    int32_t firstPosition;
+    int32_t lastPosition;
 }TTriggerEx;
 
 typedef struct TriggerAlign
 {
-	short encoder;
-	short probeType;
-	short probeIndex;
-	short sense;
-	int32_t offset;
-	uint32_t loop;
-	short windowOnly;
-	short pad2;
-	int32_t firstPosition;
-	int32_t lastPosition;
+    short encoder;
+    short probeType;
+    short probeIndex;
+    short sense;
+    int32_t offset;
+    uint32_t loop;
+    short windowOnly;
+    short pad2;
+    int32_t firstPosition;
+    int32_t lastPosition;
 }TTriggerAlign;
 
 typedef struct TriggerStatus
 {
-	short execute;
-	short done;
-	int32_t position;
+    short execute;
+    short done;
+    int32_t position;
 }TTriggerStatus;
 
 typedef struct TriggerStatusEx
 {
-	short execute;
-	short done;
-	int32_t position;
-	uint32_t clock;
-	uint32_t loopCount;
+    short execute;
+    short done;
+    int32_t position;
+    uint32_t clock;
+    uint32_t loopCount;
 }TTriggerStatusEx;
 
 typedef struct TriggerPrm
 {
-	short latchType;
-	short latchIndex;
-	short probeType;
-	short probeIndex;
-	short sense;
-	short loopType;
-	int32_t  offset;
-	uint32_t loop;
-	short windowOnly;
-	short pad1;
-	int32_t firstPosition;
-	int32_t lastPosition;
-	short fifoMode;
-	short pad2[3];
-	double pad3;
+    short latchType;    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                        // MC_ENCODER    (23)
+                        // MC_AU_ENCODER (26)
+    short latchIndex;   // ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short probeType;    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½È¡Öµï¿½ï¿½Î§[1,3]
+                        // CAPTURE_HOME  (1)
+                        // CAPTURE_INDEX (2)
+                        // CAPTURE_PROBE (3)
+    short probeIndex;   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¶ï¿½Ó¦ï¿½ï¿½DIï¿½ï¿½ï¿½
+    short sense;        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,0:ï¿½Â½ï¿½ï¿½Ø£ï¿½1:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short loopType;     // 0ï¿½ï¿½FPGAÑ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½DSPï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¹Ø±Õ²ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
+                        // 1ï¿½ï¿½DSPÑ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½DSPï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½éµ¥ï¿½Ê´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É¹ï¿½Ò»ï¿½Îºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Î¡ï¿½
+    int32_t  offset;    // ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½Æ«ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½Ö»ï¿½ï¿½GTMÄ£ï¿½ï¿½Ö§ï¿½ï¿½offsetÎªï¿½ï¿½0Öµ
+    uint32_t loop;      // ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½Ô£ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short windowOnly;   // ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ü£ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ñ´°£ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short pad1;         // ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    int32_t firstPosition;// windowOnly=1Ê±ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ãµï¿½ï¿½ï¿½ï¿½
+    int32_t lastPosition;// windowOnly=1Ê±ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ãµï¿½ï¿½Õµï¿½
+    short fifoMode;     // Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½FIFOÄ£Ê½
+                        // TRIGGER_RESULT_FIFO_MODE_STATIC(0)ï¿½ï¿½ï¿½ï¿½Ì¬Ä£Ê½ï¿½ï¿½FIFOï¿½ï¿½ï¿½Ë¾Í²ï¿½ï¿½ï¿½ï¿½ï¿½
+                        // TRIGGER_RESULT_FIFO_MODE_LOOP(1)ï¿½ï¿½ï¿½ï¿½Ì¬Ä£Ê½ï¿½ï¿½FIFOï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½á±»ï¿½ï¿½ï¿½ï¿½ï¿½Ý¸ï¿½ï¿½Ç£ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¶ï¿½ï¿½ßºï¿½á½«FIFOï¿½Í·Å³ï¿½ï¿½ï¿½
+    short pad2[3];      // ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    double pad3;        // ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
 }TTriggerPrm;
 
 typedef struct
 {
-	short fifoFull;
-	short pad1[3];
-	double pad2[2];
+    short fifoFull;
+    short pad1[3];
+    double pad2[2];
 }TLatchValueInfo;
+
+#define TRIGGER_RESULT_FIFO_MODE_STATIC  0
+#define TRIGGER_RESULT_FIFO_MODE_LOOP    1
+
+typedef struct TriggerLatchPrm
+{
+    uint32_t latchIndex;//ï¿½ï¿½ï¿½ñ´¥·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å¡ï¿½
+    int32_t latchValue;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½Triggerï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¹ï¿½	
+    double   userValue;//ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½TTriggerPrmï¿½Ä²ï¿½ï¿½ï¿½pad3ï¿½ï¿½Ó¦
+    double   reserve;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+}TTriggerLatchPrm;
+
+#define LATCH_USER_VAR_DOUBLE          (100)
+#define LATCH_USER_VAR_LONG             (101)
 
 GT_API GTN_SetAuTrigger(short core,short index,TTriggerEx *pTrigger);
 GT_API GTN_GetAuTrigger(short core,short index,TTriggerEx *pTrigger);
+GT_API GTN_DisableAuTrigger(short core, short index);
 GT_API GTN_ClearAuTriggerStatus(short core,short index);
 GT_API GTN_GetAuTriggerStatus(short core,short index,TTriggerStatusEx *pTriggerStatusEx,short count=1);
 
 GT_API GTN_SetTriggerPrm(short core,short index,TTriggerPrm *pTriggerPrm);
 GT_API GTN_GetTriggerPrm(short core,short index,TTriggerPrm *pTriggerPrm);
 GT_API GTN_GetTriggerLatchValue(short core,short index,int32_t count,int32_t *pValue,int32_t *pCount,TLatchValueInfo *pInfo);
-
+GT_API GTN_GetTriggerLatchValuePro(short core,short index,int32_t count,TTriggerLatchPrm *pLatchPrm,int32_t *pCount,TLatchValueInfo *pInfo);
 GT_API GTN_SetTrigger(short core,short index,TTrigger *pTrigger);
 GT_API GTN_GetTrigger(short core,short index,TTrigger *pTrigger);
 GT_API GTN_SetTriggerEx(short core,short index,TTriggerEx *pTrigger);
@@ -510,29 +637,29 @@ GT_API GTN_DisableTrigger(short core,short index);
 
 typedef struct Checkpoint
 {
-	short mode;
-	int32_t offset;
-	short fifoIndex;
-	uint32_t crossCount;
-	short fifoDataCount;
-	short dataReady;
-	int32_t data;
-	short dataIndex;
+    short mode;
+    int32_t offset;
+    short fifoIndex;
+    uint32_t crossCount;
+    short fifoDataCount;
+    short dataReady;
+    int32_t data;
+    short dataIndex;
 } TCheckpoint;
 
 typedef struct TriggerDeltaPrm
 {
-	short mode;
-	short dir;
-	short triggerIndex[2];
+    short mode;
+    short dir;
+    short triggerIndex[2];
 } TTriggerDeltaPrm;
 
 typedef struct TriggerDelta
 {
-	short enable;
-	short checkpointCount;
-	short fifoDataCount;
-	short lostCount;
+    short enable;
+    short checkpointCount;
+    short fifoDataCount;
+    short lostCount;
 }TTriggerDeltaInfo;
 
 GT_API GTN_ClearTriggerDelta(short core,short index,short mode=0);
@@ -565,22 +692,52 @@ GT_API GTN_GetCaptureOffsetStatus(short core,short encoder,short *pCount,int32_t
 GT_API GTN_AutoCaptureOn(short core,short encoder);
 GT_API GTN_AutoCaptureOff(short core,short encoder);
 
+typedef struct
+{
+    int32_t position1;                    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½â²¶ï¿½ï¿½Î»ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int32_t position2;                    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½â²¶ï¿½ï¿½Î»ï¿½ï¿½2ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+}TToolPosition;
+
+/**
+ * @brief ï¿½ï¿½È¡Triggerï¿½ï¿½ï¿½ñµ½µÄµï¿½ï¿½ï¿½Î»ï¿½ï¿½
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param triggerIndex ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½ï¿½ï¿½ñµ½µï¿½ï¿½ï¿½Î»ï¿½Ãµï¿½Triggerï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pToolPos ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã½á¹¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ë£¬ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡Îªcount
+ * @param count ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½ï¿½ï¿½ñµ½µï¿½ï¿½ï¿½Î»ï¿½Ãµï¿½Triggerï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0
+ * @return 17051ï¿½ï¿½countï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,119]
+ *         17052ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í²ï¿½Ö§ï¿½Ö£ï¿½ï¿½ï¿½Ö§ï¿½ï¿½Triggerï¿½ï¿½AuTrigger
+ *         17053ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+*/
+GT_API GTN_GetTriggerToolPosition(short core,short triggerIndex,TToolPosition *pToolPos,short count=1);
+
+/**
+ * @brief ï¿½ï¿½È¡AuTriggerï¿½ï¿½ï¿½ñµ½µÄµï¿½ï¿½ï¿½Î»ï¿½ï¿½
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param auTriggerIndex ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½ï¿½ï¿½ñµ½µï¿½ï¿½ï¿½Î»ï¿½Ãµï¿½AuTriggerï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pToolPos ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã½á¹¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ë£¬ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡Îªcount
+ * @param count ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½ï¿½ï¿½ñµ½µï¿½ï¿½ï¿½Î»ï¿½Ãµï¿½AuTriggerï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0
+ * @return 17051ï¿½ï¿½countï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,119]
+ *         17052ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í²ï¿½Ö§ï¿½Ö£ï¿½ï¿½ï¿½Ö§ï¿½ï¿½Triggerï¿½ï¿½AuTrigger
+ *         17053ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+*/
+GT_API GTN_GetAuTriggerToolPosition(short core,short auTriggerIndex,TToolPosition *pToolPos,short count=1);
+
 /*-----------------------------------------------------------*/
 /* Basic Motion                                              */
 /*-----------------------------------------------------------*/
 typedef struct TrapPrm
 {
-	double acc;
-	double dec;
-	double velStart;
-	short  smoothTime;
+    double acc;
+    double dec;
+    double velStart;
+    short  smoothTime;
 } TTrapPrm;
 
 typedef struct TTrapTime
 {
-	double totalTime;
-	double remainderTime;
-	double pad[2];
+    double totalTime;
+    double remainderTime;
+    double pad[2];
 } TTrapTime;
 
 GT_API GTN_Update(short core,int32_t mask);
@@ -603,9 +760,9 @@ GT_API GTN_GetTrapOverride(short core,short profile,double *pVelRatio);
 
 typedef struct JogPrm
 {
-	double acc;
-	double dec;
-	double smooth;
+    double acc;
+    double dec;
+    double smooth;
 } TJogPrm;
 
 GT_API GTN_PrfJog(short core,short profile);
@@ -621,16 +778,16 @@ GT_API GTN_GetJogPrm(short core,short profile,TJogPrm *pPrm);
 
 typedef struct
 {
-	double prfPos;
-	int32_t loop;
-	short mode;
-	short fifoUse;
-	short fifoPlace;
-	short segmentNumber;
-	uint32_t segmentReceive[2];
-	uint32_t segmentExecute[2];
-	uint32_t bufferReceive[2];
-	uint32_t bufferExecute[2];
+    double prfPos;
+    int32_t loop;
+    short mode;
+    short fifoUse;
+    short fifoPlace;
+    short segmentNumber;
+    uint32_t segmentReceive[2];
+    uint32_t segmentExecute[2];
+    uint32_t bufferReceive[2];
+    uint32_t bufferExecute[2];
 } TPtInfo;
 
 //GT_API GTN_PosCurrFeedForward(short core,short profile,double pos,int32_t time,short torque,short type,short fifo=0);
@@ -662,12 +819,12 @@ GT_API GTN_PtSmoothEnd(short core,short profile,short fifo);
 
 typedef struct TPvtTableMovePrm
 {
-	short tableId;
-	int32_t distance;
-	double vm;
-	double am;
-	double jm;
-	double time;
+    short tableId;
+    int32_t distance;
+    double vm;
+    double am;
+    double jm;
+    double time;
 } TPvtTableMovePrm;
 
 GT_API GTN_PrfPvt(short core,short profile);
@@ -681,22 +838,23 @@ GT_API GTN_PvtTable(short core,short tableId,int32_t count,double *pTime,double 
 GT_API GTN_PvtTableEx(short core,short tableId,int32_t count,double *pTime,double *pPos,double *pVelBegin,double *pVelEnd);
 GT_API GTN_PvtTableComplete(short core,short tableId,int32_t count,double *pTime,double *pPos,double *pA,double *pB,double *pC,double velBegin=0,double velEnd=0);
 GT_API GTN_PvtTablePercent(short core,short tableId,int32_t count,double *pTime,double *pPos,double *pPercent,double velBegin=0);
-GT_API GTN_PvtPercentCalculate(short core,int32_t n,double *pTime,double *pPos,double *pPercent,double velBegin,double *pVel);
+GT_API GTN_PvtPercentCalculate(short core, int32_t count, double* pTime, double* pPos, double* pPercent, double velBegin, double* pVel);
 GT_API GTN_PvtTableContinuous(short core,short tableId,int32_t count,double *pPos,double *pVel,double *pPercent,double *pVelMax,double *pAcc,double *pDec,double timeBegin);
-GT_API GTN_PvtContinuousCalculate(short core,int32_t n,double *pPos,double *pVel,double *pPercent,double *pVelMax,double *pAcc,double *pDec,double *pTime);
+GT_API GTN_PvtContinuousCalculate(short core, int32_t count, double* pPos, double* pVel, double* pPercent, double* pVelMax, double* pAcc, double* pDec, double* pTime);
 
-GT_API GTN_PvtTableMove(short core,short tableId,int32_t distance,double vm,double am,double jm,double *pTime=NULL);
+GT_API GTN_PvtTableMove(short core, short tableId, int32_t distance, double vm, double am, double jm, double* pTime = NULL);
 GT_API GTN_PvtTableMoveCalculate(short core,int32_t distance,double vm,double am,double *pVm,double *pJm);
 GT_API GTN_PvtTableMove2(short core,short tableId,int32_t distance,double vm,double am,double jm,double *pTime=NULL);
+GT_API GTN_PvtTableMoveAbsoluteJerk(short core, short profile, short tableId, double* pPos, double* pVelMax, double* pAccMax, double* pJerkMax, double* pTime, short count);
 GT_API GTN_PvtTableMove2Calculate(short core,int32_t distance,double vm,double am,double *pVm,double *pJm);
 GT_API GTN_PvtTableMovePercent(short core,short tableId,int32_t distance,double vm,
-							   double acc,double pa1,double pa2,
-							   double dec,double pd1,double pd2,
-							   double *pVel=NULL,double *pAcc=NULL,double *pDec=NULL,double *pTime=NULL);
+                               double acc,double pa1,double pa2,
+                               double dec,double pd1,double pd2,
+                               double *pVel=NULL,double *pAcc=NULL,double *pDec=NULL,double *pTime=NULL);
 GT_API GTN_PvtTableMovePercentEx(short core,short tableId,int32_t distance,double vm,
-								 double acc,double pa1,double pa2,double ma,
-								 double dec,double pd1,double pd2,double md,
-								 double *pVel=NULL,double *pAcc=NULL,double *pDec=NULL,double *pTime=NULL);
+                                 double acc,double pa1,double pa2,double ma,
+                                 double dec,double pd1,double pd2,double md,
+                                 double *pVel=NULL,double *pAcc=NULL,double *pDec=NULL,double *pTime=NULL);
 
 GT_API GTN_PvtTableMoveTogether(short core,short tableCount,TPvtTableMovePrm *pPvtTableMovePrm);
 
@@ -705,21 +863,22 @@ GT_API GTN_SetPvtTableLoop(short core,short profile,short tableId,int32_t loop,s
 GT_API GTN_GetPvtTableLoop(short core,short profile,short tableId,int32_t *pLoopCount,int32_t *pLoop,short *pNextTableId);
 
 GT_API GTN_PvtTableMoveAbsolute(short core,short profile,double *pDistance,double *pVm,
-	double *pAcc,double *pPa1,double *pPa2,
-	double *pDec,double *pPd1,double *pPd2,
-	double *pVelM,double *pAccM,double *pDecM,double *pTime,short count);
+    double *pAcc,double *pPa1,double *pPa2,
+    double *pDec,double *pPd1,double *pPd2,
+    double *pVelM,double *pAccM,double *pDecM,double *pTime,short count);
 
 
 #define GEAR_MASTER_ENCODER             (1)
 #define GEAR_MASTER_PROFILE             (2)
 #define GEAR_MASTER_AXIS                (3)
 #define GEAR_MASTER_AU_ENCODER          (4)
-#define GEAR_MASTER_MPG_ENCODER					(5)
+#define GEAR_MASTER_MPG_ENCODER         (5)
+#define GEAR_MASTER_MPG                 (9)
 
 #define GEAR_MASTER_ENCODER_OTHER       (101)
 #define GEAR_MASTER_AXIS_OTHER          (103)
-#define GEAR_MASTER_AU_ENCODER_OTHER		(104)
-#define GEAR_MASTER_MPG_ENCODER_OTHER		(105)
+#define GEAR_MASTER_AU_ENCODER_OTHER    (104)
+#define GEAR_MASTER_MPG_ENCODER_OTHER   (105)
 
 #define GEAR_EVENT_START                (1)
 #define GEAR_EVENT_PASS                 (2)
@@ -733,6 +892,40 @@ GT_API GTN_GetGearRatio(short core,short profile,int32_t *pMasterEven,int32_t *p
 GT_API GTN_GearStart(short core,int32_t mask);
 GT_API GTN_SetGearEvent(short core,short profile,short event,int32_t startPara0,int32_t startPara1);
 GT_API GTN_GetGearEvent(short core,short profile,short *pEvent,int32_t *pStartPara0,int32_t *pStartPara1);
+
+typedef struct{
+    unsigned short masterIndex;        // GearInÄ£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short masterValueSource;           // ï¿½ï¿½ï¿½ï¿½Ô´
+    short pad1;                        // ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0
+    short pad2;                        // ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0
+    int32_t ratioNumerator;               // ï¿½ï¿½ï¿½Ö±ÈµÄ·ï¿½ï¿½ï¿½
+    uint32_t ratioDenominator;    // ï¿½ï¿½ï¿½Ö±ÈµÄ·ï¿½Ä¸
+    double acceleration;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½Ù¶ï¿½
+    double deceleration;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½Ù¶ï¿½
+    double jerk;                       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼Ó¼ï¿½ï¿½Ù¶ï¿½
+    double pad3;                       // ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0
+}TGearInParameter;
+
+typedef struct  
+{
+    short state;
+    unsigned short masterIndex;        // GearInÄ£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    unsigned short masterValueSource;  // ï¿½ï¿½ï¿½ï¿½Ô´
+    short pad1[3];                     // ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0
+
+    int32_t ratioNumerator;               // ï¿½ï¿½ï¿½Ö±ÈµÄ·ï¿½ï¿½ï¿½
+    uint32_t ratioDenominator;    // ï¿½ï¿½ï¿½Ö±ÈµÄ·ï¿½Ä¸
+    int32_t slaveEven;                    // ï¿½ï¿½ï¿½Ô¹ï¿½Ô¼ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½Ö±ÈµÄ·ï¿½ï¿½ï¿½
+    uint32_t masterEven;          // ï¿½ï¿½ï¿½Ô¹ï¿½Ô¼ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½Ö±ÈµÄ·ï¿½Ä¸
+    double acceleration;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½Ù¶ï¿½
+    double deceleration;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½Ù¶ï¿½
+    double jerk;                       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼Ó¼ï¿½ï¿½Ù¶ï¿½
+    double pad2;                       // ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0
+}TGearInInfo;
+
+GT_API GTN_SetGearInParameter(short core, short slaveIndex, TGearInParameter *pGearInPrm);
+GT_API GTN_GearInStart(short core, uint32_t *pStartMask, unsigned short maskCount);
+GT_API GTN_GetGearInInfo(short core, unsigned short slaveIndex, TGearInInfo *pGearInInfo);
 
 #define FOLLOW_SWITCH_SEGMENT			(1)
 #define FOLLOW_SWITCH_TABLE				(2)
@@ -755,15 +948,15 @@ GT_API GTN_GetGearEvent(short core,short profile,short *pEvent,int32_t *pStartPa
 
 typedef struct
 {
-	short fifoNum;
-	short switchStatus;
-	short segNum;
-	short pad1;
-	double masterPosDelta;
-	double slavePosDelta;
-	double virtualMasterError;
-	double pad2;
-	double pad3;
+    short fifoNum;
+    short switchStatus;
+    short segNum;
+    short pad1;
+    double masterPosDelta;
+    double slavePosDelta;
+    double virtualMasterError;
+    double pad2;
+    double pad3;
 } TFollowInfo;
 
 GT_API GTN_PrfFollow(short core,short profile,short dir=0);
@@ -814,6 +1007,19 @@ GT_API GTN_FollowDoBitEx(short core,short profile,short doType,short index,short
 GT_API GTN_FollowDelayEx(short core,short profile,uint32_t delayTime,short fifo=0);
 GT_API GTN_FollowDiBitEx(short core,short profile,short diType,short index,short value,uint32_t time=0,short fifo=0);
 
+/**
+ * @brief Followï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹Ä£ï¿½é£¬Ö´ï¿½Ð¸ï¿½Ö¸ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½Òªï¿½È³ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Õ¹Ä£ï¿½é£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹Ä£ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½È¨ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ç£ºsRtn = GTN_ExtModuleInit(CORE_1,100);
+ * @param core ï¿½Ëºï¿½
+ * @param profile Followï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param doIndex ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹Ä£ï¿½ï¿½DOï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½
+ * @param value ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹Ä£ï¿½ï¿½DOï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½bitÎ»ï¿½ï¿½ï¿½ï¿½
+ * @param mask ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹Ä£ï¿½ï¿½DOï¿½ï¿½Öµï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ë£¬ï¿½ï¿½bitÎ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½bitÎª1Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦valueï¿½ï¿½bitï¿½ï¿½Öµ
+ * @param fifo Followï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½Followï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @returnï¿½ï¿½
+            7ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ / ï¿½ï¿½Õ¹Ä£ï¿½ï¿½Î´ï¿½ï¿½Ê¼ï¿½ï¿½
+            1ï¿½ï¿½Ö´ï¿½Ð´ï¿½ï¿½ó£¬¸ï¿½ï¿½ï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½FollowExï¿½æ»®Ä£Ê½ / ï¿½ï¿½ï¿½Ë¶ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½16ï¿½ï¿½
+*/
+GT_API GTN_FollowExtDoEx(short core,short profile,short doIndex,int32_t value,int32_t mask, short fifo);
 GT_API GTN_SetAxisFollowErrorMode(short core,short axis,short followErrorMode);
 GT_API GTN_GetAxisFollowErrorMode(short core,short axis,short *pFollowErrorMode);
 
@@ -823,24 +1029,24 @@ GT_API GTN_GetFollowRegistCount(short core,short profile,uint32_t *pCount);
 
 typedef struct
 {
-	int32_t pos;
-	double vel;
-	double acc;
-	double dec;
-	short percent;
+    int32_t pos;
+    double vel;
+    double acc;
+    double dec;
+    short percent;
 } TMoveAbsolutePrm;
 
 typedef struct
 {
-	int32_t pos;
-	double vel;
-	double acc;
-	double dec;
-	short percent;
-	double velStart;
-	double velEnd;
-	short accStartPercent;
-	short decEndPercent;
+    int32_t pos;
+    double vel;
+    double acc;
+    double dec;
+    short percent;
+    double velStart;
+    double velEnd;
+    short accStartPercent;
+    short decEndPercent;
 } TMoveAbsolutePrmEx;
 
 GT_API GTN_MoveAbsolute(short core,short profile,TMoveAbsolutePrm *pPrm);
@@ -851,81 +1057,134 @@ GT_API GTN_GetMoveAbsoluteEx(short core,short profile,TMoveAbsolutePrmEx *pPrm);
 
 typedef struct
 {
-	double vel;
-	double acc;
-	double dec;
-	double jerkBegin;
-	double jerkEnd;
-	short direction;
+    double vel;
+    double acc;
+    double dec;
+    double jerkBegin;
+    double jerkEnd;
+    short direction;
 } TMoveVelocityPrm;
 
 GT_API GTN_MoveVelocity(short core,short profile,TMoveVelocityPrm *pPrm);
 GT_API GTN_GetMoveVelocity(short core,short profile,TMoveVelocityPrm *pPrm);
 
+#define LISTINFO_RESERVE2_USERTAG                           (0)
 typedef struct
 {
-	short list;
-	short reserve1[2];
-	short modal;
-	int32_t segNum;
-	int32_t reserve2[3];
-	double reserve3[4];
+    short list;
+    short reserve1[2];
+    short modal;
+    int32_t segNum;
+    int32_t reserve2[3];
+    double reserve3[4];
 }TListInfo;
+/*-----------------------------------------------------------*/
+/* Move                                                      */
+/*-----------------------------------------------------------*/
+#define VEL_PROFILE_MODE_TRAP               (1)
+#define VEL_PROFILE_MODE_SMOOTH             (40)
+#define VEL_PROFILE_MODE_SMOOTH_EX          (41)
+#define VEL_PROFILE_MODE_JERK               (46)
 
 typedef struct
 {
-	double pos;
-	double vel;
-	double velEnd;
-	double acc;
-	double dec;
-	short  direction;
-	short overrideSelect;
-	short reserve[2];
+    double accTime;              // ï¿½ï¿½ï¿½Ù¶È±ä»¯Ê±ï¿½ï¿½
+    double k;                    // ï¿½ï¿½Ì¬
+    double reserve[18];
+} TVelProfileModeSmooth;
+
+typedef struct
+{
+    double value;                // ï¿½Ó¼ï¿½ï¿½Ù¶ï¿½
+    double beginPercent;	
+    double endPercent;	
+    double reserve[17];
+} TVelProfileModeJerk;
+
+typedef union
+{
+    TVelProfileModeSmooth smooth;
+    TVelProfileModeJerk jerk;
+    double data[20];
+} TVelProfileModeParameter;
+
+typedef struct
+{
+    short mode;			// Ä£Ê½
+    short reserve[3];
+    TVelProfileModeParameter parameter;
+} TVelProfileMode;
+
+typedef struct
+{
+    double pos;
+    double vel;
+    double velEnd;
+    double acc;
+    double dec;
+    short  direction;
+    short overrideSelect;
+    short reserve;
+    short velProfileMode;
+    TVelProfileModeParameter velProfile;
 } TMoveContinuousAbsolutePrm;
 
 typedef struct
 {
-	double distance;
-	double vel;
-	double velEnd;
-	double acc;
-	double dec;
-	short overrideSelect;
-	short reserve[3];
+    double distance;
+    double vel;
+    double velEnd;
+    double acc;
+    double dec;
+    short  direction;
+    short overrideSelect;
+    short reserve;
+    short velProfileMode;
+    TVelProfileModeParameter velProfile;
 } TMoveContinuousRelativePrm;
 
+typedef struct  
+{
+	short profile;
+	short reserve[3];
+	short group;
+	short cmdCoord;
+	short oriMode;
+	short configIndex;
+	TMoveContinuousAbsolutePrm prm;
+} TTaskMoveContinuousAbsolute;
 GT_API GTN_MoveContinuousAbsolute(short core,short profile,TMoveContinuousAbsolutePrm *pPrm,TListInfo *pListInfo=NULL,short group=0);
-GT_API GTN_MoveContinuousRelative(short core,short profile,TMoveContinuousRelativePrm *pPrm,TListInfo *pListInfo,short group);
+GT_API GTN_MoveContinuousRelative(short core,short profile,TMoveContinuousRelativePrm *pPrm,TListInfo *pListInfo=NULL,short group=0);
 
+#define MOVE_JOG_MODE_GENERAL    0  //JOGÄ£Ê½
 typedef struct
 {
-	short overrideSelect;
-	short reserve1[3];
-	double vel;
-	double acc;
-	double dec;
-	short reserve[44];
+    short overrideSelect;
+    short reserve1[3];
+    double vel;
+    double acc;
+    double dec;
+    short reserve[44];
 }TJogParameter;
 
 typedef union
 {
-	TJogParameter jog;
-	short reserve[60];
+    TJogParameter jog;
+    short reserve[60];
 }TMoveJogPrmUnion;
 
 typedef struct
 {
-	short mode;
-	short reserve[3];
-	TMoveJogPrmUnion data;
+    short mode;
+    short reserve[3];
+    TMoveJogPrmUnion data;
 }TMoveJogPrm;
 
-GT_API GTN_MoveJog(short core,short index,TMoveJogPrm *pPrm,TListInfo *pListInfo,short group);
+GT_API GTN_MoveJog(short core,short index,TMoveJogPrm *pPrm,TListInfo *pListInfo=NULL,short group=0);
 GT_API GTN_MoveTrap(short core,short profile,double pos,double vel,TTrapPrm *pPrm,TListInfo *pList=NULL);
 
 /*-----------------------------------------------------------*/
-/* Command Array			                                       */
+/* Command Array                                             */
 /*-----------------------------------------------------------*/
 GT_API GTN_SetVelArray(short core,short profile,double *pVel,short count);
 GT_API GTN_SetTrapPrmArray(short core,short profile,TTrapPrm *pPrm,short count);
@@ -937,193 +1196,217 @@ GT_API GTN_ClearTriggerStatusArray(short core,short trigger,short count);
 /*-----------------------------------------------------------*/
 typedef struct
 {
-	short value;
+    short value;
 }TMovePosPercent;
 
 typedef struct
 {
-	short value;
+    short value;
 }TMovePosSmoothTime;
 
 typedef union
 {
-	TMovePosPercent percent;
-	TMovePosSmoothTime smoothTime;
-	double value[2];
+    TMovePosPercent percent;
+    TMovePosSmoothTime smoothTime;
+    double value[2];
 }TMovePosUnion;
 
 typedef struct
 {
-	double pos;
-	double vel;
-	double acc;
-	double dec;
-	short direction;
-	short overrideSelect;
-	short pad;
-	short mode;
-	TMovePosUnion data;
+    double pos;
+    double vel;
+    double acc;
+    double dec;
+    short direction;
+    short overrideSelect;
+    short pad;
+    short mode;
+    TMovePosUnion data;
 }TMovePosParameter;
 
 typedef struct
 {
-	double pos[2];
-	double vel[2];
-	double acc;
-	double dec;
-	short direction;
-	short overrideSelect;
-	short pad;
-	short mode;
-	TMovePosUnion data;
+    double pos[2];
+    double vel[2];
+    double acc;
+    double dec;
+    short direction;
+    short overrideSelect;
+    short pad;
+    short mode;
+    TMovePosUnion data;
 }TMovePosTwoSegmentParameter;
 
 typedef struct
 {
-	short profile;
-	short pad1[3];
-	double pos;
-	double vel;
-	double acc;
-	double dec;
-	short direction;
-	short overrideSelect;
-	short pad2;
-	short mode;
-	TMovePosUnion data;
+    short profile;
+    short pad1[3];
+    double pos;
+    double vel;
+    double acc;
+    double dec;
+    short direction;
+    short overrideSelect;
+    short pad2;
+    short mode;
+    TMovePosUnion data;
 }TMultiMovePosParameter;
 
 typedef struct
 {
-	short profile;
-	short pad1[3];
-	double pos[2];
-	double vel[2];
-	double acc;
-	double dec;
-	short direction;
-	short overrideSelect;
-	short pad2;
-	short mode;
-	TMovePosUnion data;
+    short profile;
+    short pad1[3];
+    double pos[2];
+    double vel[2];
+    double acc;
+    double dec;
+    short direction;
+    short overrideSelect;
+    short pad2;
+    short mode;
+    TMovePosUnion data;
 }TMultiMovePosTwoSegmentParameter;
 
 GT_API GTN_MovePos(short core,short profile,TMovePosParameter *pMovePos,TListInfo *pListInfo=NULL,short group=0);
 GT_API GTN_MovePosTwoSegment(short core,short profile,TMovePosTwoSegmentParameter *pMovePos,TListInfo *pListInfo=NULL,short group=0);
-GT_API GTN_MultiMovePos(short core,TMultiMovePosParameter *pMovePos,short count,TListInfo *pListInfo,short group);
-GT_API GTN_MultiMovePosTwoSegment(short core,TMultiMovePosTwoSegmentParameter *pMovePos,short count,TListInfo *pListInfo,short group);
+GT_API GTN_MultiMovePos(short core,TMultiMovePosParameter *pMovePos,short count=1,TListInfo *pListInfo=NULL,short group=0);
+GT_API GTN_MultiMovePosTwoSegment(short core,TMultiMovePosTwoSegmentParameter *pMovePos,short count=1,TListInfo *pListInfo=NULL,short group=0);
 
-#define MOTION_RESTRICT_PROFILE_MAX						(8)
+#define MOTION_RESTRICT_PROFILE_MAX                     (8)
 
-#define MOTION_TIME_RESTRICT_MODE_DIRECT				(1)
-#define MOTION_TIME_RESTRICT_MODE_ATTENTION_PROFILE		(2)
+#define MOTION_TIME_RESTRICT_MODE_DIRECT                (1)
+#define MOTION_TIME_RESTRICT_MODE_ATTENTION_PROFILE     (2)
 
 typedef struct
 {
-	short condition[MOTION_RESTRICT_PROFILE_MAX];
-	double time[MOTION_RESTRICT_PROFILE_MAX];
+    short condition[MOTION_RESTRICT_PROFILE_MAX];
+    double time[MOTION_RESTRICT_PROFILE_MAX];
 }TMotionTimeRestrictDirect;
 
 typedef struct
 {
-	short condition;
-	short attentionProfileCount;
-	short attentionProfile[MOTION_RESTRICT_PROFILE_MAX];
-	short reserve1[6];
-	double settlingTime;
+    short condition;
+    short attentionProfileCount;
+    short attentionProfile[MOTION_RESTRICT_PROFILE_MAX];
+    short reserve1[6];
+    double settlingTime;
 }TMotionTimeRestrictAttentionProfile;
 
 typedef union
 {
-	TMotionTimeRestrictDirect direct;
-	TMotionTimeRestrictAttentionProfile attentionProfile;
-	double data[32];
+    TMotionTimeRestrictDirect direct;
+    TMotionTimeRestrictAttentionProfile attentionProfile;
+    double data[32];
 }TMotionTimeRestrictUnion;
 
 typedef struct
 {
-	short profileCount;
-	short profile[MOTION_RESTRICT_PROFILE_MAX];
-	short pad1[7];
-	double profilePos[MOTION_RESTRICT_PROFILE_MAX];
+    short profileCount;
+    short profile[MOTION_RESTRICT_PROFILE_MAX];
+    short pad1[7];
+    double profilePos[MOTION_RESTRICT_PROFILE_MAX];
 
-	short mode;
-	short pad2[3];
-	TMotionTimeRestrictUnion parameter;
+    short mode;
+    short pad2[3];
+    TMotionTimeRestrictUnion parameter;
 }TMotionTimeRestrict;
-GT_API GTN_SetMotionTimeRestrict(short core,short restrictIndex,TMotionTimeRestrict *pRestrict,TListInfo *pListInfo);
+GT_API GTN_SetMotionTimeRestrict(short core,short restrictIndex,TMotionTimeRestrict *pRestrict,TListInfo *pListInfo=NULL);
 GT_API GTN_GetMotionTimeRestrict(short core,short restrictIndex,TMotionTimeRestrict *pRestrict);
 
+#define MOVE_SYNCHRONIZATION_MODE_GEAR    0  //gearÄ£Ê½(Î»ï¿½ï¿½Í¬ï¿½ï¿½Ä£Ê½)
+#define MOVE_SYNCHRONIZATION_MODE_MPG     1  //mpgÍ¬ï¿½ï¿½Ä£Ê½(Î»ï¿½ï¿½Í¬ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½Ù¶ï¿½Í¬ï¿½ï¿½Ä£Ê½1ï¿½Ð»ï¿½)
+#define MOVE_SYNCHRONIZATION_MODE_FOLLOW  2  //followÍ¬ï¿½ï¿½Ä£Ê½(ï¿½Ù¶È¸ï¿½ï¿½ï¿½Ä£Ê½(ï¿½Ù¶ï¿½Í¬ï¿½ï¿½Ä£Ê½2))
+#define MOVE_SYNCHRONIZATION_MODE_GEAR_POS  3  //Î»ï¿½ï¿½Ä£Ê½(Î»ï¿½ï¿½Í¬ï¿½ï¿½Ä£Ê½)
 typedef struct
 {
-	short type;     // ÀàÐÍ
-	short index;    //Ë÷Òý
-	short subIndex; // ¶þ¼¶Ë÷Òý
-	short reserve[5];
+    short type;     // ï¿½ï¿½ï¿½ï¿½
+    short index;    //ï¿½ï¿½ï¿½ï¿½
+    short subIndex; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short reserve[5];
 }TProfileItem;
 
 typedef struct
 {
-	double masterEven;          //´«¶¯±ÈÖ÷Öá£¬µ¥Î»ÊÇpulse
-	double slaveEven;            //´«¶¯±È´ÓÖá£¬µ¥Î»ÊÇmm
-	double masterSlope;    // Ö÷ÖáÀëºÏÇøÎ»ÒÆ
-	short reserve[48];
+	double masterEven;          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double slaveEven;           // ï¿½ï¿½ï¿½ï¿½ï¿½È´ï¿½ï¿½ï¿½
+	double slope;               // ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+	short  slopeType;           // ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á»¹ï¿½Ç´ï¿½ï¿½ï¿½
+	short  dir;
+	short  startMode;
+	short  startPrmType;        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢Ê±ï¿½ï¿½ï¿½á»¹ï¿½Ç´ï¿½ï¿½ï¿½
+	double startPrm[6];
+
+	double deltaSlaveEven;      // ï¿½ï¿½ï¿½Ó±ÈµÄ±ä»¯ï¿½ï¿½
+	double deltaSlope;          // ï¿½ï¿½ï¿½Ó±È±ä»¯Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+	short  deltaSlopeType;      // ï¿½ï¿½ï¿½Ó±È±ä»¯Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á»¹ï¿½Ç´ï¿½ï¿½ï¿½
+	short  deltaLoop;           // ï¿½ï¿½ï¿½Ó±È±ä»¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½
+	short  reserve2[10]; 
 }TGearParameter;
 
+#define MOVE_SYNCH_MPG_RESERVE_MASTER_VEL_LIMIT     (0) // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù£ï¿½ï¿½ï¿½Î»pusle/ms
 typedef struct
 {
-	double masterEven;          //´«¶¯±ÈÖ÷Öá£¬µ¥Î»ÊÇpulse
-	double slaveEven;            //´«¶¯±È´ÓÖá£¬µ¥Î»ÊÇmm
-	double masterFilterTime;// Ö÷ÖáÂË²¨Ê±¼ä
-	double sampleTime;    // Ö÷Öá²ÉÑùÊ±¼ä
-	double stopWaitTime;   // Í£Ö¹µÈ´ýÊ±¼ä
-	double acceleration;    // ´ÓÖáÔË¶¯¼ÓËÙ¶È
-	double deceleration;    // ´ÓÖáÔË¶¯¼õËÙ¶È
-	double maxVel;        // ´ÓÖáÔË¶¯×î´óËÙ¶È
-	short reserve[28];
+    double masterEven;          //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á£¬ï¿½ï¿½Î»ï¿½ï¿½pulse
+    double slaveEven;            //ï¿½ï¿½ï¿½ï¿½ï¿½È´ï¿½ï¿½á£¬ï¿½ï¿½Î»ï¿½ï¿½mm
+    double masterFilterTime;// ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½Ê±ï¿½ï¿½
+    double sampleTime;    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+    double stopWaitTime;   // Í£Ö¹ï¿½È´ï¿½Ê±ï¿½ï¿½
+    double acceleration;    // ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double deceleration;    // ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double maxVel;        // ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    short reserve[28];
 }TMpgParameter;
 
 typedef struct
 {
-	double masterEven;          //´«¶¯±ÈÖ÷Öá£¬µ¥Î»ÊÇpulse
-	double slaveEven;            //´«¶¯±È´ÓÖá£¬µ¥Î»ÊÇmm
-	short reserve[52];
+    double masterEven;          //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á£¬ï¿½ï¿½Î»ï¿½ï¿½pulse
+    double slaveEven;            //ï¿½ï¿½ï¿½ï¿½ï¿½È´ï¿½ï¿½á£¬ï¿½ï¿½Î»ï¿½ï¿½mm
+    short reserve[52];
 }TFollowParameter;
 
+#define GEAR_POS_RESERVE_SLAVE_VEL_LIMIT_MODE        (4)
 typedef struct
 {
-	double pos;            // ´ÓÖáÖÕµãÎ»ÖÃ
-	double masterLength;   // Ö÷ÖáÎ»ÒÆ
-	short reserve[52];
+    double pos;            // ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½Î»ï¿½ï¿½
+    double masterLength;   // ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+    short reserve[52];
 }TGearPosParameter;
 
 typedef union
 {
-	TGearParameter gear;
-	TMpgParameter mpg;
-	TFollowParameter follow;
-	TGearPosParameter gearPos;
-	short reserve[60];
+    TGearParameter gear;
+    TMpgParameter mpg;
+    TFollowParameter follow;
+    TGearPosParameter gearPos;
+    short reserve[60];
 }TMoveSynchronizationUnion;
 
 typedef struct
 {
-	short mode;          // Í¬²½ÔË¶¯Ä£Ê½
-	short enable;        // ÊÇ·ñÊ¹ÄÜÍ¬²½ÔË¶¯¹¦ÄÜ
-	short softDirCheck;  //0:¹Ø±Õ·½ÏòÇ÷ÊÆÅÐ¶Ï¹¦ÄÜ 1£º¿ªÆô·½ÏòÇ÷ÊÆÅÐ¶Ï¹¦ÄÜ
-	short reserve;
-	TMoveSynchronizationUnion prm;
+    short mode;          // Í¬ï¿½ï¿½ï¿½Ë¶ï¿½Ä£Ê½
+    short enable;        // ï¿½Ç·ï¿½Ê¹ï¿½ï¿½Í¬ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½
+    short softDirCheck;  //0:ï¿½Ø±Õ·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶Ï¹ï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶Ï¹ï¿½ï¿½ï¿½
+    short reserve;
+    TMoveSynchronizationUnion prm;
 }TMoveSynchronizationPrm;
 
-GT_API GTN_MoveSynchronization(short core,TProfileItem slave,TProfileItem master,TMoveSynchronizationPrm *pPrm,TListInfo *pListInfo);
+typedef struct  
+{
+	short info1[8];
+	int32_t info2[8];
+	double info3[8];
+}TMoveSynchronizationInfo;
+
+GT_API GTN_MoveSynchronization(short core,TProfileItem slave,TProfileItem master,TMoveSynchronizationPrm *pPrm,TListInfo *pListInfo=NULL);
+GT_API GTN_GetMoveSynchronizationInfo(short core,TProfileItem slave,TMoveSynchronizationInfo *pInfo);
 
 typedef struct
 {
-	short source;
-	short enable;
-	short x;
-	short y;
-	double theta;		// degree
+    short source;
+    short enable;
+    short x;
+    short y;
+    double theta;		// degree
 } TTransformOrthogonal;
 
 GT_API GTN_SetTransformOrthogonal(short core,short index,TTransformOrthogonal *pOrthogonal);
@@ -1132,14 +1415,14 @@ GT_API GTN_GetTransformOrthogonalPosition(short core,short index,double *pPositi
 
 typedef struct
 {
-	short source;
-	short enable;
-	short x;
-	short y;
-	short z;
-	double alpha;		// ZÖáºÍXYÆ½ÃæµÄ¼Ð½Ç
-	double beta;		// ZÖáÔÚXYÆ½ÃæµÄÍ¶Ó°ºÍXÖáµÄ¼Ð½Ç
-	double gama;		// XYÖáÖ®¼äµÄ¼Ð½Ç
+    short source;
+    short enable;
+    short x;
+    short y;
+    short z;
+    double alpha;		// Zï¿½ï¿½ï¿½XYÆ½ï¿½ï¿½Ä¼Ð½ï¿½
+    double beta;		// Zï¿½ï¿½ï¿½ï¿½XYÆ½ï¿½ï¿½ï¿½Í¶Ó°ï¿½ï¿½Xï¿½ï¿½Ä¼Ð½ï¿½
+    double gama;		// XYï¿½ï¿½Ö®ï¿½ï¿½Ä¼Ð½ï¿½
 } TTransformPerpendicularity;
 
 GT_API GTN_SetTransformPerpendicularity(short core,short index,TTransformPerpendicularity *pPerpendicularity);
@@ -1154,30 +1437,30 @@ GT_API GTN_GetTransformPerpendicularityPosition(short core,short index,double *p
 
 typedef struct
 {
-	double translateion[2];	//¹¤¼þ×ø±êÏµÏà¶ÔÔ­Ê¼×ø±êÏµµÄÆ½ÒÆ
-	double theta;	//¹¤¼þ×ø±êÏµÏà¶ÔÔ­Ê¼×ø±êÏµµÄÐý×ª
+    double translateion[2];	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½Ô­Ê¼ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Æ½ï¿½ï¿½
+    double theta;	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½Ô­Ê¼ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½×ª
 }TCoordTransformPrm;
 
 typedef struct
 {
-	short enable;	//ÊÇ·ñÊ¹ÄÜ×ø±êÏµ×ª»»¹¦ÄÜ
-	short refType;	//²Î¿¼ÀàÐÍ£¬¿ÉÒÔÉèÖÃÎªMC_CRD¡¢MC_GROUP¡¢MC_PROFILEµÈ
-	short index;	//Èç¹û²Î¿¼ÀàÐÍÎªMC_CRD£¬Ð´Èë×ø±êÏµºÅ
-	short refIndex[2];	//²Î¿¼ÖáºÅ£¬Ö¸¶¨×ø±êÏµÖÐµÄÄ³Á½¸öÖá£¬»òÕßprofileµÄÁ½¸öÖá
-	double offset[2];	//²¹³¥ÖáX2¡¢Y2ÁãµãÏà¶Ô²Î¿¼×ø±êÏµX1¡¢Y1ÁãµãµÄÆ«ÒÆ
-	TCoordTransformPrm refTrans;	//²Î¿¼¹¤¼þ×ø±êÏµÏà¶ÔÔ­×ø±êÏµµÄÆ½ÒÆºÍÐý×ª
-	TCoordTransformPrm syncTrans;	//Í¬²½¹¤¼þ×ø±êÏµÏà¶ÔÔ­×ø±êÏµµÄÆ½ÒÆºÍÐý×ª
-	short reserve1[4];
-	double reserve2[4];
+    short enable;	//ï¿½Ç·ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµ×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short refType;	//ï¿½Î¿ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªMC_CRDï¿½ï¿½MC_GROUPï¿½ï¿½MC_PROFILEï¿½ï¿½
+    short index;	//ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ÎªMC_CRDï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½
+    short refIndex[2];	//ï¿½Î¿ï¿½ï¿½ï¿½Å£ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½Ðµï¿½Ä³ï¿½ï¿½ï¿½ï¿½ï¿½á£¬ï¿½ï¿½ï¿½ï¿½profileï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double offset[2];	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½X2ï¿½ï¿½Y2ï¿½ï¿½ï¿½ï¿½ï¿½Ô²Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ÏµX1ï¿½ï¿½Y1ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½
+    TCoordTransformPrm refTrans;	//ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Æ½ï¿½Æºï¿½ï¿½ï¿½×ª
+    TCoordTransformPrm syncTrans;	//Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Æ½ï¿½Æºï¿½ï¿½ï¿½×ª
+    short reserve1[4];
+    double reserve2[4];
 }TCoordSyncCompPrm;
 
 typedef struct
 {
-	short type;	//²¹³¥ÀàÐÍ£¬ÀýÈçÍ¬²½²¹³¥µÈ
-	short index;	//Ò»¼¶Ë÷Òý£¬ÀýÈçÍ¬²½²¹³¥Ö§³Ö×î¶àÔÊÐíËÄÌ××ø±êÏµ£¬¸ÃË÷Òý±íÊ¾µÚ¼¸Ì×Í¬²½²¹³¥
-	short subIndex;	//¶þ¼¶Ë÷Òý£¬ÀýÈçµÚÒ»Ì×Í¬²½²¹³¥µÄµÚÒ»¸öÖá
-	short reserve1[5];
-	double reserve2[4];
+    short type;	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short index;	//Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½Ú¼ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short subIndex;	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½Ò»ï¿½ï¿½ï¿½ï¿½
+    short reserve1[5];
+    double reserve2[4];
 }TPrfComp;
 
 GT_API GTN_PrfComp(short core,short profile,TPrfComp *pComp);
@@ -1239,46 +1522,46 @@ GT_API GTN_GetCoordSyncCompValue(short core,short index,double x,double y,double
 #define HOME_MODE_LIMIT_HOME                      (11)
 #define HOME_MODE_LIMIT_INDEX                     (12)
 #define HOME_MODE_LIMIT_HOME_INDEX                (13)
-
+#define HOME_MODE_LIMITPOS_INDEX		          (14)
 #define HOME_MODE_HOME                            (20)
 
 #define HOME_MODE_HOME_INDEX                      (22)
 
-#define HOME_MODE_HOME_LEVEL                      (24)                               // Ê¹ÓÃHOMEµçÆ½»ØÁã(ÊÊÓÃÓÚÃ»ÓÐHOME²¶»ñµÄÇé¿öÏÂ)
+#define HOME_MODE_HOME_LEVEL                      (24)                               // Ê¹ï¿½ï¿½HOMEï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½HOMEï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
 
 #define HOME_MODE_INDEX                           (30)
+#define HOME_MODE_FORCED_HOME                     (40)
+#define HOME_MODE_FORCED_HOME_INDEX               (41)
 #define HOME_MODE_DRIVER_HOME                     (42)
-#define HOME_MODE_FORCED_HOME                     (50)
-#define HOME_MODE_FORCED_HOME_INDEX               (51)
 typedef struct
 {
-	short mode;
-	short moveDir;
-	short indexDir;
-	short edge;
-	short triggerIndex;
-	short pad1[3];
-	double velHigh;
-	double velLow;
-	double acc;
-	double dec;
-	short smoothTime;
-	short pad2[3];
-	int32_t homeOffset;
-	int32_t searchHomeDistance;
-	int32_t searchIndexDistance;
-	int32_t escapeStep;
-	int32_t pad3[2];
+    short mode;
+    short moveDir;
+    short indexDir;
+    short edge;
+    short triggerIndex;
+    short pad1[3];
+    double velHigh;
+    double velLow;
+    double acc;
+    double dec;
+    short smoothTime;
+    short pad2[3];
+    int32_t homeOffset;
+    int32_t searchHomeDistance;
+    int32_t searchIndexDistance;
+    int32_t escapeStep;
+    int32_t pad3[2];
 } THomePrm;
 
 typedef struct
 {
-	short run;
-	short stage;
-	short error;
-	short pad1;
-	int32_t capturePos;
-	int32_t targetPos;
+    short run;
+    short stage;
+    short error;
+    short pad1;
+    int32_t capturePos;
+    int32_t targetPos;
 } THomeStatus;
 
 GT_API GTN_GoHome(short core,short axis,THomePrm *pHomePrm);
@@ -1316,82 +1599,82 @@ GT_API GTN_EndHandwheel(short core,short slave);
 
 typedef enum
 {
-	PLC_BIND_NONE,
-	PLC_BIND_DI,
-	PLC_BIND_DO,
-	PLC_BIND_TIMER,
-	PLC_BIND_COUNTER,
-	PLC_BIND_FLANK,
-	PLC_BIND_SRFF,
+    PLC_BIND_NONE,
+    PLC_BIND_DI,
+    PLC_BIND_DO,
+    PLC_BIND_TIMER,
+    PLC_BIND_COUNTER,
+    PLC_BIND_FLANK,
+    PLC_BIND_SRFF,
 } EPlcBind;
 
 typedef struct VarInfo
 {
-	short id;
-	short dataType;
-	char  name[32];
+    short id;
+    short dataType;
+    char  name[32];
 } TVarInfo;
 
 typedef struct
 {
-	short diType;
-	short index;
-	short reverse;
+    short diType;
+    short index;
+    short reverse;
 } TBindDi;
 
 typedef struct
 {
-	short doType;
-	short index;
-	short reverse;
+    short doType;
+    short index;
+    short reverse;
 } TBindDo;
 
 typedef struct
 {
-	short timerType;
-	int32_t delay;
-	short inputVarId;
+    short timerType;
+    int32_t delay;
+    short inputVarId;
 } TBindTimer;
 
 typedef struct
 {
-	short counterType;
-	short edge;
-	int32_t init;
-	int32_t target;
-	int32_t begin;
-	int32_t end;
-	short dir;
-	int32_t unit;
-	short inputVarId;
-	short resetVarId;
+    short counterType;
+    short edge;
+    int32_t init;
+    int32_t target;
+    int32_t begin;
+    int32_t end;
+    short dir;
+    int32_t unit;
+    short inputVarId;
+    short resetVarId;
 } TBindCounter;
 
 typedef struct
 {
-	short flankType;
-	short inputVarId;
+    short flankType;
+    short inputVarId;
 } TBindFlank;
 
 typedef struct
 {
-	short setVarId;
-	short resetVarId;
+    short setVarId;
+    short resetVarId;
 } TBindSrff;
 
 typedef struct CompileInfo
 {
-	char  *pFileName;
-	short *pLineNo;
-	char  *pMessage;
+    char  *pFileName;
+    short *pLineNo;
+    char  *pMessage;
 } TCompileInfo;
 
 typedef struct ThreadSts
 {
-	short  run;
-	short  error;
-	double result;
-	short  line;
+    short  run;
+    short  error;
+    double result;
+    short  line;
 } TThreadSts;
 
 GT_API GTN_Compile(char *pFileName,TCompileInfo *pWrongInfo);
@@ -1442,21 +1725,21 @@ GT_API GTN_GetBindSrffInfo(short core,short thread,short index,short *pVar,TBind
 
 typedef struct ThreadStatus
 {
-	short link;
-	uint32_t  address;
-	short size;
-	uint32_t  page;
-	short delay;
-	short priority;
-	short ptr;
-	short status;
-	short error;
-	short result[4];
-	short resultType;
-	short breakpoint;
-	short period;
-	short count;
-	short function;
+    short link;
+    uint32_t  address;
+    short size;
+    uint32_t  page;
+    short delay;
+    short priority;
+    short ptr;
+    short status;
+    short error;
+    short result[4];
+    short resultType;
+    short breakpoint;
+    short period;
+    short count;
+    short function;
 } TThreadStatus;
 GT_API GTN_GetThread(short core,short thread,TThreadStatus *pThread);
 
@@ -1490,100 +1773,155 @@ GT_API GTN_LoadPlcCommand(short core,short id,short count,short *pData);
 #define INTERPOLATION_CIRCLE_DIR_CW              (0)
 #define INTERPOLATION_CIRCLE_DIR_CCW             (1)
 
+#define CRD_AXIS_X                               (1) // ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµxï¿½ï¿½
+#define CRD_AXIS_Y                               (2) // ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµyï¿½ï¿½
+#define CRD_AXIS_Z                               (3) // ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµzï¿½ï¿½
+#define CRD_AXIS_A                               (4) // ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµaï¿½ï¿½
+#define CRD_AXIS_C                               (5) // ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµcï¿½ï¿½
+#define CRD_AXIS_U                               (6) // ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµuï¿½ï¿½
+#define CRD_AXIS_V                               (7) // ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµvï¿½ï¿½
+#define CRD_AXIS_W                               (8) // ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµwï¿½ï¿½
+
 typedef struct CrdPrm
 {
-	short dimension;
-	short profile[8];
-	double synVelMax;
-	double synAccMax;
-	short evenTime;
-	short setOriginFlag;
-	int32_t originPos[8];
+    short dimension;
+    short profile[8];
+    double synVelMax;
+    double synAccMax;
+    short evenTime;
+    short setOriginFlag;
+    int32_t originPos[8];
 }TCrdPrm;
 
 typedef struct CrdBufOperation
 {
-	short flag;
-	unsigned short delay;
-	short doType;
-	unsigned short doMask;
-	unsigned short doValue;
-	unsigned short dataExt[CRD_OPERATION_DATA_EXT_MAX];
+    short flag;
+    unsigned short delay;
+    short doType;
+    unsigned short doMask;
+    unsigned short doValue;
+    unsigned short dataExt[CRD_OPERATION_DATA_EXT_MAX];
 }TCrdBufOperation;
 
 typedef struct CrdData
 {
-	short motionType;
-	short circlePlat;
-	int32_t pos[INTERPOLATION_AXIS_MAX];
-	double radius;
-	short circleDir;
-	double center[3];
-	double vel;
-	double acc;
-	short velEndZero;
-	TCrdBufOperation operation;
+    short motionType;
+    short circlePlat;
+    int32_t pos[INTERPOLATION_AXIS_MAX];
+    double radius;
+    short circleDir;
+    double center[3];
+    double vel;
+    double acc;
+    short velEndZero;
+    TCrdBufOperation operation;
 
-	double cos[INTERPOLATION_AXIS_MAX];
-	double velEnd;
-	double velEndAdjust;
-	double r;
+    double cos[INTERPOLATION_AXIS_MAX];
+    double velEnd;
+    double velEndAdjust;
+    double r;
 }TCrdData;
 
 typedef struct
 {
-	double time;
-	int32_t segmentUsed;
-	int32_t segmentHead;
-	int32_t segmentTail;
+    double time;
+    int32_t segmentUsed;
+    int32_t segmentHead;
+    int32_t segmentTail;
 } TCrdTime;
 
 typedef struct
 {
-	short crdAxis;
-	short masterIndex;
-	short masterType;
+    short crdAxis;
+    short masterIndex;
+    short masterType;
 } TBufFollowMaster;
 
 typedef struct
 {
-	int32_t masterPos;
-	int32_t pad;
+    int32_t masterPos;
+    int32_t pad;
 } TBufFollowEventCross;
 
 typedef struct
 {
-	short triggerIndex;
-	int32_t triggerOffset;
-	int32_t pad;
+    short triggerIndex;
+    int32_t triggerOffset;
+    int32_t pad;
 } TBufFollowEventTrigger;
 
 typedef struct
 {
-	double velRatioMax;
-	double accRatioMax;
-	int32_t masterLead;
-	int32_t masterEven;
-	int32_t slaveEven;
-	short dir;
-	short smoothPercent;
-	short synchAlign;
+    double velRatioMax;
+    double accRatioMax;
+    int32_t masterLead;
+    int32_t masterEven;
+    int32_t slaveEven;
+    short dir;
+    short smoothPercent;
+    short synchAlign;
 } TCrdFollowPrm;
 
 typedef struct
 {
-	short stage;
-	double slavePos;
-	double slaveVel;
-	int32_t masterFrameWidth;
-	int32_t masterFrameIndex;
-	uint32_t loopCount;
+    short stage;
+    double slavePos;
+    double slaveVel;
+    int32_t masterFrameWidth;
+    int32_t masterFrameIndex;
+    uint32_t loopCount;
 } TCrdFollowStatus;
+
+// ï¿½å²¹ï¿½Ã»ï¿½Ö¸ï¿½ï¿½Í£Ö¹Ä£Ê½ï¿½ï¿½ï¿½ï¿½
+#define BUF_CMD_TYPE_ALL               (-1) // ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹Ä£Ê½ï¿½ï¿½BufÖ¸ï¿½î£¬ï¿½ï¿½ï¿½ï¿½ï¿½Í½ï¿½Ö§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªDefaultï¿½ï¿½ContinueÄ£Ê½
+#define BUF_CMD_TYPE_BUF_MOVE          (0)  // BufMoveÄ£Ì¬Ö¸ï¿½î£¬ï¿½ï¿½ï¿½ï¿½ï¿½Í½ï¿½Ö§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªDefaultï¿½ï¿½ContinueÄ£Ê½
+#define BUF_CMD_TYPE_BUF_GEAR          (1)  // BufGearÖ¸ï¿½î£¬ï¿½ï¿½ï¿½ï¿½ï¿½Í½ï¿½Ö§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªDefaultï¿½ï¿½ContinueÄ£Ê½
+#define BUF_CMD_TYPE_BUF_IO            (2)  // BufIoÖ¸ï¿½î£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªDefaultï¿½ï¿½Continueï¿½ï¿½HoldÄ£Ê½
+// ×¢ï¿½â£ºï¿½ï¿½Continueï¿½ï¿½HoldÄ£Ê½ï¿½Â£ï¿½Ö»ï¿½ï¿½Ö¸ï¿½ï¿½GT_SetBufIoHoldValueï¿½ï¿½ï¿½ï¿½doMaskï¿½ï¿½0Ê±ï¿½ï¿½ï¿½ï¿½Ð§
+
+#define BUF_CMD_STOP_MODE_DEFAULT      (0)  // Ä¬ï¿½ï¿½Ä£Ê½
+#define BUF_CMD_STOP_MODE_CONTINUE     (1)  // ï¿½ï¿½Í£ï¿½Ö¸ï¿½Ä£Ê½ï¿½ï¿½×¢ï¿½â£ºBufIoï¿½ï¿½Í£Ê±ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½GT_SetBufIoHoldValueï¿½ï¿½ï¿½Ãµï¿½doÖµï¿½ï¿½ï¿½Ö¸ï¿½ï¿½Ë¶ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ç°×´Ì¬ï¿½ï¿½doMaskï¿½ï¿½0Ê±ï¿½ï¿½Ð§
+#define BUF_CMD_STOP_MODE_HOLD         (2)  // ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½Í£Ç°×´Ì¬ï¿½ï¿½ï¿½ï¿½BufIoÖ§ï¿½Ö£ï¿½ï¿½ï¿½Í£ï¿½å²¹ï¿½Ë¶ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½GT_SetBufIoHoldValueï¿½ï¿½ï¿½Ãµï¿½doÖµï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½doMaskï¿½ï¿½0Ê±ï¿½ï¿½Ð§
+
+// ï¿½ï¿½ï¿½Ã²å²¹ï¿½Ë¶ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ì³£Í£Ö¹Ê±ï¿½ï¿½doï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø¶ï¿½Öµ
+// crdï¿½ï¿½ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµï¿½Å£ï¿½ï¿½ï¿½Ç°Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Ã½ï¿½ï¿½Ú¶ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Ð§
+// doTypeï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½doï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½Ö§ï¿½Ö£ï¿½MC_ENABLEï¿½ï¿½MC_CLEARï¿½ï¿½MC_GPO
+// doMaskï¿½ï¿½ï¿½ï¿½Í£Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø¶ï¿½Öµï¿½ï¿½doï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ë£¬Í¬Ê±Ò²ï¿½ï¿½Ê¾ï¿½Ö¸ï¿½ï¿½Ë¶ï¿½Ê±ï¿½ï¿½Òªï¿½Ö¸ï¿½Ô­ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½doï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ë£¬ï¿½ï¿½Î»Ö¸Ê¾ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½Ð§ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½Ð§
+// doValueï¿½ï¿½ï¿½ï¿½Í£Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø¶ï¿½Öµï¿½ï¿½ï¿½ï¿½Î»Ö¸Ê¾
+// ×¢ï¿½â£ºï¿½ï¿½doMask=0Ê±ï¿½ï¿½ï¿½ï¿½Ê¹BufIOï¿½ï¿½ï¿½ï¿½Îªcontinueï¿½ï¿½ï¿½ï¿½holdÄ£Ê½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½
+GT_API GTN_SetBufIoHoldValue(short core,short crd,short doType,unsigned short doMask,unsigned short doValue);
+GT_API GTN_GetBufIoHoldValue(short core,short crd,short doType,unsigned short *pDoMask,unsigned short *pDoValue);
+
+// ï¿½ï¿½ï¿½Ã²å²¹ï¿½Ã»ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½Í£Ö¹Ä£Ê½
+// crdï¿½ï¿½ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµï¿½Å£ï¿½ï¿½ï¿½Ç°Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Ã½ï¿½ï¿½Ú¶ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Ð§
+// bufCmdTypeï¿½ï¿½ï¿½å²¹ï¿½Ã»ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½Ö§ï¿½Ö£ï¿½BUF_CMD_TYPE_ALLï¿½ï¿½BUF_CMD_TYPE_BUF_MOVEï¿½ï¿½BUF_CMD_TYPE_BUF_GEARï¿½ï¿½BUF_CMD_TYPE_BUF_IO
+// modeï¿½ï¿½Í£Ö¹Ä£Ê½
+GT_API GTN_SetBufCmdStopMode(short core,short crd,short bufCmdType,short mode);
+GT_API GTN_GetBufCmdStopMode(short core,short crd,short bufCmdType,short *pMode);
+
+/**
+ * @brief ï¿½ï¿½ï¿½Ã²å²¹ï¿½ï¿½Ó¡logï¿½ï¿½Ï¢Ê¹ï¿½Ü±ï¿½Ö¾
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param crd ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param enable Ê¹ï¿½Ü±ï¿½Ö¾ï¿½ï¿½0-ï¿½ï¿½ï¿½ï¿½Ó¡ï¿½ï¿½1-ï¿½ï¿½Ó¡
+ * @return ï¿½ï¿½ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½
+*/
+GT_API GTN_SetCrdPrintLogEnable(short core,short crd,short enable);
+
+/**
+ * @brief ï¿½ï¿½È¡ï¿½å²¹ï¿½ï¿½Ó¡logï¿½ï¿½Ï¢Ê¹ï¿½Ü±ï¿½Ö¾
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param crd ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pEnable Ê¹ï¿½Ü±ï¿½Ö¾ï¿½ï¿½0-ï¿½ï¿½ï¿½ï¿½Ó¡ï¿½ï¿½1-ï¿½ï¿½Ó¡
+ * @return ï¿½ï¿½ï¿½ã£¬ï¿½ï¿½È¡Ê§ï¿½ï¿½
+*/
+GT_API GTN_GetCrdPrintLogEnable(short core,short crd,short *pEnable);
 
 GT_API GTN_SetCrdPrm(short core,short crd,TCrdPrm *pCrdPrm);
 GT_API GTN_GetCrdPrm(short core,short crd,TCrdPrm *pCrdPrm);
 GT_API GTN_CrdSpace(short core,short crd,int32_t *pSpace,short fifo=0);
 GT_API GTN_CrdData(short core,short crd,TCrdData *pCrdData,short fifo=0);
+GT_API GTN_SetCrdLaserLevelDelay(short core,short crd,double highLevelDelay,double lowLevelDelay,short channel);
 
 GT_API GTN_LnXY(short core,short crd,int32_t x,int32_t y,double synVel,double synAcc,double velEnd=0,short fifo=0);
 GT_API GTN_LnXYOverride2(short core,short crd,int32_t x,int32_t y,double synVel,double synAcc,double velEnd=0,short fifo=0);
@@ -1717,6 +2055,7 @@ GT_API GTN_HelixZXCMultiYEx(short core,short crd,double *pPos,double zCenter,dou
 GT_API GTN_BufIO(short core,short crd,unsigned short doType,unsigned short doMask,unsigned short doValue,short fifo=0);
 GT_API GTN_BufDelay(short core,short crd,unsigned short delayTime,short fifo=0);
 GT_API GTN_BufDA(short core,short crd,short chn,short daValue,short fifo=0);
+GT_API GTN_BufAuDA(short core,short crd,short chn,short daValue,short fifo=0);
 GT_API GTN_BufLmtsOn(short core,short crd,short axis,short limitType,short fifo=0);
 GT_API GTN_BufLmtsOff(short core,short crd,short axis,short limitType,short fifo=0);
 GT_API GTN_BufSetStopIo(short core,short crd,short axis,short stopType,short inputType,short inputIndex,short fifo=0);
@@ -1735,48 +2074,85 @@ GT_API GTN_BufVirtualToActual(short core,short crd,short fifo=0);
 GT_API GTN_BufEnableDoBitPulse(short core,short crd,short doType,short doIndex,unsigned short highLevelTime,unsigned short lowLevelTime,int32_t pulseNum,short firstLevel,short fifo);
 GT_API GTN_BufDisableDoBitPulse(short core,short crd,short doType,short doIndex,short fifo);
 GT_API GTN_BufTrend(short core,short crd,uint32_t trendSegNum,double trendDistance,double trendVelEnd,short fifo);
+//ï¿½å²¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹Ä£ï¿½ï¿½Ö¸ï¿½ï¿½
 GT_API GTN_BufExtIO(short core,short crd,unsigned short doIndex,unsigned short doMask,unsigned short doValue,short fifo);
 GT_API GTN_BufExtDA(short core,short crd,short chn,short daValue,short fifo);
+GT_API GTN_BufExtAoEx(short core,short crd,short aoIndex,double aoValue,short fifo);
+GT_API GTN_BufExtDoBitEx(short core,short crd,unsigned short doIndex,unsigned short doValue,short fifo);
+GT_API GTN_BufExtDoBit(short core,short crd,unsigned short doIndex,unsigned short doValue,short fifo);
+GT_API GTN_BufExtAo(short core,short crd,short aoIndex,double aoValue,short fifo);
+
 GT_API GTN_BufGearListBegin(short core,short crd,short gearAxis,double pos,short fifo);
 GT_API GTN_BufGearListAdd(short core,short crd,float k,float percent,short fifo);
 GT_API GTN_BufGearListEnd(short core,short crd,short fifo);
 
 typedef struct
 {
-	double pos;
-	double vel;
-	double acc;
-	double velMax;
-	double reserve1[4];
-	short smoothTime;
-	short enableRatio;
-	short modal;
-	short fifo;
-	short dir;
-	short reserve2[3];
-	int32_t segNum;
-	int32_t reserve3[3];
+    double pos;
+    double vel;
+    double acc;
+    double velMax;
+    double reserve1[4];
+    short smoothTime;
+    short enableRatio;
+    short modal;
+    short fifo;
+    short dir;
+    short reserve2[3];
+    int32_t segNum;
+    int32_t reserve3[3];
 }TBufMoveAbsPrm;
 GT_API GTN_BufMoveAbsoluteEx(short core,short crd,short moveAxis,TBufMoveAbsPrm *pPrm);
 
 typedef struct
 {
-	short time;
-	short aheadOfTime;
-	short shape;
-	short reverseSmooth;
-	double velDelta;
+    short time;
+    short aheadOfTime;
+    short shape;
+    short reverseSmooth;
+    double velDelta;
 } TCrdBlend;
 GT_API GTN_BufSetCrdBlend(short core,short crd,TCrdBlend *pCrdBlend,short fifo);
 GT_API GTN_BufCrdBlendOn(short core,short crd,short fifo);
 GT_API GTN_BufCrdBlendOff(short core,short crd,short fifo);
 
+/**
+ * @brief ï¿½å²¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø£ï¿½×¢ï¿½â£ºÖ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½Í£Ö¹Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø²ï¿½ï¿½ï¿½Ð§
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param crd ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param axis ï¿½ï¿½ï¿½
+ * @param prfTorque ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param fifo ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1]
+ * @return 
+*/
+GT_API GTN_BufSetPrfTorque(short core,short crd,short axis,short prfTorque,short fifo);
+
+/**
+ * @brief ï¿½å²¹Ç°Õ°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø£ï¿½×¢ï¿½â£ºÖ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½Í£Ö¹Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø²ï¿½ï¿½ï¿½Ð§
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param crd ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param axis ï¿½ï¿½ï¿½
+ * @param prfTorque ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param fifo ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1]
+ * @return 
+*/
+GT_API GTN_BufSetPrfTorqueEx(short core,short crd,short axis,short prfTorque,short fifo);
 GT_API GTN_CrdStart(short core,short mask,short option);
 GT_API GTN_CrdStartStep(short core,short mask,short option);
 GT_API GTN_CrdStepMode(short core,short mask,short option);
 GT_API GTN_SetOverride(short core,short crd,double synVelRatio);
 GT_API GTN_SetOverride2(short core,short crd,double synVelRatio);
 GT_API GTN_InitLookAhead(short core,short crd,short fifo,double T,double accMax,short n,TCrdData *pLookAheadBuf);
+/**
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°Õ°ï¿½ï¿½Ð¡ï¿½Î³ï¿½ï¿½ï¿½ï¿½Ú³ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Ç°Õ°Ö®ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param core ï¿½Ëºï¿½
+ * @param crd ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½
+ * @param fifo fifoï¿½ï¿½
+ * @param minSegmentLength ï¿½ï¿½Ð¡ï¿½Î³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½ï¿½Ý¶Î³ï¿½Ð¡ï¿½Ú´ï¿½Öµï¿½ï¿½ï¿½ï¿½á·µï¿½ï¿½102ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Ñ¸Ã¶ï¿½ï¿½ï¿½ï¿½Ý´ï¿½ï¿½Ú²ï¿½fifoï¿½ï¿½ï¿½Þ³ï¿½,ï¿½ï¿½Î»ï¿½ï¿½pulse
+ * @return ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½1ï¿½ï¿½Î´ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Ç°Õ°ï¿½ï¿½0ï¿½ï¿½ï¿½É¹ï¿½
+*/
+GT_API GTN_SetLookAheadMinSegmentLength(short core,short crd,short fifo,double minSegmentLength);
+
 GT_API GTN_GetLookAheadSpace(short core,short crd,int32_t *pSpace,short fifo=0);
 GT_API GTN_GetLookAheadSegCount(short core,short crd,int32_t *pSegCount,short fifo=0);
 GT_API GTN_CrdClear(short core,short crd,short fifo);
@@ -1797,32 +2173,32 @@ GT_API GTN_GetCrdVel(short core,short crd,double *pSynVel);
 GT_API GTN_SetCrdSingleMaxVel(short core,short crd,double *pMaxVel);
 GT_API GTN_GetCrdSingleMaxVel(short core,short crd,double *pMaxVel);
 
-#define DIMENSION_MAX                   (8)                 // Ã¿¸ö×ø±êÏµµÄ×î´óÎ¬Êý
+#define DIMENSION_MAX                   (8)                 // Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½Î¬ï¿½ï¿½
 typedef struct
 {
-	int32_t segNumUserSet;
-	int32_t segNumInCmd;
-	double synPrfVel;
-	double prfPosCrd[DIMENSION_MAX];
+    int32_t segNumUserSet;
+    int32_t segNumInCmd;
+    double synPrfVel;
+    double prfPosCrd[DIMENSION_MAX];
 }TCrdSegSyncInfo;
 GT_API GTN_GetCrdSegSyncInfo(short core,short crd,short fifo,TCrdSegSyncInfo *pSegInfo);
 
 typedef struct
 {
-	short runEmpty;
-	int32_t segUseCount;
-	int32_t segReceiveCount;
-	short pad1[2];
-	int32_t pad2[2];
-	double pad3[2];
+    short runEmpty;
+    int32_t segUseCount;
+    int32_t segReceiveCount;
+    short pad1[2];
+    int32_t pad2[2];
+    double pad3[2];
 }TCrdStatusEx;
 GT_API GTN_CrdStatusEx(short core,short crd,TCrdStatusEx *pCrdStatus,short fifo);
 
 typedef struct
 {
-	double receive;
-	double travel;
-	double left;
+    double receive;
+    double travel;
+    double left;
 } TCrdSegmentLength;
 GT_API GTN_GetCrdSegmentLength(short core,short crd,TCrdSegmentLength *pSegmentLength,short fifo);
 
@@ -1834,24 +2210,32 @@ GT_API GTN_SetArcAllowErrorLa(short core,short crd,double error);
 /*-----------------------------------------------------------*/
 typedef struct
 {
-	short laserFollowMode;
-	double maxFrq;
-	double minFrq;
-	double maxDuty;
-	double minDuty;
-	short pad1[7];
-	double pad2[8];
+    short laserFollowMode;
+    double maxFrq;
+    double minFrq;
+    double maxDuty;
+    double minDuty;
+    short pad1[7];
+    double pad2[8];
 }TLaserFollowPrm;
 
 typedef struct
 {
-	uint32_t onCount;
-	uint32_t offCount;
-	uint32_t onCountInFpga;
-	uint32_t offCountInFpga;
-	uint32_t pad[4];
+    uint32_t onCount;
+    uint32_t offCount;
+    uint32_t onCountInFpga;
+    uint32_t offCountInFpga;
+    uint32_t pad[4];
 }TLaserOnOffCount;
 
+typedef struct
+{
+    double ratio;                                          // Ïµï¿½ï¿½
+    double laserPowerFollowVelMax;                         // mm/s
+    double laserPowerFollowFreqMax;                        // KHz
+    double laserFollowPulseMax;                            // us
+    double pad1[4];
+}TLaserFollowSpline2Prm;
 GT_API GTN_SetLaserFollowMode(short core,TLaserFollowPrm *pPrm,short channel);
 GT_API GTN_LaserFollowOff(short core,short crd,short fifo,short channel);
 GT_API GTN_SetLaserFollowTable(short core,short tableId,int32_t n,double *pVel,double *pPower,short channel);
@@ -1883,18 +2267,91 @@ GT_API GTN_BufLaserOffEx(short core,short crd,short fifo=0,short channel=0);
 GT_API GTN_BufLaserFollowModeEx(short core,short crd,short source,short fifo,short channel,double startPower=0);
 GT_API GTN_BufLaserFollowTableEx(short core,short crd,short tableId,double minPower,double maxPower,short fifo,short channel);
 GT_API GTN_BufLaserFollowOffEx(short core,short crd,short fifo,short channel);
+GT_API GTN_BufLaserFollowSpline2Ex(short core,short crd,TLaserFollowSpline2Prm *pPrm,short fifo,short channel);
 GT_API GTN_BufLaserPrfCmdEx(short core,short crd,double laserPower,short fifo=0,short channel=0);
+GT_API GTN_BufSetPulseWidthEx(short core,short crd,unsigned short width,short fifo=0,short channel=0);
 GT_API GTN_BufLaserFollowRatioEx(short core,short crd,double ratio,double minPower,double maxPower,short fifo,short channel);
 
 typedef struct
 {
-	short frqTableId;
-	short dutyTableId;
-	double pad1[8];
-	short pad2[8];
+    short frqTableId;
+    short dutyTableId;
+    double pad1[8];
+    short pad2[8];
 }TLaserFollowDuoTablePrm;
 GT_API GTN_BufLaserFollowDuoTableEx(short core,short crd,TLaserFollowDuoTablePrm *pPrm,short fifo,short channel);
 
+/*-----------------------------------------------------------*/
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½                                      */
+/*-----------------------------------------------------------*/
+
+typedef struct
+{
+    short tableId;
+    short channel;
+    short enable;
+    short loopCount;
+    int32_t intervalTime;
+    short pad[2];
+}TLaserPowerWave;
+
+typedef struct
+{
+	short tableId;
+	short enable;
+	short loopIndex;
+	short pad;
+	double power;
+}TLaserPowerWaveStatus;
+
+/**
+ * @brief ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ±ï¿½
+ * @param core ï¿½Ëºï¿½
+ * @param tableId ï¿½ï¿½ID
+ * @param pTime ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½
+ * @param pPower Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½Ö®ï¿½ï¿½Ä²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¹ï¿½ï¿½É±ä»¯
+ * @param count ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÝµÄ¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½50ï¿½ï¿½ï¿½ï¿½
+ * @param mode ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+ * @return ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+*/
+GT_API GTN_SetLaserPowerWaveTable(short core, short tableId, int32_t* pTime, double* pPower, short count, short mode);
+
+/**
+ * @brief ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param core ï¿½Ëºï¿½
+ * @param pLaserPowerWave ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÒªÑ¡ï¿½ï¿½ï¿½Î±ï¿½IDï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã²ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+*/
+GT_API GTN_SetLaserPowerWaveEnable(short core, TLaserPowerWave* pLaserPowerWave);
+
+/**
+ * @brief ï¿½å²¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param core ï¿½Ëºï¿½
+ * @param crd ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½
+ * @param pLaserPowerWave ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÒªÑ¡ï¿½ï¿½ï¿½Î±ï¿½IDï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã²ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param fifo ï¿½ï¿½ï¿½ï¿½Ïµfifoï¿½ï¿½
+ * @return
+*/
+GT_API GTN_BufSetLaserPowerWaveEnable(short core, short crd, TLaserPowerWave* pLaserPowerWave, short fifo);
+
+/**
+ * @brief ï¿½å²¹Ç°Õ°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param core ï¿½Ëºï¿½
+ * @param crd ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½
+ * @param pLaserPowerWave ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÒªÑ¡ï¿½ï¿½ï¿½Î±ï¿½IDï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã²ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param fifo ï¿½ï¿½ï¿½ï¿½Ïµfifoï¿½ï¿½
+ * @return ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+*/
+GT_API GTN_BufSetLaserPowerWaveEnableEx(short core, short crd, TLaserPowerWave* pLaserPowerWave, short fifo);
+
+/**
+ * @brief ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
+ * @param core ï¿½Ëºï¿½
+ * @param laserChannel ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½
+ * @param pLaserPowerWaveStatus ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+*/
+GT_API GTN_GetLaserPowerWaveStatus(short core,short laserChannel,TLaserPowerWaveStatus *pLaserPowerWaveStatus);
 
 /*-----------------------------------------------------------*/
 /* Crd					                                              */
@@ -1930,6 +2387,8 @@ GT_API GTN_GetCrdContourErrorControl(short core,short crd,short *pEnable,double 
 //////////////////////////////////////////////////////////////////////////
 //Smooth
 //////////////////////////////////////////////////////////////////////////
+GT_API GTN_SetCrdJerkMode(short core, short crd,double jerkMax, short mode);
+GT_API GTN_GetCrdJerkMode(short core, short crd,double *pJerkMax, short *pMode);
 GT_API GTN_SetCrdJerk(short core,short crd,double jerkMax);
 GT_API GTN_GetCrdJerk(short core,short crd,double *pJerkMax);
 GT_API GTN_SetCrdJerkTime(short core,short crd,double jerkTime,double coef);
@@ -1941,10 +2400,10 @@ GT_API GTN_GetCrdAccTime(short core,short crd,short *pTime,short *pK);
 
 typedef struct
 {
-	short percent;
-	short accStartPercent;
-	short decEndPercent;
-	double reserve;
+    short percent;
+    short accStartPercent;
+    short decEndPercent;
+    double reserve;
 } TCrdSmooth;
 GT_API GTN_SetCrdSmooth(short core,short crd,TCrdSmooth *pCrdSmooth);
 GT_API GTN_GetCrdSmooth(short core,short crd,TCrdSmooth *pCrdSmooth);
@@ -1959,18 +2418,29 @@ GT_API GTN_SetMotionSmoothWorkMode(short core,short type,short index,short mode)
 GT_API GTN_GetMotionSmoothWorkMode(short core,short type,short index,short *pMode);
 GT_API GTN_SetAxisMotionSmooth(short core,short axis,double time,double k);
 GT_API GTN_GetAxisMotionSmooth(short core,short axis,double *pTime,double *pK);
+typedef struct
+{
+    short optimizeMode;
+    short blendingType;
+    short pad[2];
+    double tolerance;
+    double blendingPrm;
+    double blendingMinAngle;
+    double blendingMaxAngle;
+} TPathOptimizePrm;
+//ï¿½ì¼£ï¿½Å»ï¿½
 GT_API GTN_SetPathOptimizePrmLa(short core,short crd,short enable,short mode,void *pPrm);
 
 typedef struct
 {
-	short mode;                  //Æ½»¬Ä£Ê½
-	short reserve[3];            //±£ÁôÖµ
-	double prm[6];               //²ÎÊý
+    short mode;                  //Æ½ï¿½ï¿½Ä£Ê½
+    short reserve[3];            //ï¿½ï¿½ï¿½ï¿½Öµ
+    double prm[6];               //ï¿½ï¿½ï¿½ï¿½
 }TMotionSmooth;
 GT_API GTN_SetMotionSmooth(short core,short index,TMotionSmooth *pSmooth,short count);
 GT_API GTN_GetMotionSmooth(short core,short index, TMotionSmooth *pSmooth,short count,short *pCountReturn);
 
-//ÉèÖÃ±¾ºËµÄÓ²¼þÆ½»¬×ÊÔ´ÊýÁ¿£¬ÁíÍâÒ»¸öºËÎª×ÜÊýÁ¿¼õÈ¥±¾ºËÊýÁ¿
+//ï¿½ï¿½ï¿½Ã±ï¿½ï¿½Ëµï¿½Ó²ï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 GT_API GTN_SetMotionSmoothFpgaResCount(short core,short count);
 GT_API GTN_GetMotionSmoothFpgaResCount(short core,short *pCount);
 
@@ -1987,18 +2457,18 @@ GT_API GTN_SetPathShapingPara(short core, short axis, double coef, short level);
 /*-----------------------------------------------------------*/
 typedef struct
 {
-	short enable;
-	int32_t compValue;
-	int32_t compTime;
-	short dir;
+    short enable;
+    int32_t compValue;
+    int32_t compTime;
+    short dir;
 }TBacklashComp;
 
 typedef struct
 {
-	short run;
-	short pad1[3];
-	int32_t  pad2[2];
-	double pad3[2];
+    short run;
+    short pad1[3];
+    int32_t  pad2[2];
+    double pad3[2];
 }TLeadScrewCompStatus;
 
 GT_API GTN_SetBacklash(short core,short axis,int32_t value,double changeValue,int32_t dir);
@@ -2014,6 +2484,7 @@ GT_API GTN_GetLeadScrewLink(short core,short axis,short *pLink);
 GT_API GTN_GetLeadScrewCompStatus(short core,short axis,TLeadScrewCompStatus *pSts);
 GT_API GTN_GetCompensate(short core,short axis,double *pPitchError,double *pCrossError,double *pBacklashError,double *pEncPos,double *pPrfPos);
 GT_API GTN_SetLeadScrewCompMode(short core,short axis,short cycleMode,short revCompCycle);
+GT_API GTN_SetLeadScrewCompCycleMode(short core,short axis,short cycleMode);
 GT_API GTN_GetLeadScrewCompMode(short core,short axis,short *pCycleMode,short *pRevCompCycle);
 GT_API GTN_SetFriction(short core,short axis,short gain,double compTime);
 GT_API GTN_GetFriction(short core,short axis,short *pGain,double *pCompTime);
@@ -2025,11 +2496,11 @@ GT_API GTN_GetZeroVelThreshold(short core,short axis,double *pZeroVelThreshold);
 
 typedef struct
 {
-	short n;
-	int32_t startPos;
-	int32_t lenPos;
-	int32_t *pCompPos;
-	int32_t *pCompNeg;
+    short n;
+    int32_t startPos;
+    int32_t lenPos;
+    int32_t *pCompPos;
+    int32_t *pCompNeg;
 } TLeadScrewPrm;
 
 GT_API GTN_SetLeadScrewTable(short core,short axis,TLeadScrewPrm *pPrm);
@@ -2038,20 +2509,20 @@ GT_API GTN_DisableLeadScrewTable(short core,short axis);
 GT_API GTN_GetLeadScrewTablePrfPosCount(short core,int32_t encPos,TLeadScrewPrm *pPrm,short *pCountPositive,short *pCountNegative);
 GT_API GTN_GetLeadScrewTablePrfPosPositive(short core,int32_t encPos,TLeadScrewPrm *pPrm,short index,int32_t *pPrfPosPositive);
 GT_API GTN_GetLeadScrewTablePrfPosNegative(short core,int32_t encPos,TLeadScrewPrm *pPrm,short index,int32_t *pPrfPosNegative);
-
+GT_API GTN_GetPrfPosBeforeLeadScrewComp(short core,short axis,short dir,double endPos,double *pOriginPos);
 typedef struct
 {
-	short count[2];
-	int32_t posBegin[2];
-	int32_t step[2];
+    short count[2];
+    int32_t posBegin[2];
+    int32_t step[2];
 } TCompensate2DTable;
 
 typedef struct
 {
-	short enable;
-	short tableIndex;
-	short axisType[2];
-	short axisIndex[2];
+    short enable;
+    short tableIndex;
+    short axisType[2];
+    short axisIndex[2];
 } TCompensate2D;
 
 GT_API GTN_SetCompensate2DTable(short core,short tableIndex,TCompensate2DTable *pTable,int32_t *pData,short extend);
@@ -2064,20 +2535,25 @@ GT_API GTN_GetCompensate2DValue(short core,short axis,double *pValue);
 GT_API GTN_SetCompensate2DMode(short core,short axis,short mode);
 GT_API GTN_GetCompensate2DMode(short core,short axis,short *pMode);
 
+GT_API GTN_SetCompensateLimit(short core,short compensateIndex,short compensateType,double minLimit,double maxLimit);
+GT_API GTN_GetCompensateLimit(short core,short compensateIndex,short compensateType,double *pMinLimit,double *pMaxLimit);
+
+
 /*-----------------------------------------------------------*/
 /* IO and Encoder                                            */
 /*-----------------------------------------------------------*/
 typedef struct
 {
-	short pad1[2];
-	int32_t reverseTime;
-	int32_t pad2[3];
-	double pad3[2];
+    short pad1[2];
+    int32_t reverseTime;
+    int32_t pad2[3];
+    double pad3[2];
 }TDoBit;
 
 GT_API GTN_SetDo(short core,short doType,int32_t value);
 GT_API GTN_SetDoEx(short core,short doType,int32_t *pValue,short count);
 GT_API GTN_SetDoBit(short core,short doType,short doIndex,short value);
+GT_API GTN_SetDoMultiBit(short core,short doType,int32_t *pValue,int32_t *pMask,short count=1);
 GT_API GTN_GetDo(short core,short doType,int32_t *pValue);
 GT_API GTN_GetDoEx(short core,short doType,int32_t *pValue,short count);
 GT_API GTN_SetDoBitReverse(short core,short doType,short doIndex,short value,short reverseTime);
@@ -2091,10 +2567,11 @@ GT_API GTN_SetDiReverseCount(short core,short diType,short diIndex,uint32_t *pRe
 GT_API GTN_GetDiRaw(short core,short diType,int32_t *pValue);
 GT_API GTN_GetDiEx(short core,short diType,int32_t *pValue,short count);
 
-GT_API GTN_SetGtmDoBit(short core,short station,short slot,short doIndex,short *pValue,short count);
-GT_API GTN_GetGtmDoBit(short core,short station,short slot,short doIndex,short *pValue,short count);
-GT_API GTN_GetGtmDiBit(short core,short station,short slot,short doIndex,short *pValue,short count);
-
+GT_API GTN_SetGtmDoBit(short core,short station,short slot,short doIndex,short *pValue,short count=1);
+GT_API GTN_GetGtmDoBit(short core,short station,short slot,short doIndex,short *pValue,short count=1);
+GT_API GTN_GetGtmDiBit(short core,short station,short slot,short diIndex,short *pValue,short count=1);
+GT_API GTN_SetDacScale(short core,short dac,int32_t scale);
+GT_API GTN_GetDacScale(short core,short dac,int32_t *pScale);
 GT_API GTN_SetDac(short core,short dac,short *pValue,short count=1);
 GT_API GTN_GetDac(short core,short dac,short *pValue,short count=1,uint32_t *pClock=NULL);
 GT_API GTN_SetAuDac(short core,short dac,short *pValue,short count=1);
@@ -2121,149 +2598,162 @@ GT_API GTN_GetAuAdcBias(short core,short auAdc,short *pBias);
 
 typedef struct
 {
-	double time;
-	double reserve[9];
+    double time;
+    double reserve[9];
 }TDoReverseParameter;
 
 typedef union
 {
-	TDoReverseParameter doReverse;
-	double data[10];
+    TDoReverseParameter doReverse;
+    double data[10];
 }TDigitalOutputMode;
 
 typedef struct
 {
-	double distance;
-	double delayTime;
-	double reserve[8];
+    double distance;
+    double delayTime;
+    double reserve[8];
 }TAtParameter;
 
 typedef struct
 {
-	double distance;
-	double reserve[9];
+    double distance;
+    double reserve[9];
 }TPsoParameter;
 
 typedef struct
 {
-	double time;
-	double reserve[9];
+    double time;
+    double reserve[9];
 }TTsoParameter;
 
 typedef struct
 {
-	TAtParameter atPrm;
-	TPsoParameter psoPrm;
-	TTsoParameter tsoPrm;
-	TDoReverseParameter doReverse;
-	double data[10];
+    TAtParameter atPrm;
+    TPsoParameter psoPrm;
+    TTsoParameter tsoPrm;
+    TDoReverseParameter doReverse;
+    double data[10];
 }TWriteDigitalOutputMode;
 
 typedef struct
 {
-	short mode;              //DoÊä³öÄ£Ê½
-	short doType;
-	short doIndex;
-	short doCount;
-	short *pValue;
-	short reverse1[2];
-	int32_t  reserve2[2];
-	TWriteDigitalOutputMode prm;
+    short mode;              //Doï¿½ï¿½ï¿½Ä£Ê½
+    short doType;
+    short doIndex;
+    short doCount;
+    short *pValue;
+    short reverse1[2];
+    int32_t  reserve2[2];
+    TWriteDigitalOutputMode prm;
 }TDigitalOutput;
 
 typedef struct
 {
-	short mode;              //DoÊä³öÄ£Ê½
-	short doType;
-	short doIndex;
-	short doValue;
-	short reverse1[4];
-	int32_t  reserve2[2];
-	TDigitalOutputMode prm;
+    short mode;              //Doï¿½ï¿½ï¿½Ä£Ê½
+    short doType;
+    short doIndex;
+    short doValue;
+	short reverseTime;
+	short reverse1[3];
+    int32_t  reserve2[2];
+	TWriteDigitalOutputMode prm;
 }TDigitalOutputBit;
 
 typedef struct
 {
-	double delayTime;
-	short reserve1[4];
-	int32_t reserve2[2];
-	double reserve3[2];
+    double delayTime;
+    short reserve1[4];
+    int32_t reserve2[2];
+    double reserve3[2];
 }TDelay;
 
 typedef struct
 {
-	short type;					// type=0:¾àÀëÆðµãdistanceºóDoÊä³ö£»type=1:¾àÀëÖÕµãdistanceÊ±DoÊä³ö
-	short motionType;			// ±£Áô£¬±ØÐëÎª0£¬Ä¿Ç°Ö»Ö§³Ö²å²¹ÔË¶¯Ö¸Áî£¬
-	int32_t delayTime;				// ±£Áô£¬±ØÐëÎª0
+    short type;					// type=0:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½distanceï¿½ï¿½Doï¿½ï¿½ï¿½ï¿½ï¿½type=1:ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½distanceÊ±Doï¿½ï¿½ï¿½
+    short motionType;			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½Ä¿Ç°Ö»Ö§ï¿½Ö²å²¹ï¿½Ë¶ï¿½Ö¸ï¿½î£¬
+    int32_t delayTime;				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
 
-	double distance;			// ÔË¶¯distanceºóDoÊä³ö£¬µ¥Î»mm
+    double distance;			// ï¿½Ë¶ï¿½distanceï¿½ï¿½Doï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»mm
 }TDigitalOutputProByMoveDistance;
 
 typedef struct
 {
-	short type;					// type=0:¿ªÊ¼ÔË¶¯ºóÑÓÊ±delayTimeºóDoÊä³ö£»type1:ÔË¶¯½áÊøÇ°ÌáÇ°delayTimeDoÊä³ö
-	short motionType;			// ±£Áô£¬±ØÐëÎª0£¬Ä¿Ç°Ö»Ö§³Ö²å²¹ÔË¶¯Ö¸Áî£¬
-	short reserve1[2];			// ±£Áô£¬±ØÐëÎª0
-	double delayTime;			// Ê±¼ä,µ¥Î»ms
+    short type;					// type=0:ï¿½ï¿½Ê¼ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½Ê±delayTimeï¿½ï¿½Doï¿½ï¿½ï¿½ï¿½ï¿½type1:ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½Ç°delayTimeDoï¿½ï¿½ï¿½
+    short motionType;			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½Ä¿Ç°Ö»Ö§ï¿½Ö²å²¹ï¿½Ë¶ï¿½Ö¸ï¿½î£¬
+    short reserve1[2];			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    double delayTime;			// Ê±ï¿½ï¿½,ï¿½ï¿½Î»ms
 }TDigitalOutputProByMoveTime;
 
 typedef struct
 {
-	double time;				// ÑÓÊ±Êä³öµÄÊ±¼ä£¬µ¥Î»ms
+    double time;				// ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ä£¬ï¿½ï¿½Î»ms
 }TDigitalOutputProDelay;
 
 typedef union
 {
-	double data[30];
-	TDigitalOutputProDelay delay;					// ´¿ÑÓÊ±Êä³ö
-	TDigitalOutputProByMoveTime moveTime;			// ¿ªÊ¼ÔË¶¯ºó£¬¸ù¾ÝÔË¶¯Ê±¼äÊä³ö¡£
-	TDigitalOutputProByMoveDistance moveDistance;  // ¿ªÊ¼ÔË¶¯ºó£¬¸ù¾ÝÔË¶¯¾àÀëÊä³ö¡£
+    double data[30];
+    TDigitalOutputProDelay delay;					// ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½
+    TDigitalOutputProByMoveTime moveTime;			// ï¿½ï¿½Ê¼ï¿½Ë¶ï¿½ï¿½ó£¬¸ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    TDigitalOutputProByMoveDistance moveDistance;  // ï¿½ï¿½Ê¼ï¿½Ë¶ï¿½ï¿½ó£¬¸ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 }TWriteDigitalOutputProPrmUnion;
 
 typedef struct
 {
-	// DoÊä³öÄ£Ê½:
-	// Ä£Ê½1£ºÑÓÊ±Êä³ö;
-	// Ä£Ê½2£ºÖ´ÐÐÏÂÒ»Ìõ²å²¹Ö¸ÁîÊ±£¬°´ÕÕÉè¶¨µÄ¾àÀë¶ÎÇ°ÑÓ³ÙÊä³ö»òÕß¶ÎÄ©ÌáÇ°Êä³ö;
-	// Ä£Ê½3£ºÖ´ÐÐÏÂÒ»Ìõ²å²¹Ö¸ÁîÊ±£¬°´ÕÕÉè¶¨µÄÊ±¼ä¶ÎÇ°ÑÓ³ÙÊä³ö»òÕß¶ÎÄ©ÌáÇ°Êä³ö;
-	short mode;              // DoÊä³öÄ£Ê½
-	short doType;		     // DoÀàÐÍ
-	short doIndex;			 // DoË÷Òý
-	short doCount;			 // DoÊä³ö¸öÊý
-	short *pValue;			 // DoÊä³öÖµ£¬
-	short reserve1[2];		 // ±£Áô£¬±ØÐëÎª0
-	int32_t  reserve2[2];		 // ±£Áô£¬±ØÐëÎª0
-	TWriteDigitalOutputProPrmUnion prm;
+    // Doï¿½ï¿½ï¿½Ä£Ê½:
+    // Ä£Ê½1ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½;
+    // Ä£Ê½2ï¿½ï¿½Ö´ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½å²¹Ö¸ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½è¶¨ï¿½Ä¾ï¿½ï¿½ï¿½ï¿½Ç°ï¿½Ó³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¶ï¿½Ä©ï¿½ï¿½Ç°ï¿½ï¿½ï¿½;
+    // Ä£Ê½3ï¿½ï¿½Ö´ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½å²¹Ö¸ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½è¶¨ï¿½ï¿½Ê±ï¿½ï¿½ï¿½Ç°ï¿½Ó³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¶ï¿½Ä©ï¿½ï¿½Ç°ï¿½ï¿½ï¿½;
+    short mode;              // Doï¿½ï¿½ï¿½Ä£Ê½
+    short doType;		     // Doï¿½ï¿½ï¿½ï¿½
+    short doIndex;			 // Doï¿½ï¿½ï¿½ï¿½
+    short doCount;			 // Doï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short *pValue;			 // Doï¿½ï¿½ï¿½Öµï¿½ï¿½
+    short reserve1[2];		 // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    int32_t  reserve2[2];		 // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    TWriteDigitalOutputProPrmUnion prm;
 }TDigitalOutputPro;
 
 typedef struct
 {
-	short aoType;
-	short aoIndex;
-	short count;
-	short reserve1;
-	double *pValue;
-	int32_t reserve2[3];
+    short aoType;
+    short aoIndex;
+    short count;
+    short reserve1;
+    double *pValue;
+    int32_t reserve2[3];
 }TAnalogOutput;
 
 typedef struct
 {
-	short diType;
-	short diIndex;
-	short diCount;
-	short *pValue;
-	short reverse1[3];
-	int32_t  reserve2[2];
+    short diType;
+    short diIndex;
+    short diCount;
+    short *pValue;
+    short reverse1[3];
+    int32_t  reserve2[2];
 }TDigitalInput;
 
-GT_API GTN_ReadDigitalInput(short core,short diType,short diIndex,short *pDi,short diCount);
+typedef struct  
+{
+	short inputType;
+	short inputIndex;
+	short mode;
+	short modePrm;
+	short reserve1[4];
+	double resuerve2[4];
+}TStopIoPrm;
+
+GT_API GTN_ReadDigitalInput(short core,short diType,short diIndex,short *pDi,short diCount=1);
 GT_API GTN_WaitDigitalInput(short core,TDigitalInput *pDi,TListInfo *pListInfo);
-GT_API GTN_WriteDigitalOutput(short core,TDigitalOutput *pDo,TListInfo *pListInfo);
+GT_API GTN_WriteDigitalOutput(short core,TDigitalOutput *pDo,TListInfo *pListInfo=NULL);
 GT_API GTN_WriteDigitalOutputBit(short core,TDigitalOutputBit *pDoBit,TListInfo *pListInfo=NULL);
-GT_API GTN_ReadDigitalOutput(short core,short doType,short doIndex,short *pValue,short doCount);
+GT_API GTN_ReadDigitalOutput(short core,short doType,short doIndex,short *pValue,short doCount=1);
 GT_API GTN_ReadAnalogInput(short core,short adcType,short adcIndex,double *pValue,short adcCount);
+GT_API GTN_ReadAnalogOutput(short core,short aoType,short aoIndex,double *pValue,short aoCount);
 GT_API GTN_WriteAnalogOutput(short core,TAnalogOutput *pAo,TListInfo *pListInfo);
 GT_API GTN_SetDelay(short core,TDelay *pDelay,TListInfo *pListInfo);
+
 
 GT_API GTN_SetAuMtrBias(short core,short dac,short bias);
 GT_API GTN_GetAuMtrBias(short core,short dac,short *pBias);
@@ -2301,29 +2791,29 @@ GT_API GTN_GetAbsEncPosEx(short core,short encoder,short mode,__int64 *pValue);
 
 typedef struct
 {
-	short type;
-	short index;
+    short type;
+    short index;
 }TEncoderSource;
 GT_API GTN_SetEncoderSource(short core,short encoder,TEncoderSource *pEncoderSource);
 GT_API GTN_GetEncoderSource(short core,short encoder,TEncoderSource *pEncoderSource);
 
 typedef struct
 {
-	short probeType;			// ²¶»ñÀàÐÍ
-	short probeIndex;			// ²¶»ñË÷Òý
-	short latchType;			// Ëø´æÀàÐÍ
-	short latchIndex;			// Ëø´æË÷Òý
+    short probeType;            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short probeIndex;           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short latchType;            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short latchIndex;           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-	short sense;				// ²¶»ñµçÆ½
-	short pad[3];
-	double filterWidth;			// ²¶»ñ×îÐ¡¿í¶È
+    short sense;                // ï¿½ï¿½ï¿½ï¿½ï¿½Æ½
+    short pad[3];
+    double filterWidth;         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½
 }TSignalDetect;
 
 typedef struct
 {
-	short status;				// Íê³É±êÖ¾,0£¬Î´´¥·¢£¬1¼ÆÊýÖÐ£¬2¼ÆÊýÍê³É
-	short pad[3];
-	double latchWidth;			// Ëø´æÂö¿íÖµ
+    short status;               // ï¿½ï¿½É±ï¿½Ö¾,0ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short pad[3];
+    double latchWidth;          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
 }TSignalDetectStatus;
 
 GT_API GTN_SetSignalTimeFilter(short core,short type,short index,double filterWidth);
@@ -2366,38 +2856,43 @@ GT_API GTN_GetEHMIDo(short core,unsigned char *data,unsigned short offset,unsign
 GT_API GTN_SetEHMIDo(short core,unsigned char *data,unsigned short offset,unsigned short count);
 GT_API GTN_GetEHMIDi(short core,unsigned char *data,unsigned short offset,unsigned short count);
 
-GT_API GTN_OpenExtMdl(short core,char *pDllName);
-GT_API GTN_CloseExtMdl(short core);
-GT_API GTN_ResetExtMdl(short core);
+
 
 /*-----------------------------------------------------------*/
 /* Config of Ext-Module                                      */
 /*-----------------------------------------------------------*/
 typedef struct
 {
-	short active;
-	short checkError;
-	short linkError;
-	short packageErrorCount;
-	short pad[8];
+    short active;
+    short checkError;
+    short linkError;
+    short packageErrorCount;
+    short pad[8];
 } TExtModuleStatus;
 
 typedef struct
 {
-	short type;
-	short input;
-	short output;
+    short type;
+    short input;
+    short output;
 } TExtModuleType;
 
 typedef struct
 {
-	short station;
-	short module;
-	short index;
+    short station;
+    short module;
+    short index;
 } TExtIoMap;
 
+GT_API GTN_OpenExtMdl(short core,char *pDllName);
+GT_API GTN_CloseExtMdl(short core);
+GT_API GTN_ResetExtMdl(short core);
+GT_API GTN_LoadExtConfig(short core,char *pFileName);
+GT_API GTN_SetExtIoValue(short core,short module,unsigned short value);
+GT_API GTN_GetExtIoValue(short core,short module,unsigned short *pValue);
 GT_API GTN_LoadExtModuleConfig(short core,char *pFile);
 GT_API GTN_SaveExtModuleConfig(short core,char *pFile);
+GT_API GTN_SaveRingNetConfig(short core,char *pFile);
 GT_API GTN_ExtModuleOn(short core,short station);
 GT_API GTN_ExtModuleOff(short core,short station);
 GT_API GTN_GetExtModuleStatus(short core,short station,TExtModuleStatus *pStatus);
@@ -2415,14 +2910,14 @@ GT_API GTN_GetExtAoRange(short core,short index,double *pMax,double *pMin);
 GT_API GTN_SetExtAiRange(short core,short index,double max,double min);
 GT_API GTN_GetExtAiRange(short core,short index,double *pMax,double *pMin);
 
-GT_API GTN_LoadExtConfig(short core,char *pFileName);
-
 /*-----------------------------------------------------------*/
 /* Pos Compare                                               */
 /*-----------------------------------------------------------*/
 #define POS_COMPARE_MODE_FIFO                       (0)
 #define POS_COMPARE_MODE_LINEAR                     (1)
 #define POS_COMPARE_MODE_EQUIDISTANT                (2)
+#define POS_COMPARE_MODE_EQUIDISTANT_BUFFER_PERMIT  (3)	// PSOï¿½È´ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+#define POS_COMPARE_MODE_PSO7                       (7) // PSO7Ä£Ê½
 
 #define POS_COMPARE_OUTPUT_PULSE                    (0)
 #define POS_COMPARE_OUTPUT_LEVEL                    (1)
@@ -2434,161 +2929,178 @@ GT_API GTN_LoadExtConfig(short core,char *pFileName);
 
 typedef struct
 {
-	short mode;
-	short dimension;
-	short sourceMode;
-	short sourceX;
-	short sourceY;
-	short outputMode;
-	short outputCounter;
-	unsigned short outputPulseWidth;
-	unsigned short errorBand;
+    short mode;
+    short dimension;
+    short sourceMode;
+    short sourceX;
+    short sourceY;
+    short outputMode;
+    short outputCounter;
+    unsigned short outputPulseWidth;
+    unsigned short errorBand;
 } TPosCompareMode;
 
 typedef struct
 {
-	uint32_t count;
-	unsigned short hso;
-	unsigned short gpo;
+    uint32_t count;
+    unsigned short hso;
+    unsigned short gpo;
 
-	int32_t startPos;
-	int32_t interval;
+    int32_t startPos;
+    int32_t interval;
 } TPosCompareLinear;
 
 typedef struct
 {
-	uint32_t count;
-	unsigned short hso;
-	unsigned short gpo;
+    uint32_t count;
+    unsigned short hso;
+    unsigned short gpo;
 
-	int32_t startPosX;
-	int32_t startPosY;
-	int32_t intervalX;
-	int32_t intervalY;
+    int32_t startPosX;
+    int32_t startPosY;
+    int32_t intervalX;
+    int32_t intervalY;
 } TPosCompareLinear2D;
 
 
 typedef struct
 {
-	int32_t pos;
-	unsigned short hso;
-	unsigned short gpo;
-	uint32_t segmentNumber;
+    int32_t pos;
+    unsigned short hso;
+    unsigned short gpo;
+    uint32_t segmentNumber;
 } TPosCompareData;
 
 typedef struct
 {
-	int32_t posX;
-	int32_t posY;
-	unsigned short hso;
-	unsigned short gpo;
-	uint32_t segmentNumber;
+    int32_t posX;
+    int32_t posY;
+    unsigned short hso;
+    unsigned short gpo;
+    uint32_t segmentNumber;
 } TPosCompareData2D;
 
 typedef struct
 {
-	unsigned short mode;
-	unsigned short run;
-	unsigned short space;
-	uint32_t pulseCount;
-	unsigned short hso;
-	unsigned short gpo;
-	uint32_t segmentNumber;
+    unsigned short mode;
+    unsigned short run;
+    unsigned short space;
+    uint32_t pulseCount;
+    unsigned short hso;
+    unsigned short gpo;
+    uint32_t segmentNumber;
 } TPosCompareStatus;
 
 typedef struct
 {
-	unsigned short config;
-	unsigned short fifoEmpty;
-	unsigned short head;
-	unsigned short tail;
-	uint32_t commandReceive;
-	uint32_t commandSend;
-	int32_t posX;
-	int32_t posY;
+    unsigned short config;
+    unsigned short fifoEmpty;
+    unsigned short head;
+    unsigned short tail;
+    uint32_t commandReceive;
+    uint32_t commandSend;
+    int32_t posX;
+    int32_t posY;
 } TPosCompareInfo;
 
 typedef struct
 {
-	uint32_t count;
-	unsigned short hso;
-	unsigned short gpo;
-	int32_t startPosX;
-	int32_t startPosY;
-	int32_t syncPos;
-	int32_t time;
-	short reserve[20];
+    uint32_t count;
+    unsigned short hso;
+    unsigned short gpo;
+    int32_t startPosX;
+    int32_t startPosY;
+    int32_t syncPos;
+    int32_t time;
+    short reserve[20];
 } TPosComparePsoPrm;
 
 typedef struct
 {
-	uint32_t count;
-	unsigned short hso;
-	unsigned short gpo;
-	int32_t startPosX;
-	int32_t startPosY;
-	int32_t syncPos;
-	int32_t time;
-	short pulseWidth;
-	short pad;
+    uint32_t count;
+    unsigned short hso;
+    unsigned short gpo;
+    int32_t startPosX;
+    int32_t startPosY;
+    int32_t syncPos;
+    int32_t time;
+    short pulseWidth;
+    short pad;
 } TPosComparePsoPrmPro;
 
 typedef struct
 {
-	short mode;
-	unsigned short count;
-	short highLevel;
-	short lowLevel;
-	short resver[20];
+    short mode;
+    unsigned short count;
+    short highLevel;
+    short lowLevel;
+    short resver[20];
 } TPosCompareContinueMode;
 
 typedef struct
 {
-	short	referenceX;
-	short	referenceY;
-	short	pad1[2];
-	double	pad2[2];
+    short	referenceX;
+    short	referenceY;
+    short	pad1[2];
+    double	pad2[2];
 } TPosCompareReferencePrm;
 
 typedef struct
 {
-	short mode;          // 0£º²»Êä³ö£¬1£º°´Ä¬ÈÏÉèÖÃÊä³ö£¬2£º°´ÕÕµ±Ç°Ö¸ÁîÅäÖÃÐÅÏ¢Êä³ö
-	short timeScale;     // Ê±¼ä¾«¶È£º0£º1us£¬1:0.1us
-	short pad1[2];
-	double pulseWidth;
-	double pad2[3];
+    short mode;          // 0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½Ä¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½2ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½Ç°Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½
+    short timeScale;     // Ê±ï¿½ä¾«ï¿½È£ï¿½0ï¿½ï¿½1usï¿½ï¿½1:0.1us
+    short pad1[2];
+    double pulseWidth;
+    double pad2[3];
 }THsoPulsePrm;
 
 typedef struct
 {
-	short outputMode;
-	short level;
-	short reserve1[2];
-	double highLevelTime;
-	double lowLevelTime;
-	double reserve2[4];
+    short outputMode;
+    short level;
+    short reserve1[2];
+    double highLevelTime;
+    double lowLevelTime;
+    double reserve2[4];
 }TPosComparePulse;
 
 typedef struct
 {
-	int32_t count;
-	short reserve1[2];
-	double reserve2[4];
+    short outputMode;
+    short level;
+    int32_t count;
+    double highLevelTime;
+    double lowLevelTime;
+    double reserve2[4];
+}TPosCompareMultiPulse;
+
+typedef struct
+{
+    int32_t count;
+    short reserve1[2];
+    double reserve2[4];
 }TPosComparePulseStatus;
 
 typedef struct
 {
-	uint32_t count;
-	unsigned short hso;
-	unsigned short gpo;
-	int32_t startPosX;
-	int32_t startPosY;
-	int32_t time;
-	short multiNumber;
-	short pad1;
-	int32_t syncPosArray[256];
+    uint32_t count;
+    unsigned short hso;
+    unsigned short gpo;
+    int32_t startPosX;
+    int32_t startPosY;
+    int32_t time;
+    short multiNumber;
+    short pad1;
+    int32_t syncPosArray[256];
 } TPosCompareMultiPsoPrm;
 
+typedef struct
+{
+    short sourceMode;                  // Î»ï¿½Ã±È½Ïµï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ñ¡ï¿½ï¿½-1ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ó£ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short additionX;                   // Î»ï¿½Ã±È½ï¿½xï¿½ï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short additionY;                   // Î»ï¿½Ã±È½ï¿½yï¿½ï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short additionZ;                   // Î»ï¿½Ã±È½ï¿½zï¿½ï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+}TPosCompareAdditionPrm;
 
 GT_API GTN_PosCompareStart(short core,short posCompareIndex);
 GT_API GTN_PosCompareStop(short core,short posCompareIndex);
@@ -2599,6 +3111,7 @@ GT_API GTN_PosCompareData2D(short core,short posCompareIndex,TPosCompareData2D *
 GT_API GTN_PosComparePulse(short core,short posCompareIndex,short outputMode,short level,unsigned short outputPulseWidth);
 GT_API GTN_SetPosComparePulseCount(short core,short posCompareIndex,int32_t count);
 GT_API GTN_PosComparePulseEx(short core,short posCompareIndex,TPosComparePulse *pPosComparePulse);
+GT_API GTN_PosCompareMultiPulse(short core,short posCompareIndex,TPosCompareMultiPulse *pPosComparePulse);
 GT_API GTN_GetPosComparePulseStatus(short core,short posCompareIndex,TPosComparePulseStatus *pPosComparePulseStatus);
 GT_API GTN_SetPosCompareMode(short core,short posCompareIndex,TPosCompareMode *pMode);
 GT_API GTN_GetPosCompareMode(short core,short posCompareIndex,TPosCompareMode *pMode);
@@ -2606,74 +3119,87 @@ GT_API GTN_SetPosCompareContinueMode(short core,short posCompareIndex,TPosCompar
 GT_API GTN_GetPosCompareContinueMode(short core,short posCompareIndex,TPosCompareContinueMode *pMode);
 GT_API GTN_SetPosCompareLinear(short core,short posCompareIndex,TPosCompareLinear *pLinear);
 GT_API GTN_GetPosCompareLinear(short core,short posCompareIndex,TPosCompareLinear *pLinear);
+GT_API GTN_SetPosCompareLinearBuf(short core,short posCompareIndex,TPosCompareLinear *pLinear);
 GT_API GTN_SetPosCompareLinear2D(short core,short posCompareIndex,TPosCompareLinear2D *pLinear);
 GT_API GTN_GetPosCompareLinear2D(short core,short posCompareIndex,TPosCompareLinear2D *pLinear);
+GT_API GTN_SetPosCompareLinear2DBuf(short core,short posCompareIndex,TPosCompareLinear2D *pLinear);
 GT_API GTN_PosCompareInfo(short core,short posCompareIndex,TPosCompareInfo *pInfo);
-GT_API GTN_PosCompareHsOn(short core,short posCompareIndex,short link,unsigned short threshold);
+GT_API GTN_PosCompareHsOn(short core,short posCompareIndex,short link,unsigned short threshold=200);
 GT_API GTN_PosCompareHsOff(short core,short posCompareIndex);
 GT_API GTN_PosCompareSpace(short core,short posCompareIndex,unsigned short *pSpace);
 GT_API GTN_SetPosComparePsoPrm(short core,short posCompareIndex,TPosComparePsoPrm *pPrm);
 GT_API GTN_GetPosComparePsoPrm(short core,short posCompareIndex,TPosComparePsoPrm *pPrm);
-GT_API GTN_SetPosCompareMultiPsoPrm(short core,short index,TPosCompareMultiPsoPrm *pPrm);
-GT_API GTN_GetPosCompareMultiPsoPrm(short core,short index,TPosCompareMultiPsoPrm *pPrm);
-GT_API GTN_SetPosComparePsoOffDistance(short core,short index,int32_t distance);
+GT_API GTN_SetPosCompareMultiPsoPrm(short core,short posCompareIndex,TPosCompareMultiPsoPrm *pPrm);
+GT_API GTN_GetPosCompareMultiPsoPrm(short core,short posCompareIndex,TPosCompareMultiPsoPrm *pPrm);
+GT_API GTN_SetPosComparePsoOffDistance(short core,short posCompareIndex,int32_t distance);
 GT_API GTN_SetPosCompareStartLevel(short core,short posCompareIndex,short type,short startLevel);
 GT_API GTN_SetPosCompareReference(short core,short posCompareIndex,TPosCompareReferencePrm *pPrm);
 GT_API GTN_GetPosCompareReference(short core,short posCompareIndex,TPosCompareReferencePrm *pPrm);
+GT_API GTN_SetPosCompareAddition(short core,short posCompareIndex,TPosCompareAdditionPrm *pPrm);
+GT_API GTN_GetPosCompareAddition(short core,short posCompareIndex,TPosCompareAdditionPrm *pPrm);
 GT_API GTN_SetHsoPulsePrm(short core,short station,short hsoIndex,THsoPulsePrm *pPem,short hsoCount=1);
 GT_API GTN_GetHsoPulsePrm(short core,short station,short hsoIndex,THsoPulsePrm *pPem,short hsoCount=1);
-GT_API GTN_SetPosComparePulseDuty(short core,short index,double duty);
-GT_API GTN_PosCompareVariablePsoData(short core,short index,TPosCompareData *pData);
+GT_API GTN_SetPosComparePulseDuty(short core,short posCompareIndex,double duty);
+GT_API GTN_PosCompareVariablePsoData(short core,short posCompareIndex,TPosCompareData *pData);
+GT_API GTN_BufPosCompareData2D(short core,short crd,short posCompareIndex,TPosCompareData2D *pData,short fifo);
+GT_API GTN_BufPosCompareData2DEx(short core,short crd,short posCompareIndex,TPosCompareData2D *pData,short fifo);
 
-
+#define POS_COMPARE_THRESHOLD_DEFAULT             (0)     //Î»ï¿½Ã½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î§ï¿½ó£¬¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ã·¨ï¿½Òµï¿½ï¿½ï¿½ï¿½Åµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define POS_COMPARE_THRESHOLD_ZERO	              (1)     //Î»ï¿½Ã½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½    
+#define POS_COMPARE_THRESHOLD_FPGA	              (2)     //Î»ï¿½Ã½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î§ï¿½ó£¬¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ã·¨ï¿½Òµï¿½ï¿½ï¿½ï¿½Åµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+GT_API GTN_SetPosCompareThresholdMode(short core,short index,short mode);
+GT_API GTN_GetPosCompareThresholdMode(short core,short index,short *pMode);
+GT_API GTN_SetPosCompareThresholdValue(short core,short index,short thresholdValue);
+GT_API GTN_GetPosCompareThresholdValue(short core,short index,short *pThresholdValue);
 typedef struct
 {
-	short			mode;							// 0£ºFIFOÄ£Ê½£¬1£ºLinearÄ£Ê½ 2£ºµÈ¼ä¾àÊä³öÄ£Ê½
-	short			dimension;					//1£º1D£¬2£º2D
-	short			sourceMode;					// 0£º±àÂëÆ÷£» 1£ºÂö³å¼ÆÊýÆ÷
-	short			source[8];					//±àÂëÆ÷±È½ÏÔ´
-	short			outputMode;					/*Êä³öÄ£Ê½£º0:Âö³å 1:µçÆ½2£ºµçÆ½×Ô
-										¶¯·­×ª(µçÆ½Ä£Ê½²¢ÇÒÊä³öµçÆ½×Ô¶¯·´×ª£¬²»ÊÜposCompareDataµçÆ½Ó°Ïì)*/
-	short			outputCounter;				// ±£Áô
-	unsigned short	outputPulseWidth;	/*Êä³öÂö³å¿í¶È,µ¥Î»Îª1us£¬µçÆ½Ä£Ê½¸Ã²ÎÊýÎÞÐ§*/
-	unsigned short	errorBand;			// ¶þÎ¬Î»ÖÃ±È½ÏÊä³öÎó²î´ø
-	short			reserve1[2];
-	double			reserve2[16];
+    short mode;                         // 0ï¿½ï¿½FIFOÄ£Ê½ï¿½ï¿½1ï¿½ï¿½LinearÄ£Ê½ 2ï¿½ï¿½ï¿½È¼ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+    short dimension;                    // 1ï¿½ï¿½1Dï¿½ï¿½2ï¿½ï¿½2D
+    short sourceMode;                   // 0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short source[8];                    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È½ï¿½Ô´
+    short outputMode;                   // ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½0:ï¿½ï¿½ï¿½ï¿½ 1:ï¿½ï¿½Æ½2ï¿½ï¿½ï¿½ï¿½Æ½ï¿½Ô¶ï¿½ï¿½ï¿½×ª
+                                        // (ï¿½ï¿½Æ½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ½ï¿½Ô¶ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½posCompareDataï¿½ï¿½Æ½Ó°ï¿½ï¿½)
+    short outputCounter;                // ï¿½ï¿½ï¿½ï¿½
+    unsigned short outputPulseWidth;    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½Î»Îª1usï¿½ï¿½ï¿½ï¿½Æ½Ä£Ê½ï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
+    unsigned short errorBand;           // ï¿½ï¿½Î¬Î»ï¿½Ã±È½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short reserve1[2];
+    double reserve2[16];
 } TPosCompareModeEx;
 
 typedef struct
 {
-	uint32_t count;
-	unsigned short hso;
-	unsigned short gpo;
-	int32_t startPosX;
-	int32_t startPosY;
-	int32_t time;
+    uint32_t count;
+    unsigned short hso;
+    unsigned short gpo;
+    int32_t startPosX;
+    int32_t startPosY;
+    int32_t time;
 
-	short pad1;
-	short multiNumber;
-	int32_t scale[6];
-	double syncPosArray[256];
+    short pad1;
+    short multiNumber;
+    int32_t scale[6];
+    double syncPosArray[256];
 } TPosComparePsoPrmEx;
 
-GT_API GTN_SetPosCompareModeEx(short core,short index,TPosCompareModeEx *pMode);
-GT_API GTN_GetPosCompareModeEx(short core,short index,TPosCompareModeEx *pMode);
-GT_API GTN_SetPosComparePsoPrmEx(short core,short index,TPosComparePsoPrmEx *pPrm);
-GT_API GTN_GetPosComparePsoPrmEx(short core,short index,TPosComparePsoPrmEx *pPrm);
+GT_API GTN_SetPosCompareModeEx(short core,short posCompareIndex,TPosCompareModeEx *pMode);
+GT_API GTN_GetPosCompareModeEx(short core,short posCompareIndex,TPosCompareModeEx *pMode);
+GT_API GTN_SetPosComparePsoPrmEx(short core,short posCompareIndex,TPosComparePsoPrmEx *pPrm);
+GT_API GTN_GetPosComparePsoPrmEx(short core,short posCompareIndex,TPosComparePsoPrmEx *pPrm);
 
 GT_API GTN_ComparePulse(short core,short level,short outputType,short time);
 GT_API GTN_CompareStop(short core);
 GT_API GTN_CompareStatus(short core,short *pStatus,int32_t *pCount);
 GT_API GTN_CompareData(short core,short encoder,short source,short pulseType,short startLevel,short time, int32_t *pBuf1,short count1,int32_t *pBuf2,short count2);
 GT_API GTN_CompareLinear(short core,short encoder,short channel,int32_t startPos,int32_t repeatTimes,int32_t interval,short time,short source);
+GT_API GTN_EnablePoscomparePsoPulseWidthFollow(short core,short index,short enable,double velMin,double velMax,double cmpPulseWidthMax);
 
 /*-----------------------------------------------------------*/
 /* Config of Position Compare                                */
 /*-----------------------------------------------------------*/
 typedef struct
 {
-	short module;
-	short fifo;
+    short module;
+    short fifo;
 } TPosCompareMap;
 
 GT_API GTN_SetPosCompareMap(short core,short index,TPosCompareMap *pMap);
@@ -2690,6 +3216,36 @@ GT_API GTN_SetPosComparePsoSyncPrm(short core,short posCompareIndex,short psoSyn
 #define COMPARE_STEP_MAX				(0x1fff)
 #define COMPARE_MAX_NUM					(0x3fffffff)
 
+typedef struct
+{
+    unsigned short velCompCoeff[3];
+    short reserve1[2];
+    unsigned short accCompCoeff[3];
+    short reserve2[2];
+}TPosCompareCompensateCoeff;
+GT_API GTN_SetPosCompareCompensateCoeff(short core,short posCompareIndex,TPosCompareCompensateCoeff *pCoeff);
+GT_API GTN_GetPosCompareCompensateCoeff(short core,short posCompareIndex,TPosCompareCompensateCoeff *pCoeff);
+
+typedef struct
+{
+    short index;              // Î»ï¿½Ã±È½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short enable;             // ï¿½ï¿½ï¿½ï¿½ï¿½Ø±ï¿½
+    int32_t  reserve[3];      // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+}TPosCompareEnablePro;
+
+typedef struct
+{
+    short index;
+    short pulseWidth;
+    short reserve[2];
+    uint32_t count;
+    int32_t syncPos;
+    int32_t time;
+} TPosComparePrmPro;
+
+GT_API GTN_SetPosCompareEnablePro(short core,short group,TPosCompareEnablePro *pPrm,TListInfo *pListInfo);
+GT_API GTN_SetPosComparePrmPro(short core,short group,TPosComparePrmPro *pPrm,TListInfo *pListInfo);
+GT_API GTN_SetPosCompareData2DPro(short core,short index,TPosCompareData2D *pData,TListInfo *pListInfo);
 
 /*-----------------------------------------------------------*/
 /* Laser and Scan                                            */
@@ -2703,66 +3259,66 @@ GT_API GTN_SetPosComparePsoSyncPrm(short core,short posCompareIndex,short psoSyn
 
 struct TScanInit
 {
-	int lookAheadNum;
-	double time;
-	double radiusRatio;
+    int lookAheadNum;
+    double time;
+    double radiusRatio;
 };
 
 typedef struct
 {
-	uint32_t segmentNumber;
-	unsigned short commandNumber;
-	unsigned short prfVel;
-	unsigned short fifoEmpty;
-	unsigned short head;
-	unsigned short tail;
-	uint32_t commandReceive;
-	uint32_t commandSend;
-	uint32_t reserve[6];
+    uint32_t segmentNumber;
+    unsigned short commandNumber;
+    unsigned short prfVel;
+    unsigned short fifoEmpty;
+    unsigned short head;
+    unsigned short tail;
+    uint32_t commandReceive;
+    uint32_t commandSend;
+    uint32_t reserve[6];
 } TScanInfo;
 
 typedef struct
 {
-	short enable;
-	short superposeSrc;
-	short superposeAxisX;
-	short superposeAxisY;
-	double xCoefficient;
-	double yCoefficient;
-	double xVelCoefficient;
-	double yVelCoefficient;
+    short enable;
+    short superposeSrc;
+    short superposeAxisX;
+    short superposeAxisY;
+    double xCoefficient;
+    double yCoefficient;
+    double xVelCoefficient;
+    double yVelCoefficient;
 }TScanPosSuperposeParameter;
 
 typedef struct
 {
-	unsigned short hso;
-	unsigned short powerMode;
-	unsigned short power;
-	unsigned short powerMax;
-	unsigned short powerMin;
-	unsigned short frequency;
-	unsigned short pulseWidth;
+    unsigned short hso;
+    unsigned short powerMode;
+    unsigned short power;
+    unsigned short powerMax;
+    unsigned short powerMin;
+    unsigned short frequency;
+    unsigned short pulseWidth;
 } TLaserInfo;
 
 typedef struct
 {
-	short n;
-	double startVel;
-	double power;
+    short n;
+    double startVel;
+    double power;
 }TLaserPowerPrm;
 
 typedef struct
 {
-	short n;
-	double startVel;
-	double velStep;
-	double *power;
+    short n;
+    double startVel;
+    double velStep;
+    double *power;
 }TLaserPowerTable;
 
 typedef struct
 {
-	short corrX[65][65];
-	short corrY[65][65];
+    short corrX[65][65];
+    short corrY[65][65];
 }TScanCorrectionTableData;
 
 GT_API GTN_ScanInit(short core,TScanInit *pScanInit=NULL,double jumpAcc=0,double markAcc=0,short scan=1);
@@ -2817,6 +3373,23 @@ GT_API GTN_ClearScanExecuteTime(short core,short scan=1);
 GT_API GTN_ScanHsOn(short core,short scan=1,short link=1,unsigned short threshold=200);
 GT_API GTN_ScanHsOff(short core,short scan=1);
 
+/*
+*   ï¿½ï¿½ï¿½ï¿½Ëµï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½FPKï¿½ï¿½ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¹ï¿½ï¿½Ü£ï¿½
+*   coreï¿½ï¿½         ï¿½ËºÅ£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,32]
+*   time1ï¿½ï¿½        ï¿½ï¿½Ê¾FPKï¿½ÅºÅµï¿½ï¿½ï¿½Ð§ï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ä£¬È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,65535]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½us
+*   time2ï¿½ï¿½        ï¿½ï¿½Ê¾FPKï¿½ÅºÅ¿ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÅºÅ¿ï¿½Ê¼ï¿½ï¿½ï¿½Ö®ï¿½ï¿½Ä¼ï¿½ï¿½Ê±ï¿½ä£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±Ê±ï¿½ä£¬È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,65535]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½us
+*   laserOffDelayï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½Ø±ï¿½ï¿½ï¿½Ê±Ê±ï¿½ä£¬È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,65535]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½us
+*   channelï¿½ï¿½      ï¿½ï¿½ÒªÊ¹ï¿½ï¿½FPKï¿½ï¿½ï¿½ÜµÄ¼ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,9]
+*/
+GT_API GTN_EnaFPK(short core,unsigned short time1,unsigned short time2,unsigned short laserOffDelay,short channel=0);
+
+/*
+*   ï¿½ï¿½ï¿½ï¿½Ëµï¿½ï¿½ï¿½ï¿½ï¿½Ø±ï¿½FPKï¿½ï¿½ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¹ï¿½ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½å±£ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½Ø¹ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½
+*   coreï¿½ï¿½         ï¿½ËºÅ£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,32]
+*   channelï¿½ï¿½ï¿½ï¿½Òªï¿½Ø±ï¿½FPKï¿½ï¿½ï¿½ÜµÄ¼ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,9]
+*/
+GT_API GTN_DisFPK(short core,short channel=0);
+
 GT_API GTN_LaserOn(short core,short laserChannel=0);
 GT_API GTN_LaserOff(short core,short laserChannel=0);
 GT_API GTN_LaserOnStatus(short core,unsigned short *pValue,short laserChannel=0);
@@ -2827,16 +3400,40 @@ GT_API GTN_SetPulseWidth(short core,unsigned short width,short laserChannel=0);
 GT_API GTN_SetLevelDelay(short core,uint32_t highLevelDelay,uint32_t lowLevelDelay,short laserChannel=0);
 GT_API GTN_LaserInfo(short core,TLaserInfo *pLaserInfo,short laserChannel=0);
 GT_API GTN_WriteLaserPrfCmd(short core,double power,short channel);
+GT_API GTN_SetWaitPulse(short core,unsigned short mode,double waitPulseFrq,double waitPulseDuty,short channel);
+
+/**
+ * @brief ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½â¿ªï¿½Ø¹ï¿½ï¿½Åºï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ÅºÅ°ó¶¨¹ï¿½Ïµ
+ * @param core ï¿½Ëºï¿½
+ * @param laserChannel ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼
+ * @param link ï¿½ó¶¨¹ï¿½Ïµï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ó¶¨£ï¿½1ï¿½ï¿½ï¿½ï¿½
+ * @return 17053ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17055ï¿½ï¿½ï¿½ËºÅ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Ç°Ã¿ï¿½Å¿ï¿½Ö»ï¿½Ðµï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ö§ï¿½Ö¼ï¿½ï¿½â¹¦ï¿½ï¿½
+ *         17500ï¿½ï¿½linkï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         11091ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ð½Ó´ï¿½ï¿½ï¿½ï¿½â¹¦ï¿½ÜµÄ´ï¿½Õ¾
+*/
+GT_API GTN_SetLaserOnAndVoltageLink(short core,short laserChannel,short link);
+
+/**
+ * @brief ï¿½ï¿½È¡ï¿½ï¿½ï¿½â¿ªï¿½Ø¹ï¿½ï¿½Åºï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ÅºÅ°ó¶¨¹ï¿½Ïµ
+ * @param core ï¿½Ëºï¿½
+ * @param laserChannel ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼
+ * @param pLink ï¿½ó¶¨¹ï¿½Ïµï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ó¶¨£ï¿½1ï¿½ï¿½ï¿½ï¿½
+ * @return 17053ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17055ï¿½ï¿½ï¿½ËºÅ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Ç°Ã¿ï¿½Å¿ï¿½Ö»ï¿½Ðµï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ö§ï¿½Ö¼ï¿½ï¿½â¹¦ï¿½ï¿½
+ *         11091ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ð½Ó´ï¿½ï¿½ï¿½ï¿½â¹¦ï¿½ÜµÄ´ï¿½Õ¾
+*/
+GT_API GTN_GetLaserOnAndVoltageLink(short core,short laserChannel,short *pLink);
 
 typedef struct
 {
-	short run;
-	short mode;
-	double power;
-	double frequency;
-	double pulseWidth;
-	double pad1[9];
-	short pad2[8];
+    short run;
+    short mode;
+    double power;
+    double frequency;
+    double pulseWidth;
+    double pad1[9];
+    short pad2[8];
 } TLaserStatus;
 GT_API GTN_GetLaserStatus(short core,short channel,TLaserStatus *pStatus);
 
@@ -2849,7 +3446,11 @@ GT_API GTN_ScanLaserPrfCmd(short core,double power, short scan=1);
 GT_API GTN_ScanLaserOutFrq(short core,double outFrq, short scan=1);
 GT_API GTN_ScanSetPulseWidth(short core,unsigned short width, short scan=1);
 GT_API GTN_ScanSetLevelDelay(short core,unsigned short highLevelDelay,unsigned short lowLevelDelay, short scan=1);
+GT_API GTN_ScanSetDa(short core,short chn,short value,short scan=1);
 GT_API GTN_ScanLaserInfo(short core,TLaserInfo *pLaserInfo, short scan=1);
+
+GT_API GTN_ScanSetMotionWithLaserControl(short core,short laserCtrlEnable,short scan=1);
+GT_API GTN_ScanGetMotionWithLaserControl(short core,short *pLaserCtrlEnable,short scan=1);
 
 GT_API GTN_SetHsoPwmLink(short core,short station,short hsoIndex);
 GT_API GTN_GetHsoPwmLink(short core,short station,short *pHsoIndex);
@@ -2885,17 +3486,17 @@ GT_API GTN_GetScanWorkMode(short core,short scan,short *pMode);
 
 typedef struct TDlmStatus
 {
-	int32_t version;
-	int32_t date;
-	short enable;
-	int32_t function;
+    int32_t version;
+    int32_t date;
+    short enable;
+    int32_t function;
 } TDlmStatus;
 
 typedef struct TDlmFunction
 {
-	short function;
-	short enable;
-	int32_t value;
+    short function;
+    short enable;
+    int32_t value;
 } TDlmFunction;
 
 GT_API GTN_LoadDlm(short core,int32_t vender,int32_t module,char *fileName,short *pId);
@@ -2920,161 +3521,224 @@ GT_API GTN_DlmCommandGetDouble(short core,double *pValue);
 /*-----------------------------------------------------------*/
 /* Event-Task                                                */
 /*-----------------------------------------------------------*/
-#define TASK_SET_DO_BIT							(0x1101)
-#define TASK_SET_DAC							(0x1120)
+#define TASK_SET_DO_BIT                          (0x1101)
+#define TASK_SET_DAC                             (0x1120)
 
-#define TASK_STOP								(0x1303)
+#define TASK_STOP                                (0x1303)
 
-#define TASK_UPDATE_POS							(0x2002)
-#define TASK_UPDATE_VEL							(0x2004)
-#define TASK_UPDATE_DISTANCE					(0x2022)
+#define TASK_TRIGGER_CALLBACK_FUNCTION           (0x119c)
 
-#define TASK_PT_START							(0x2306)
-#define TASK_PVT_START							(0x2346)
-#define TASK_MOVE_ABSOLUTE						(0x2500)
+#define TASK_UPDATE_POS                          (0x2002)
+#define TASK_UPDATE_VEL                          (0x2004)
+#define TASK_UPDATE_DISTANCE                     (0x2022)
 
-#define TASK_GEAR_START							(0x3005)
 
-#define TASK_FOLLOW_START						(0x310A)
-#define TASK_FOLLOW_SWITCH						(0x310B)
+#define TASK_PT_START                            (0x2306)
+#define TASK_PVT_START                           (0x2346)
+#define TASK_MOVE_ABSOLUTE                       (0x2500)
 
-#define TASK_CRD_START							(0x4004)
-#define TASK_CRD_OVERRIDE						(0x4006)
-#define TASK_SCAN_START							(0x4102)
+#define TASK_MOVE_CONTINUOUS_ABSOLUTE            (0x2560)
 
-#define TASK_MOVE_ESCAPE						(0x5000)
+#define TASK_GEAR_START                          (0x3005)
 
-#define TASK_SET_DO_BIT_MODE_NONE				(0)
-#define TASK_SET_DO_BIT_MODE_TIME				(10)
-#define TASK_SET_DO_BIT_MODE_DISTANCE			(20)
+#define TASK_FOLLOW_START                        (0x310A)
+#define TASK_FOLLOW_SWITCH                       (0x310B)
 
-//±£´æÔË¿Ø±äÁ¿ÈÎÎñ£¬ÒÔ¼°±£´æ±äÁ¿µÄ×î´ó¸öÊý
-#define TASK_SAVE_MC_VAR_MAX                    (5)
-#define TASK_SAVE_MC_VAR                        (50)
+#define TASK_CRD_START                           (0x4004)
+#define TASK_CRD_OVERRIDE                        (0x4006)
+
+#define TASK_CRD_STEP_MODE                       (0x4015)
+#define TASK_SCAN_START                          (0x4102)
+
+#define TASK_START_COMMAND_LIST                  (0x4825)
+
+#define TASK_STOP_COMMAND_LIST                   (0x482B)
+
+#define TASK_MOVE_ESCAPE                         (0x5000)
+
+#define TASK_UPDATE_SERVO_GAIN                   (0x6000)
+#define	TASK_SET_TRIGGER_PRM                     (0x6001)
+
+#define TASK_SET_DO_BIT_MODE_NONE                (0)
+#define TASK_SET_DO_BIT_MODE_TIME                (10)
+#define TASK_SET_DO_BIT_MODE_DISTANCE            (20)
+
+//ï¿½ï¿½ï¿½ï¿½ï¿½Ë¿Ø±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define TASK_SAVE_MC_VAR_MAX                     (5)
+#define TASK_SAVE_MC_VAR_EX_MAX                 (8)
+#define TASK_SAVE_MC_VAR                         (50)
+#define TASK_ADJUST_MOVE_JOG_ANGLE_VELOCITY      (51)
+#define TASK_SAVE_MC_VAR_EX                     (52)
 
 typedef struct
 {
-	unsigned short type;
-	unsigned short index;
-	unsigned short id;
+    unsigned short type;
+    unsigned short index;
+    unsigned short id;
 } TWatchVar;
 
 typedef struct
 {
-	short doType;
-	short doIndex;
-	short doValue;
-	short mode;
-	int32_t parameter[8];
+    short doType;
+    short doIndex;
+    short doValue;
+    short mode;
+    int32_t parameter[8];
 } TTaskSetDoBit;
 
 typedef struct
 {
-	short dac;
-	short value;
+    short dac;
+    short value;
 } TTaskSetDac;
 
 typedef struct
 {
-	int32_t mask;
-	int32_t option;
+    int32_t mask;
+    int32_t option;
 } TTaskStop;
 
 typedef struct
 {
-	short type;
-	short index;
-	short operation;
-	short data[20];
+    short type;
+    short index;
+    short operation;
+    short data[20];
 } TTaskFifoOperation;
 
 typedef struct
 {
-	short profile;
-	int32_t pos;
+    short profile;
+    int32_t pos;
 } TTaskUpdatePos;
 
 typedef struct
 {
-	short profile;
-	short triggerIndex;
-	int32_t distance;
+    short profile;
+    short triggerIndex;
+    int32_t distance;
 } TTaskUpdateDistance;
 
 typedef struct
 {
-	short profile;
-	double vel;
+    short profile;
+    double vel;
 } TTaskUpdateVel;
 
 typedef struct
 {
-	int32_t mask;
-	int32_t option;
+    int32_t mask;
+    int32_t option;
 } TTaskPtStart;
 
 typedef struct
 {
-	int32_t mask;
+    int32_t mask;
 } TTaskPvtStart;
 
 typedef struct
 {
-	int32_t mask;
+    int32_t mask;
 } TTaskGearStart;
 
 typedef struct
 {
-	int32_t mask;
-	int32_t option;
+    int32_t mask;
+    int32_t option;
 } TTaskFollowStart;
 
 typedef struct
 {
-	int32_t mask;
+    int32_t mask;
 } TTaskFollowSwitch;
 
 typedef struct
 {
-	short profile;
-	int32_t pos;
-	double vel;
-	double acc;
-	double dec;
-	short percent;
+    short profile;
+    int32_t pos;
+    double vel;
+    double acc;
+    double dec;
+    short percent;
 } TTaskMoveAbsolute;
 
 typedef struct
 {
-	short mask;
-	short option;
+    short mask;
+    short option;
 } TTaskCrdStart;
 
 typedef struct
 {
-	short crd;
-	double synVelOverride;
+    short crd;
+    double synVelOverride;
 } TTaskCrdOverride;
 
+typedef struct  
+{
+    short mask;
+    short option;
+} TTaskCrdStepMode;
+
 typedef struct
 {
-	short port;
-	short index;
-	short count;
+    short port;
+    short index;
+    short count;
 } TTaskScanStart;
 
-typedef struct
+//ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½
+typedef struct  
 {
-	short count;
-	TWatchVar var[TASK_SAVE_MC_VAR_MAX];
-}TTaskSaveMcVar;
+    short list;
+    short reserve1[23];
+} TTaskStartCommandList;
+
+typedef struct  
+{
+    short option;
+    short reserve;
+}TTaskTriggerCallbackFunction;
 
 typedef struct
 {
-	uint32_t loop;
-	TWatchVar var;
-	unsigned short condition;
-	double value;
+    short count;
+    TWatchVar var[TASK_SAVE_MC_VAR_MAX];
+}TTaskSaveMcVar;
+
+// ï¿½ï¿½ï¿½Ý²Î¿ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½ï¿½ï¿½MoveJogï¿½á£¨ï¿½ï¿½×ªï¿½á£©ï¿½Ä½ï¿½ï¿½Ù¶È£ï¿½Ê¹ï¿½Î¿ï¿½Ô´ï¿½ï¿½ï¿½Ù¶È±ï¿½ï¿½Öºã¶¨
+#define TASK_ADJUST_JOG_VEL_RESERVE1_GROUP       (0) // ï¿½ï¿½ï¿½ï¿½jogï¿½ï¿½ï¿½Ù¶ï¿½Ê±ï¿½ï¿½ÒªÍ¬Ê±ï¿½ï¿½ï¿½ï¿½ï¿½å²¹ï¿½Ù¶Èµï¿½groupï¿½ï¿½
+#define TASK_ADJUST_JOG_VEL_RESERVE1_TARGET_TYPE (1) // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ê£º0ï¿½ï¿½jogï¿½ï¿½ï¿½Ù¶ï¿½ 1ï¿½ï¿½dacï¿½ï¿½Ñ¹
+#define TASK_ADJUST_JOG_VEL_RESERVE2_ORIGIN_VEL  (0) // jogï¿½ï¿½ï¿½Ô­Ê¼ï¿½Ù¶ï¿½
+#define TASK_ADJUST_JOG_VEL_RESERVE2_DAC_RATIO   (1) // ï¿½Ù¶ÈºÍµï¿½Ñ¹ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½Î»ï¿½ï¿½(ï¿½ï¿½/s)/ï¿½ï¿½
+
+typedef struct
+{
+    short profile;                     // ï¿½ï¿½reserve1[1]Îª0Ê±ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶Èµï¿½MoveJogï¿½Ä¹æ»®ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ÎªMoveJogÄ£Ê½ï¿½ï¿½ï¿½ï¿½reserve1[1]ÎªMC_DACï¿½ï¿½ï¿½ï¿½MC_AU_DACÊ±ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½dacÍ¨ï¿½ï¿½ï¿½ï¿½
+    short refType;                     // ï¿½Î¿ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short refIndex;                    // ï¿½Î¿ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼ï¿½ï¿½Ã»ï¿½Ð¶ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short refSubIndex;                 // ï¿½Î¿ï¿½Ô´ï¿½Ä¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð²Î¿ï¿½Ô´ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+    short reserve1[4];
+
+    double refPosition;                // ï¿½Î¿ï¿½Î»ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½Ô´ï¿½ï¿½Ç©Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½Ô²ï¿½ë¾¶ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½mm
+    double refLinearVelocity;          // ï¿½Î¿ï¿½Ô´Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½Ù¶Èµï¿½Ä¿ï¿½ï¿½ï¿½Ç±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½Î¬ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ä£¬ï¿½ï¿½Î»ï¿½ï¿½mm/s
+    double minAngleVelocity;           // ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½Æ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½/s
+    double maxAngleVelocity;           // ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½/s
+    double reserve2[4];
+}TTaskAdjustMoveJogAngleVelocity;
+
+typedef struct
+{
+	short fifo;
+	short count;
+	TWatchVar var[TASK_SAVE_MC_VAR_EX_MAX];
+}TTaskSaveMcVarEx;
+typedef struct
+{
+    uint32_t loop;
+    TWatchVar var;
+    unsigned short condition;
+    double value;
 } TEvent;
 
 GT_API GTN_ClearEvent(short core);
@@ -3099,7 +3763,7 @@ GT_API GTN_GetEventTaskLink(short core,short linkIndex,short *pEventIndex,short 
 GT_API GTN_EventOn(short core,short eventIndex,short count);
 GT_API GTN_EventOff(short core,short eventIndex,short count);
 GT_API GTN_GetTaskSaveMcVarResult(short core,short taskIndex,TWatchVar *pVar,double *pValue,short count,short *pReadCount);
-
+GT_API GTN_GetTaskSaveMcVarResultEx(short core,short index,TWatchVar *pVar,double *pValue,short count,short *pReadCount);
 GT_API GTN_SetEventWaitTime(short core,double waitTime);
 
 
@@ -3109,56 +3773,56 @@ GT_API GTN_SetEventWaitTime(short core,double waitTime);
 
 typedef struct
 {
-	TWatchVar var;
-	unsigned short condition;
-	double value;
+    TWatchVar var;
+    unsigned short condition;
+    double value;
 } TWatchCondition;
 
 typedef struct
 {
-	unsigned short operation;
-	unsigned short varType;
-	unsigned short result;
-	unsigned short lhs;
-	unsigned short rhs;
+    unsigned short operation;
+    unsigned short varType;
+    unsigned short result;
+    unsigned short lhs;
+    unsigned short rhs;
 } TVarCalculate;
 
 typedef struct
 {
-	short varIndex;
-	short reserve[3];
-	TWatchCondition watchCondition;
+    short varIndex;
+    short reserve[3];
+    TWatchCondition watchCondition;
 } TVarCondition;
 
 typedef struct
 {
-	int32_t time;				// ³¬Ê±Ê±¼ä
-	short mode;		        // ³¬Ê±ºóµÄÐÐÎª£¬0£ºÎÞÏÞµÈ´ý£¬1£ºÌø¹ýµ±Ç°µÈ´ý²Ù×÷¼ÌÐøÖ´ÐÐÖ¸ÁîÁ÷£¬2£ºÍ£Ö¹Ö¸ÁîÁ÷
-	short reserve1;
-	double reserve2[4];
+    int32_t time;				// ï¿½ï¿½Ê±Ê±ï¿½ï¿½
+    short mode;		        // ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ÞµÈ´ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½2ï¿½ï¿½Í£Ö¹Ö¸ï¿½ï¿½ï¿½ï¿½
+    short reserve1;
+    double reserve2[4];
 } TWaitTimeout;
 
 typedef struct
 {
-	short enable;
-	short loop;
-	short reserve[2];
+    short enable;
+    short loop;
+    short reserve[2];
 } TConditionTaskEnable;
 
 typedef struct
 {
-	short halt;
-	short reserve1[15];
+    short halt;
+    short reserve1[15];
 } TCommandListStopParameter;
 
-//Í£Ö¹Ö¸ÁîÁ÷
+//Í£Ö¹Ö¸ï¿½ï¿½ï¿½ï¿½
 typedef struct
 {
-	short stopList;
-	short stopMode;
-	short triggerSource;
-	short reserve[5];
-	TCommandListStopParameter prm;
+    short stopList;
+    short stopMode;
+    short triggerSource;
+    short reserve[5];
+    TCommandListStopParameter prm;
 } TTaskStopCommandList;
 
 GT_API GTN_SetVarBoolCondition(short core,short varIndex,TWatchCondition *pWatchCondition);
@@ -3172,9 +3836,9 @@ GT_API GTN_GetVarCondition(short core,short varIndex,TWatchCondition *pWatchCond
 GT_API GTN_ClearVar(short core);
 
 GT_API GTN_GetMcVar(short core,const TWatchVar *pVar,double *pValue);
-GT_API GTN_SetMcVar(short core,const TWatchVar *pVar,double value,TListInfo *pListInfo);
+GT_API GTN_SetMcVar(short core, const TWatchVar* pVar, double value, TListInfo* pListInfo = NULL);
 GT_API GTN_GetMcVarEx(short core,const TWatchVar *pVar,double *pValue,short count);
-GT_API GTN_SetMcVarEx(short core,const TWatchVar *pVar,double *pValue,short count,TListInfo *pListInfo);
+GT_API GTN_SetMcVarEx(short core, const TWatchVar* pVar, double* pValue, short count, TListInfo* pListInfo = NULL);
 
 GT_API GTN_WaitForCondition(short core,TWatchCondition *pWatchCondition,short conditionCount,short operation,TWaitTimeout *pTimeout,TListInfo *pListInfo=NULL);
 GT_API GTN_GetWaitForCondition(short core,short list,TWatchCondition *pWatchCondition,short *pConditionCount,short *pOperation,TWaitTimeout *pTimeout,short *pConditionResult,short *pConditionDone);
@@ -3187,110 +3851,1513 @@ GT_API GTN_ConditionStopCommandList(short core,TWatchCondition *pWatchCondition,
 GT_API GTN_GetGroupConditionTriggerPos(short core,short group,short index,double *pValue,short count,short coordSystem,short oriMode);
 GT_API GTN_GetAxisConditionTriggerPos(short core,short type,short axis,double *pValue,short count);
 
+
+/*--------- -------------------------------------------------*/
+/* Group                                                     */
+/*-----------------------------------------------------------*/
+
+#define COORD_SYSTEM_PCS				(0)
+#define COORD_SYSTEM_MCS				(1)
+#define COORD_SYSTEM_ACS				(2)
+#define COORD_SYSTEM_TCS				(3)
+#define COORD_SYSTEM_VCS				(4)
+#define COORD_SYSTEM_FCS				(5)
+#define COORD_SYSTEM_MVCS				(10)
+#define COORD_SYSTEM_TCS_USER_DEFINE    (20)
+#define COORD_SYSTEM_PCS_USER_DEFINE    (30)  // ï¿½Ã»ï¿½ï¿½ï¿½ï¿½å¹¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½Ð±ï¿½ï¿½Ó¹ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½
+
+#define COORD_SYSTEM_POLAR              (40)
+#define COORD_SYSTEM_CYNLINDER          (41)
+
+
+#define ORI_MODE_NONE				    (0)
+#define ORI_MODE_EULER				    (1)
+#define ORI_MODE_QUAD				    (2)
+#define ORI_MODE_VECTOR				    (3)
+#define ORI_MODE_ROTATE_AXIS_POS	    (4)
+#define ORI_MODE_SPACE_ROTATE           (5)
+
+#define VEL_MODE_DEFAULT                (0)
+#define VEL_MODE_PERCENT                (1)
+
+#define ORI_PROFILE_MODE_MINOR          (0) // ï¿½å²¹Ö¸ï¿½ï¿½ï¿½ï¿½ãµ½ï¿½Õµï¿½ï¿½ï¿½ï¿½Ì¬ï¿½ä»¯ï¿½ï¿½ï¿½ï¿½Îªï¿½Ó»ï¿½
+#define ORI_PROFILE_MODE_MAJOR          (1) // ï¿½å²¹Ö¸ï¿½ï¿½ï¿½ï¿½ãµ½ï¿½Õµï¿½ï¿½ï¿½ï¿½Ì¬ï¿½ä»¯ï¿½ï¿½ï¿½ï¿½Îªï¿½Å»ï¿½
+#define ORI_PROFILE_MODE_COMMAND_DIR    (2) // ï¿½å²¹Ö¸ï¿½ï¿½ï¿½ï¿½ãµ½ï¿½Õµï¿½ï¿½ï¿½ï¿½Ì¬ï¿½ä»¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý²å²¹Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ÃµÄ·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+#define GROUP_PROGRAM_COORD_SYSTEM_TABLE         (0)       // ï¿½ï¿½ï¿½ï¿½Ì¨ï¿½ï¿½ï¿½ï¿½ÏµÄ£Ê½
+#define GROUP_PROGRAM_COORD_SYSTEM_PIECE         (1)       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµÄ£Ê½
+
+#define GROUP_PCS_ROTATE_AXIS_POS_MODE_ORI       (0)       // PCSï¿½Âµï¿½ï¿½ï¿½×ªï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½PCSï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½Ì¬
+#define GROUP_PCS_ROTATE_AXIS_POS_MODE_DIRECT    (1)       // PCSï¿½Âµï¿½ï¿½ï¿½×ªï¿½ï¿½Î»ï¿½Ãºï¿½MCSï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½
+
+#define PCS_USER_DEFINE_COORD_TRANS_COUNT_MAX    (4)       // ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ä»»ï¿½ï¿½ï¿½ï¿½ï¿½Ó¸ï¿½ï¿½ï¿½ 
+
+#define COORD_TRANS_TYPE_EULER          (1)
+#define COORD_TRANS_TYPE_QUAD           (2)
+#define COORD_TRANS_TYPE_VECTOR	        (3)
+#define COORD_TRANS_TYPE_ROTATE_AXIS_POS (4)
+#define COORD_TRANS_TYPE_ACS_POS        (5)
+#define COORD_TRANS_TYPE_EULER_FIX      (11)
+#define COORD_TRANS_TYPE_TOOL_DIR       (20)               // ï¿½ï¿½ï¿½ï¿½ï¿½á·½ï¿½ï¿½
+#define COORD_TRANS_TYPE_OFFSET         (30)               // Æ«ï¿½ï¿½Ä£Ê½
+#define COORD_TRANS_TYPE_POINTS         (40)               // ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+#define COORD_TRANS_TYPE_TWO_VECTORS    (50)               // ï¿½ï¿½ï¿½ï¿½Ê¸ï¿½ï¿½Ä£Ê½
+#define COORD_TRANS_TYPE_PROJECT_ANGLE  (60)               // Í¶Ó°ï¿½ï¿½Ä£Ê½
+
+#define GROUP_INCLINED_PLANE_MODE_ORI_UNCHANGED     (0)    // ï¿½ï¿½ï¿½ï¿½Ì¬Ð±ï¿½ï¿½Ó¹ï¿½
+#define GROUP_INCLINED_PLANE_MODE_ORI_CHANGED       (1)    // ï¿½ï¿½ï¿½ï¿½Ì¬Ð±ï¿½ï¿½Ó¹ï¿½
+
+#define EULER_MODE_ZYX                  (0)
+#define EULER_MODE_ZXZ	                (3)
+#define EULER_MODE_XYZ	                (4)
+
+#define ORI_PROFILE_MODE_MINOR          (0) // ï¿½å²¹Ö¸ï¿½ï¿½ï¿½ï¿½ãµ½ï¿½Õµï¿½ï¿½ï¿½ï¿½Ì¬ï¿½ä»¯ï¿½ï¿½ï¿½ï¿½Îªï¿½Ó»ï¿½
+#define ORI_PROFILE_MODE_MAJOR          (1) // ï¿½å²¹Ö¸ï¿½ï¿½ï¿½ï¿½ãµ½ï¿½Õµï¿½ï¿½ï¿½ï¿½Ì¬ï¿½ä»¯ï¿½ï¿½ï¿½ï¿½Îªï¿½Å»ï¿½
+#define ORI_PROFILE_MODE_COMMAND_DIR    (2) // ï¿½å²¹Ö¸ï¿½ï¿½ï¿½ï¿½ãµ½ï¿½Õµï¿½ï¿½ï¿½ï¿½Ì¬ï¿½ä»¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý²å²¹Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ÃµÄ·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define VEL_MODE_DEFAULT                (0)
+#define VEL_MODE_PERCENT                (1)
+
+#define GROUP_PROGRAM_COORD_SYSTEM_TABLE         (0)       // ï¿½ï¿½ï¿½ï¿½Ì¨ï¿½ï¿½ï¿½ï¿½ÏµÄ£Ê½
+#define GROUP_PROGRAM_COORD_SYSTEM_PIECE         (1)       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµÄ£Ê½
+
+#define GROUP_PCS_ROTATE_AXIS_POS_MODE_ORI       (0)       // PCSï¿½Âµï¿½ï¿½ï¿½×ªï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½PCSï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½Ì¬
+#define GROUP_PCS_ROTATE_AXIS_POS_MODE_DIRECT    (1)       // PCSï¿½Âµï¿½ï¿½ï¿½×ªï¿½ï¿½Î»ï¿½Ãºï¿½MCSï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½
+#define KIN_TYPE_ORTHOGONAL             (0)
+#define KIN_TYPE_NON_ORTHOGONAL         (1)
+#define KIN_TYPE_PARALLEL               (2)
+#define KIN_TYPE_ROBOT                  (10)
+#define KIN_TYPE_FIVE_AXIS              (20)
+#define KIN_TYPE_MULTI_AXIS             (30)
+#define KIN_TYPE_CYLINDER               (40)
+
+#define ROBOT_TYPE_SCARA                (0)
+#define ROBOT_TYPE_SIX_REVOLUTE         (1)
+#define ROBOT_TYPE_FOUR_REVOLUTE        (2)
+#define ROBOT_TYPE_PALLETIZE            (3)
+#define ROBOT_TYPE_POSITIONER           (4)    //ï¿½ï¿½Î»ï¿½ï¿½
+#define ROBOT_TYPE_FIVE_REVOLUTE        (5)    //5Rï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define ROBOT_TYPE_XYZRR                (6)    //XYZRR
+#define ROBOT_TYPE_SEVEN_REVOLUTE       (7)    //7R
+#define ROBOT_TYPE_UR                   (10)   //URï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define ROBOT_TYPE_CYLINDER             (20)   //Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define CYLINDER_TYPE_NORMAL            (0)
+#define ROBOT_TYPE_DELTA                (100)  //Deltaï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define DELTA_TYPE_BASIC                (0)    //ï¿½ï¿½Ä£ï¿½Í£ï¿½4ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define DELTA_TYPE_COMMON               (1)    //Í¨ï¿½ï¿½Ä£ï¿½Í£ï¿½9ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define DELTA_TYPE_COMMON_PRO           (2)    //Í¨ï¿½ï¿½Ä£ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½Í£ï¿½20ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+#define SCARA_TYPE_RRPR                 (0)
+#define SCARA_TYPE_PRRR                 (1)
+#define SCARA_TYPE_RPRR                 (2)
+#define SCARA_TYPE_RRRP                 (3)
+
+#define PALLETIZE_TYPE_RPPR             (0)
+
+// ï¿½ï¿½Î»ï¿½ï¿½ROBOT_TYPE_POSITIONERï¿½ï¿½Ä£Ê½
+#define POSITIONER_TYPE_SINGLE          (0)     //ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+#define POSITIONER_TYPE_DUAL            (10)    //Ë«ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ROBOT_TYPE_XYZRRï¿½ï¿½ï¿½ï¿½Ä£Ê½
+#define XYZRR_TYPE_LIKE_SCARA           (0)     // XYZ+SCARA
+#define XYZRR_TYPE_DT_C_ON_A            (100)   // ï¿½ï¿½ï¿½Æ±ï¿½×¼ï¿½ï¿½ï¿½ï¿½Ë«ï¿½ï¿½Í·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+// Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+#define PARALLEL_INDEPENDENT             (0)    // Æ½ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµ
+#define PARALLEL_SUPERPOSITION           (1)    // Æ½ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½Îªï¿½ï¿½ï¿½Ó¹ï¿½Ïµ
+
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define  RW_C_ON_B                      (0) //Ë«×ªÌ¨ï¿½ï¿½B Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬C Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+#define  RW_B_ON_A                      (1) //Ë«×ªÌ¨ï¿½ï¿½A Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬B Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+#define  RW_A_ON_B                      (2) //Ë«×ªÌ¨ï¿½ï¿½B Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬A Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+#define  RW_C_ON_A                      (3) //Ë«×ªÌ¨ï¿½ï¿½A Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬C Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+#define  DT_B_ON_A                      (4) //Ë«ï¿½ï¿½Í·ï¿½ï¿½A Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬B Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+#define  DT_A_ON_B                      (5) //Ë«ï¿½ï¿½Í·ï¿½ï¿½B Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬A Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+#define  DT_A_ON_C                      (6) //Ë«ï¿½ï¿½Í·ï¿½ï¿½C Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬A Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+#define  DT_B_ON_C                      (7) //Ë«ï¿½ï¿½Í·ï¿½ï¿½C Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬B Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+#define  T_A_W_B                        (8) //×ªÌ¨ï¿½ï¿½Í·ï¿½ï¿½A Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬B Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+#define  T_B_W_A                        (9) //×ªÌ¨ï¿½ï¿½Í·ï¿½ï¿½B Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬A Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+#define  T_A_W_C                        (10) //×ªÌ¨ï¿½ï¿½Í·ï¿½ï¿½A Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬C Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+#define  T_B_W_C                        (11) //×ªÌ¨ï¿½ï¿½Í·ï¿½ï¿½B Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬C Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+#define  RW_A_ON_C                      (20) //Ë«×ªÌ¨ï¿½ï¿½C Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬A Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+#define  RW_B_ON_C                      (21) //Ë«×ªÌ¨ï¿½ï¿½C Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬B Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+typedef struct
+{
+    short type;
+    short subType;          //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short dir[8];           //ï¿½Ø½Ú·ï¿½ï¿½ï¿½0:ï¿½ë¶¨ï¿½å·½ï¿½ï¿½Í¬ï¿½ï¿½1ï¿½ï¿½ï¿½ë¶¨ï¿½å·½ï¿½ï¿½ï¿½ï¿½
+    short reserve1[6];
+    double prm[20];         //ï¿½á¹¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë³ï¿½
+    double offset[8];       //ï¿½Ø½ï¿½Æ«ï¿½Æ£ï¿½Êµï¿½Ê³ï¿½Ê¼ï¿½ï¿½Ì¬ï¿½ë¶¨ï¿½ï¿½Ä³ï¿½Ê¼ï¿½ï¿½Ì¬ï¿½ï¿½Æ«ï¿½ï¿½(Êµï¿½Ê³ï¿½Ê¼ï¿½ï¿½Ì¬ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½Âµï¿½Î»ï¿½ï¿½)
+                            //ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½×ªï¿½á£ºï¿½Ç¶È£ï¿½Ö±ï¿½ï¿½ï¿½á£ºï¿½ï¿½ï¿½ï¿½
+    int32_t reserve2[10];
+    double reserve3[11];
+}TRobotKinematicParameter;
+
+typedef struct
+{
+    short type;                          //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short reserve1[3];                   //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double primaryAxisPoint[3];          //ï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½MCSï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double slaveAxisPoint[3];            //ï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½MCSï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double toolLocationPoint[3];         //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½MCSï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short dirMode;                       //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+    short reserve2[2];                   //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short dir[5];                        //ï¿½ï¿½ï¿½á·½ï¿½ï¿½
+    double axisVector[5][3];             //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß·ï¿½ï¿½ï¿½
+    int32_t reserve3[10];
+    double reserve4[16];
+}TFiveAxisKinematicParameter;
+
+typedef struct
+{
+    short axisCount;                     //ï¿½ï¿½ï¿½ï¿½
+    short reserve1[3];                   //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int32_t reserve2[10];
+    double reserve3[42];
+}TMultiAxisKinematicParameter;
+
+typedef struct
+{
+    short subType;                       //0:Æ½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½1ï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½Ó¹ï¿½Ïµ
+    short axisCount;                     //ï¿½ï¿½ï¿½ï¿½
+    short mode;
+    short majorAxis[3];
+    short reserve1[6];
+    short parallelAxis[8];
+    int32_t reserve2[10];
+    double reserve3[38];
+}TParallelParameter;
+
+typedef union
+{
+    TRobotKinematicParameter robot;
+    TFiveAxisKinematicParameter fiveAxis;
+    TMultiAxisKinematicParameter multiAxis;
+    double data[48];
+} TKinematicParameter;
+
+typedef struct
+{
+    short type;                    //ï¿½á¹¹ï¿½ï¿½ï¿½ï¿½
+    short reserve[3];
+    TKinematicParameter kinPrm;    //ï¿½á¹¹ï¿½ï¿½ï¿½ï¿½
+}TKinematicTransform;
+
+typedef struct
+{
+    double velMax;
+    double accMax;
+    double decMax;
+    double jerkMax;
+    double reserve[10];
+} TGroupMotionConstraint;
+
+typedef struct
+{
+    double oriVelMax;
+    double oriAccMax;
+    double oriDecMax;
+    double oriJerkMax;
+    double reserve[10];
+} TGroupOrientationConstraint;
+
+typedef struct
+{
+    double transX;
+    double transY;
+    double transZ;
+    double rotAngle1;
+    double rotAngle2;
+    double rotAngle3;
+}TCartesianParameter;
+
+typedef struct
+{
+    double vel;				        // Î»ï¿½ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½Î»mm/s
+    double oriVel;                  // ï¿½ï¿½Ì¬ï¿½Ù¶È£ï¿½ï¿½ï¿½Î»ï¿½ï¿½/s
+    double reserve[18];
+} TCartesianTransformVelConstraint;
+
+typedef union
+{
+    TCartesianTransformVelConstraint velConstraint;
+    double value[20];
+} TCartesianTransformConstraintUnion;
+
+typedef struct
+{
+    short mode;			// Ä£Ê½
+    short reserve[3];
+    TCartesianTransformConstraintUnion data;
+} TCartesianTransformConstraint;
+
+typedef struct
+{
+    double prm[8];
+    double reserve[12];
+}TCoordinateTransformAcsPos;
+
+typedef struct
+{
+    double transX;             // ï¿½ï¿½ï¿½PCSÔ­ï¿½ï¿½ï¿½Xï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½
+    double transY;             // ï¿½ï¿½ï¿½PCSÔ­ï¿½ï¿½ï¿½Yï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½
+    double transZ;             // ï¿½ï¿½ï¿½PCSÔ­ï¿½ï¿½ï¿½Zï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½
+    double rotAngle1;          // ï¿½ï¿½ï¿½ß²ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½
+    double rotAngle2;          // ï¿½ï¿½ï¿½ß²ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½
+    double alpha;              // ï¿½ï¿½Zï¿½ï¿½ï¿½ï¿½×ªï¿½Ä½Ç¶ï¿½
+    double reserve[14];
+}TCoordinateTransformToolDir;
+
+typedef struct
+{
+    double prm[8];
+    double reserve[12];
+}TCoordinateTransformOffset;
+
+// ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½Ú³ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½Ï½ï¿½ï¿½ï¿½Æ½ï¿½Æºï¿½ï¿½ï¿½×ªï¿½Ãµï¿½ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµ
+typedef struct
+{
+    double point1[3];          // ï¿½ï¿½1ï¿½ã£¬ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½ÖµÎªï¿½ï¿½ï¿½Ô­Ê¼PCSï¿½ï¿½Î»ï¿½ï¿½
+    double point2[3];          // ï¿½ï¿½2ï¿½ã£¬ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµXï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµÄµã£¬ï¿½ï¿½ï¿½ï¿½ÖµÎªï¿½ï¿½ï¿½Ô­Ê¼PCSï¿½ï¿½Î»ï¿½ï¿½
+    double point3[3];          // ï¿½ï¿½3ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½ÖµÎªï¿½ï¿½ï¿½Ô­Ê¼PCSï¿½ï¿½Î»ï¿½ï¿½
+    double offset[3];          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½Ôµï¿½1ï¿½ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½ÖµÎªï¿½ï¿½Ô³ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Î»ï¿½ï¿½
+    double gama;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµZï¿½ï¿½ï¿½ï¿½×ªï¿½Ä½Ç¶ï¿½
+    double reserve[7];
+}TCoordinateTransformPoints;
+
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¸ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Í¨ï¿½ï¿½ZÊ¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½XÊ¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½Yï¿½á·½ï¿½ï¿½ï¿½Ù¸ï¿½ï¿½ï¿½XYï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½Ãµï¿½Zï¿½ï¿½ï¿½ï¿½
+typedef struct
+{
+    double offset[3];          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½ï¿½Ô­Ê¼PCSï¿½ï¿½Î»ï¿½ï¿½
+    double vector1[3];         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµXï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½ï¿½ò£¬µï¿½Î»Îªï¿½ï¿½ï¿½ï¿½1
+    double vector2[3];         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµZï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½ï¿½ò£¬µï¿½Î»Îªï¿½ï¿½ï¿½ï¿½1
+    double reserve[11];
+}TCoordinateTransformTwoVectors;
+
+// ï¿½ï¿½ï¿½ï¿½Í¶Ó°ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµ
+typedef struct
+{
+    double offset[3];          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½ï¿½Ô­Ê¼PCSï¿½ï¿½Î»ï¿½ï¿½
+    double alpha;              // Xï¿½ï¿½ï¿½ï¿½Ô­Ê¼ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Yï¿½ï¿½ï¿½ï¿½×ªï¿½Ä½Ç¶ï¿½
+    double beta;               // Yï¿½ï¿½ï¿½ï¿½Ô­Ê¼ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Xï¿½ï¿½ï¿½ï¿½×ªï¿½Ä½Ç¶ï¿½
+    double gama;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµZï¿½ï¿½ï¿½ï¿½×ªï¿½Ä½Ç¶ï¿½
+    double reserve[14];
+}TCoordinateTransformProjectAngle;
+
+typedef union
+{
+    TCoordinateTransformAcsPos acsPos;
+    TCartesianParameter euler;
+    TCoordinateTransformToolDir toolDir;
+    TCoordinateTransformOffset offset;
+    TCoordinateTransformPoints points;
+    TCoordinateTransformTwoVectors twoVectors;
+    TCoordinateTransformProjectAngle projectAngle;
+    double value[20];
+} TCoordinateTransformUnion;
+
+#define COORDINATE_TRANSFORM_RESERVE_SUB_MODE    (0)
+
+typedef struct
+{
+    short mode;
+    short reserve[3];
+    TCoordinateTransformUnion data;
+}TCoordinateTransform;
+
+// ï¿½ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½Ïµï¿½ä»»ï¿½ï¿½ï¿½ï¿½
+typedef struct
+{
+    short masterType;
+    short masterIndex;
+    short masterMoveType;
+    short trackMode;
+    double originPrfPos;
+    TCartesianParameter masterOrigin;
+    TCartesianParameter pcsToMasterTcs;
+    TCartesianParameter dynamicPcsToSlaveMcs;            //ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½î²»ï¿½ï¿½ï¿½ï¿½ï¿½Ã¸Ã²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½È¡ÊµÊ±ï¿½Ä¶ï¿½Ì¬PCSï¿½ï¿½Ï¢
+}TDynamicCoordinateTransformData;
+
+typedef union
+{
+    TDynamicCoordinateTransformData trans;
+    double reserve[60];
+}TDynamicCoordinateTransformUnion;
+
+typedef struct
+{
+    short mode;
+    short pad[3];
+    TDynamicCoordinateTransformUnion prm;
+}TDynamicCoordinateTransform;
+
+typedef struct
+{
+    short masterType;                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short masterIndex;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short reserve1[7];
+    short commandPosCoord;           // Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµ
+    short commandOrientationMode;    // Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¬
+    short commandConfigIndex;        // Î»ï¿½Ã¹ï¿½ï¿½Í½ï¿½
+    double pos[8];                   // Î»ï¿½ï¿½
+    int32_t  reserve2[8];
+    double reserve3[8];
+}TDynamicCoordinateTransformMasterPos;
+
+// ï¿½ï¿½ï¿½ï¿½Ñ§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+typedef struct
+{
+    short source;
+    short reserve1[7];
+    short enableFriction[8];
+    short enableCompensate[8];
+    int32_t reserve2[8];
+    double reserve3[8];
+}TGroupDynamicsCompensate;
+
+typedef struct
+{
+	short master;
+	short slave;
+	short reserve[2];
+	double alpha;
+	double beta;
+}TGroupCoupleParameter;
+
+typedef struct  
+{
+	short positiveLimitEnable;
+	short negativeLimitEnable;
+
+	short positiveLimitMode;
+	short negativeLimitMode;
+
+	double positiveLimit;
+	double negativeLimit;
+} TGroupSoftLimit;
+
+#define	GROUP_STATE_DISABLED			(0)
+#define	GROUP_STATE_ERROR_STOP			(1)
+#define	GROUP_STATE_STANDBY				(6)
+#define	GROUP_STATE_HOMING				(10)
+#define	GROUP_STATE_MOVING				(20)
+#define	GROUP_STATE_STOPPING			(30)
+#define GROUP_STATUS_RESERVE1_ERROR_STOP_STATE        (0)
+
+typedef struct  
+{
+	short run;
+	short state;
+	short stopInfo;	
+	short reserve1[13];
+	int32_t  reserve2[4];
+} TGroupStatus;
+
+typedef struct
+{
+	double time;				// ï¿½ï¿½ï¿½Ù¶È±ä»¯Ê±ï¿½ï¿½
+	double k;					// ï¿½ï¿½Ì¬
+} TGroupMotionSmooth;
+
+typedef union
+{
+	TGroupMotionSmooth smooth;
+	double value[20];
+} TGroupMotionSmoothUnion;
+
+typedef struct 
+{
+	short mode;
+	short reserve[3];	
+	TGroupMotionSmoothUnion data;
+} TGroupMotionSmoothPrm;
+
+typedef struct
+{
+    int32_t userTag;
+    int32_t segNum;
+    double segmentTravel;
+    double segmentLength;
+    double totalTravel;
+    short reserve1[8];
+    double reserve2[8];
+}TGroupMoveSegmentInfo;
+
+#define OVERRIDE_TYPE_VEL                        (0)
+#define OVERRIDE_TYPE_ACC                        (1)
+
+GT_API GTN_AddAxisToGroup(short core,short group,short profile,short identInGroup,TListInfo *pListInfo=NULL);
+GT_API GTN_RemoveAxisFromGroup(short core,short group,short identInGroup,TListInfo *pListInfo=NULL);
+GT_API GTN_UngroupAllAxes(short core,short group,TListInfo *pListInfo=NULL);
+GT_API GTN_GroupEnable(short core,short group,TListInfo *pListInfo=NULL);
+GT_API GTN_GroupDisable(short core,short group,TListInfo *pListInfo=NULL);
+GT_API GTN_SetGroupVelProfileMode(short core,short group,TVelProfileMode *pSmooth,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupVelProfileMode(short core,short group,TVelProfileMode *pSmooth);
+GT_API GTN_GetGroupStatus(short core, short group, TGroupStatus* pStatus);
+GT_API GTN_GroupStop(short core,short group,TListInfo *pListInfo=NULL);
+GT_API GTN_ClearGroupStatus(short core,short group,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupStatus(short core,short group,TGroupStatus *pStatus);
+GT_API GTN_GetProfileGroupInfo(short core,short profile,short *pGroup,short *pIndentInGroup);
+GT_API GTN_GetGroupProfilePos(short core,short group,short index,double *pValue,short count=1,short coordSystem=COORD_SYSTEM_ACS,short oriMode=ORI_MODE_NONE);
+GT_API GTN_GetGroupProfileVel(short core,short group,short index,double *pValue,short count=1,short coordSystem=COORD_SYSTEM_ACS);
+GT_API GTN_GetGroupTargetPos(short core,short group,short index,double *pValue,short count=1,short coordSystem=COORD_SYSTEM_ACS,short oriMode=ORI_MODE_NONE);
+GT_API GTN_GetGroupSyntheticVel(short core,short group,double *pValue,short coordSystem=COORD_SYSTEM_ACS);
+GT_API GTN_GetGroupBreakPos(short core,short group,short index,double *pValue,short count=1,short coordSystem=COORD_SYSTEM_ACS,short oriMode=ORI_MODE_NONE);
+GT_API GTN_GetGroupMoveSegmentInfo(short core,short group,TGroupMoveSegmentInfo *pInfo);
+GT_API GTN_GetGroupKinematicConfigIndex(short core,short group,short *pConfigIndex);
+GT_API GTN_GetGroupConditionTriggerPos(short core,short group,short index,double *pValue,short count,short coordSystem=COORD_SYSTEM_ACS,short oriMode=ORI_MODE_NONE);
+GT_API GTN_SetCommandListLinkGroup(short core,short list,uint32_t linkGroupMask);
+GT_API GTN_GetCommandListLinkGroup(short core,short list,uint32_t *pLinkGroupMask);
+GT_API GTN_SetGroupLinkCommandList(short core,short group,uint32_t linkListMask);
+GT_API GTN_GetGroupLinkCommandList(short core,short group,uint32_t *pLinkListMask);
+GT_API GTN_SetGroupMotionConstraint(short core, short group, TGroupMotionConstraint* pPrm, TListInfo* pListInfo = NULL);
+GT_API GTN_GetGroupMotionConstraint(short core, short group, TGroupMotionConstraint* pPrm);
+GT_API GTN_SetGroupOrientationConstraint(short core, short group, TGroupOrientationConstraint* pPrm, TListInfo* pListInfo = NULL);
+GT_API GTN_GetGroupOrientationConstraint(short core, short group, TGroupOrientationConstraint* pPrm);
+GT_API GTN_SetGroupCartesianTransform(short core, short group, short coordSystem, short enable, TCartesianParameter* pPrm, TListInfo* pListInfo = NULL);
+GT_API GTN_GetGroupCartesianTransform(short core, short group, short coordSystem, short* pEnable, TCartesianParameter* pPrm);
+GT_API GTN_SetGroupCoordinateTransform(short core, short group, short coordSystem, short enable, TCoordinateTransform* pPrm, TListInfo* pListInfo = NULL);
+GT_API GTN_GetGroupCoordinateTransform(short core, short group, short coordSystem, short* pEnable, TCoordinateTransform* pPrm);
+GT_API GTN_SetGroupCoordinateTransformPrm(short core, short group, short coordSystem, short enable, TCoordinateTransform* pPrm, short count = 1, TListInfo* pListInfo = NULL);
+GT_API GTN_GetGroupCoordinateTransformPrm(short core, short group, short coordSystem, short* pEnable, TCoordinateTransform* pPrm, short* pCount);
+GT_API GTN_SetGroupCartesianTransformConstraint(short core, short group, short coordSystem, short enable, TCartesianTransformConstraint* pConstraint, TListInfo* pListInfo = NULL);
+GT_API GTN_GetGroupCartesianTransformConstraint(short core, short group, short coordSystem, short* pEnable, TCartesianTransformConstraint* pConstraint);
+
+
+
+GT_API GTN_SetGroupDynamicCoordinateTransform(short core, short group, short enable, TDynamicCoordinateTransform* pTrans, TListInfo* pListInfo = NULL);
+GT_API GTN_GetGroupDynamicCoordinateTransform(short core, short group, short* pEnable, TDynamicCoordinateTransform* pTrans);
+GT_API GTN_SetGroupDynamicCoordinateParameter(short core, short group, short mode, void* pPrm, TListInfo* pListInfo = NULL);
+GT_API GTN_GetGroupDynamicCoordinateParameter(short core, short group, short mode, void* pPrm);
+GT_API GTN_SetGroupKinematicTransform(short core, short group, TKinematicTransform* pTransform, TListInfo* pListInfo = NULL);
+GT_API GTN_GetGroupKinematicTransform(short core, short group, TKinematicTransform* pTransform);
+GT_API GTN_SetGroupDynamicsParameter(short core, short group, short count, double* pPrm, TListInfo* pListInfo = NULL);
+GT_API GTN_GetGroupDynamicsParameter(short core, short group, short* pCount, double* pPrm);
+GT_API GTN_SetGroupDynamicsCompensate(short core,short group,short mode,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupDynamicsCompensate(short core,short group,short *pMode);
+GT_API GTN_SetGroupDynamicsSource(short core,short group,short source,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupDynamicsSource(short core,short group,short *pSource);
+GT_API GTN_SetGroupDynamicCoordinateMasterPos(short core, short group, short enable, TDynamicCoordinateTransformMasterPos* pMasterPos);
+
+GT_API GTN_SetGroupAcsOriginPos(short core,short group,double originPos[],TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupAcsOriginPos(short core,short group,short index,double originPos[],short count);
+GT_API GTN_SetGroupAcsKinematicOffset(short core,short group,double offset[],TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupAcsKinematicOffset(short core,short group,short index,double *pValue,short count);
+GT_API GTN_SetGroupAcsVelLimit(short core,short group,short motionMode,short enable,double *pAcsVelLimit,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupAcsVelLimit(short core,short group,short motionMode,short *pEnable,double *pAcsVelLimit);
+GT_API GTN_SetGroupAcsMoveMode(short core,short group,short index,short mode,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupAcsMoveMode(short core,short group,short index,short *pMode);
+GT_API GTN_SetGroupCouple(short core,short group,short count,TGroupCoupleParameter *pGroupCouplePrm,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupCouple(short core,short group,short *pCount,TGroupCoupleParameter *pGroupCouplePrm);
+GT_API GTN_GetGroupCouplePos(short core,short group,short index,double *pValue,short count=1);
+GT_API GTN_SetGroupVelModifyByTaskMode(short core,short group,short mode,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupVelModifyByTaskMode(short core,short group,short *pMode);
+
+GT_API GTN_SetGroupCommandPosDefine(short core,short group,short coordSystem,short orientationMode,short configIndex,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupCommandPosDefine(short core,short group,short *pCoordSystem,short *pOrientationMode,short *pConfigIndex);
+GT_API GTN_SetGroupCommandVelDefine(short core,short group,short type,short mode,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupCommandVelDefine(short core,short group,short type,short *pMode);
+GT_API GTN_SetGroupProfileCoordinateSystem(short core,short group,short coordSystem,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupProfileCoordinateSystem(short core,short group,short *pCoordSystem);
+GT_API GTN_SetGroupOrientationProfileMode(short core,short group,short profileMode,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupOrientationProfileMode(short core,short group,short *pProfileMode);
+GT_API GTN_SetGroupOrientationMotionRatio(short core,short group,double ratio,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupOrientationMotionRatio(short core,short group,double *pRatio);
+GT_API GTN_SetGroupOrientationMotionMode(short core,short group,short mode,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupOrientationMotionMode(short core,short group,short *pMode);
+GT_API GTN_SetGroupProgramCoordinateSystem(short core,short group,short mode,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupProgramCoordinateSystem(short core,short group,short *pMode);
+GT_API GTN_SetGroupPcsRotateAxisPosMode(short core,short group,short mode,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupPcsRotateAxisPosMode(short core,short group,short *pMode);
+GT_API GTN_SetGroupCommandVelRefAxis(short core,short group,int32_t velAxisMask,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupCommandVelRefAxis(short core,short group,int32_t *pVelAxisMask);
+GT_API GTN_SetGroupCommandVelRefRatio(short core,short group,short ident,double *pRatio,short count=1,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupCommandVelRefRatio(short core,short group,short ident,double *pRatio,short count=1);
+GT_API GTN_SetGroupMaxOverride(short core,short group,short type,double override,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupMaxOverride(short core,short group,short type,double *pMaxOverride);
+GT_API GTN_SetGroupSoftLimit(short core,short group,short coordSystem,short index,TGroupSoftLimit *pPrm,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupSoftLimit(short core,short group,short coordSystem,short index,TGroupSoftLimit *pPrm);
+GT_API GTN_SetGroupMotionSmooth(short core,short group,TGroupMotionSmoothPrm *pPrm,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupMotionSmooth(short core,short group,TGroupMotionSmoothPrm *pPrm);
+GT_API GTN_SetGroupCircularParameter(short core,short group,short type,void *pData,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupCircularParameter(short core,short group,short type,void *pData);
+GT_API GTN_SetGroupErrorStopRatio(short core,short group,double errorStopRatio);
+GT_API GTN_GetGroupErrorStopRatio(short core,short group,double *pErrorStopRatio);
+
+typedef struct
+{
+    TKinematicTransform kinTrans;
+
+    short enablePcsTrans;
+    short enableTcsTrans;
+    short reserve1[2];
+    TCartesianParameter pcsTrans;
+    TCartesianParameter tcsTrans;
+    double acsKinOffset[8];
+
+    short inputCoordSystem;
+    short inputOriMode;
+    short configIndex;
+    short outputOriMode;
+    double preAcsPos[8];
+
+    short reserve2[4];
+    double reserve3[8];
+}TCoordinateTransformParameter;
+
+typedef struct
+{
+    TKinematicTransform kinTrans;
+
+    short enablePcsTrans;
+    short enableTcsTrans;
+    short enableUserPcsTrans;
+    short reserve1[5];
+    TCoordinateTransform pcsTrans;
+    TCoordinateTransform tcsTrans;
+    TCoordinateTransform userPcsTrans;
+    double acsKinOffset[8];
+
+    short inputCoordSystem;
+    short inputOriMode;
+    short configIndex;
+    short outputOriMode;
+    double preAcsPos[8];
+
+    short reserve2[4];
+    double reserve3[8];
+}TCoordinateTransformParameterEx;
+
+#define GROUP_TRANSFORM_PRM_RESERVE2_ACS_POS_TYPE        (0)
+#define GROUP_TRANSFORM_PRM_RESERVE2_PROGRAM_MODE        (2)
+typedef struct
+{
+    TKinematicTransform kinTrans;
+
+    short enablePcsTrans;
+    short enableTcsTrans;
+    short enableUserPcsTrans;
+    short userPcsTransCount;
+    short inclinedPlaneMode;
+    short inclinedPlaneConfigIndex;
+    short reserve1[2];
+    TCoordinateTransform pcsTrans;
+    TCoordinateTransform tcsTrans;
+    TCoordinateTransform userPcsTrans[4];
+    double acsKinOffset[8];
+    double preRotateAxisPos[2];
+
+    short inputCoordSystem;
+    short inputOriMode;
+    short configIndex;
+    short outputOriMode;
+    double preAcsPos[8];
+
+    short reserve2[4];
+    double reserve3[8];
+}TGroupPosTransformPrm;
+
+typedef struct
+{
+    double pcsPos[8];
+    double mcsPos[8];
+    double acsPos[8];
+}TCoordinatePos;
+
+GT_API GTN_GroupCoordinateTransform(short core, TCoordinateTransformParameter* pPrm, double* pInputPos, TCoordinatePos* pCoordPos, short* pConfigIndex);
+GT_API GTN_GroupCoordinateTransformEx(short core, TCoordinateTransformParameterEx* pPrm, double* pInputPos, TCoordinatePos* pCoordPos, short* pConfigIndex);
+GT_API GTN_UTL_GroupPosTransform(short core, TGroupPosTransformPrm* pPrm, double* pInputPos, TCoordinatePos* pCoordPos, short* pConfigIndex);
+
+#define GROUP_TRANSFORM_INPUT_RESERVE1_ACS_POS_TYPE        (7)
+typedef struct  
+{
+	short coordSystem;
+	short oriMode;
+	short configIndex;
+	short targetOriMode;
+	short reserve1[8];
+	double inputPos[8];
+	double preAcsPos[8];
+	double reserve2[24];
+}TGroupPosTransformInput;
+
+typedef struct  
+{
+	short configIndex;
+	short singularity;
+	short reserve1[10];
+	double pcsPos[8];
+	double mcsPos[8];
+	double acsPos[8];
+	double reserve2[16];
+}TGroupPosTransformOutput;
+
+GT_API GTN_GroupPosTransform(short core,short group,TGroupPosTransformInput *pInput,TGroupPosTransformOutput *pOutput);
+typedef struct
+{
+    double deceleration;
+    double jerk;
+    short reserve1[4];
+    double reserve2[5];
+} TGroupStopParameter;
+
+#define GROUP_INDENT_MAX                         (8)
+
+// ï¿½å²¹Ä£Ê½
+#define GROUP_PATH_MODE_GENERAL                  (0)     // Í¨ï¿½Ã²å²¹Ä£Ê½
+#define GROUP_PATH_MODE_POLAR                    (1)     // ï¿½ï¿½ï¿½å²¹Ä£Ê½
+#define GROUP_PATH_MODE_CYNLINDER                (2)     // Ô²ï¿½ï¿½ï¿½å²¹Ä£Ê½
+
+// ï¿½å²¹Æ½ï¿½ï¿½
+#define GROUP_PATH_PLANE_XY                      (0)
+#define GROUP_PATH_PLANE_YZ                      (1)
+#define GROUP_PATH_PLANE_ZX                      (2)
+
+typedef struct
+{
+    short plane;                       // ï¿½å²¹Æ½ï¿½ï¿½
+    short reserve1[5];
+    short rotateIdent;                 // ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½groupï¿½Ðµï¿½ï¿½ï¿½ï¿½
+    short setOriginFlag;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¶ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ú¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ã£¬1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½originPosï¿½ï¿½ï¿½ï¿½
+    double origin[3];                  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½MCSÒ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ACSï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½
+    double rotateOrigin;               // ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ú¼ï¿½ï¿½ï¿½ï¿½ï¿½ÏµXï¿½ï¿½Ê±ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ACSÎ»ï¿½ï¿½
+	double reserve2[14];
+} TGroupPathPolar;
+
+typedef struct
+{
+    short plane;                       // ï¿½å²¹Æ½ï¿½ï¿½
+    short reserve1[4];
+    short linearIdent;                 // Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½groupï¿½Ðµï¿½ï¿½ï¿½ï¿½
+    short rotateIdent;                 // ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½groupï¿½Ðµï¿½ï¿½ï¿½ï¿½
+    short setOriginFlag;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¶ï¿½ï¿½0ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ú¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ã£¬1ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½originPosï¿½ï¿½ï¿½ï¿½
+    double r;                          // Ô²ï¿½ï¿½ï¿½ë¾¶
+    double origin[3];                  // Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½MCSÒ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ACSï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½
+    double rotateOrigin;               // ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½Ê±ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ACSÎ»ï¿½ï¿½
+	double reserve2[13];
+} TGroupPathCynlinder;
+
+typedef union
+{
+    TGroupPathPolar polar;
+    TGroupPathCynlinder cynlinder;
+    double value[20];
+} TGroupPathUnion;
+
+typedef struct
+{
+    short mode;
+    short reserve[3];
+    TGroupPathUnion data;
+} TGroupPathPrm;
+
+
+GT_API GTN_SetGroupStopParameter(short core, short group, short type, TGroupStopParameter* pPrm, TListInfo* pListInfo = NULL);
+GT_API GTN_GetGroupStopParameter(short core, short group, short type, TGroupStopParameter* pPrm);
+GT_API GTN_SetGroupPathMode(short core, short group, TGroupPathPrm* pPrm, TListInfo* pListInfo = NULL);
+GT_API GTN_GetGroupPathMode(short core, short group, TGroupPathPrm* pPrm);
+
+// GTN_SetGroupLookAheadFunc
+#define LA_FUNC_MODE_DV_MAX_LIMIT      (1) // ï¿½ï¿½ï¿½ï¿½dvmaxÔ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø²ï¿½ï¿½ï¿½
+#define LA_FUNC_MODE_SOFTLIMIT_CHECK   (2) // ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½
+#define LA_FUNC_MODE_DV_MAX_THRESHOLD  (3) // ï¿½ï¿½ï¿½ï¿½dvmaxÔ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+#define LA_FUNC_MODE_GEOMETRY_LIMIT    (4) // ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½2ï¿½ï¿½ï¿½ï¿½ï¿½ÊºÍ¼Ð½Ç¶ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½
+#define LA_FUNC_MODE_LA_PRM_TYPE       (99)// ï¿½ï¿½ï¿½Ãµï¿½Ç°Õ°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½0ï¿½ï¿½Ê±ï¿½ä³£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½
+
+typedef struct
+{
+    int32_t lookAheadNum;					//Ç°Õ°ï¿½ï¿½ï¿½ï¿½
+    short reserve1[6];
+    int32_t reserve2[4];
+    double time;						//Ê±ï¿½ä³£ï¿½ï¿½
+    double radiusRatio;					//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½Ú²ï¿½ï¿½ï¿½
+    double reserve3[7];
+}TGroupLookAheadParameter;
+
+typedef struct
+{
+    int32_t segNum;
+    int32_t userTag;
+    double data[32];
+}TLookAheadErrorInfo;
+
+#define BLEND_MODE_NONE                  0       // ï¿½Þ¹ì¼£ï¿½ï¿½ï¿½ï¿½
+#define BLEND_MODE_ARC                   1       // Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define BLEND_MODE_BIARC                 2       // Ë«Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define BLEND_MODE_SPLINE                3       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+#define BLEND_PARA_TYPE_ERROR            0       // ï¿½ï¿½ï¿½É²ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½Öµ
+#define BLEND_PARA_TYPE_RADIUS           1       // ï¿½ï¿½ï¿½É²ï¿½ï¿½ï¿½Îªï¿½ë¾¶
+#define BLEND_PARA_TYPE_DISTANCE         2       // ï¿½ï¿½ï¿½É²ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½Éµï¿½Ä¾ï¿½ï¿½ï¿½
+
+#define VEL_BLEND_MODE_NONE              0       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½blendingï¿½ï¿½ï¿½Ôµï¿½Ò»ï¿½Îµï¿½ï¿½Ù¶È¹ï¿½ï¿½É£ï¿½ï¿½Ò²ï¿½ï¿½ï¿½ï¿½Ð¹ì¼£blending
+#define VEL_BLEND_MODE_BUFFERER          1       // ï¿½ï¿½ï¿½Ùµï¿½0ï¿½ï¿½ï¿½Ò²ï¿½ï¿½ï¿½ï¿½Ð¹ì¼£blending
+#define VEL_BLEND_MODE_LOW               2       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½ï¿½Ù¶È¹ï¿½ï¿½É£ï¿½ï¿½ï¿½ï¿½Ý¹ì¼£blendingï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¹ì¼£ï¿½ï¿½ï¿½ï¿½
+#define VEL_BLEND_MODE_PREVIOUS          3       // ï¿½Ôµï¿½Ò»ï¿½Îµï¿½ï¿½Ù¶È¹ï¿½ï¿½É£ï¿½ï¿½ï¿½ï¿½Ý¹ì¼£blendingï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¹ì¼£ï¿½ï¿½ï¿½ï¿½
+#define VEL_BLEND_MODE_NEXT              4       // ï¿½ÔµÚ¶ï¿½ï¿½Îµï¿½ï¿½Ù¶È¹ï¿½ï¿½É£ï¿½ï¿½ï¿½ï¿½Ý¹ì¼£blendingï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¹ì¼£ï¿½ï¿½ï¿½ï¿½
+#define VEL_BLEND_MODE_HIGH              5       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ßµï¿½ï¿½Ù¶È¹ï¿½ï¿½É£ï¿½ï¿½ï¿½ï¿½Ý¹ì¼£blendingï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¹ì¼£ï¿½ï¿½ï¿½ï¿½
+
+typedef struct
+{
+    short blendType;
+    short prmType;
+    short reserve1[2];
+    double prm;
+    double reserve2[8];
+    double minAngle;
+    double maxAngle;
+} TPathBlendingParameter;
+
+typedef struct
+{
+    short blendType;                   // ï¿½Ù¶ï¿½blendingï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short prmType;                     // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short reserve[5];
+    short percentMode;                 // ï¿½Ù¶È°Ù·Ö±ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½Îªï¿½ï¿½blendTypeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È£ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½Îªï¿½ï¿½blendTypeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½*ï¿½ï¿½ï¿½ÃµÄ°Ù·Ö±È¡ï¿½
+    double percent;                    // ï¿½Ù¶È°Ù·Ö±È£ï¿½ï¿½ï¿½percentModeÎª1Ê±ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½Î§ï¿½ï¿½[0,1]ï¿½ï¿½
+    double prm[17];
+} TVelBlendingParameter;
+
+typedef union
+{
+    TPathBlendingParameter pathBlendingPrm;
+    TVelBlendingParameter velBlendingPrm;
+    double data[20];
+} TBlendingParameter;
+
+typedef struct
+{
+    short mode;			// Ä£Ê½
+    short reserve[3];
+    TBlendingParameter prm;
+} TGroupBlendingParameter;
+
+#define GEOMETRY_LIMIT_MODE_WORK    (0)    //ï¿½ï¿½ï¿½Ý¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ÊºÍ¼Ð½Ç½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define GEOMETRY_LIMIT_MODE_AXIS    (1)    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ÊºÍ¼Ð½Ç½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define GEOMETRY_LIMIT_MODE_NONE    (2)    //ï¿½ï¿½ï¿½ÊºÍ¼Ð½Ç¶ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½
+
+typedef struct
+{
+	short type;                         // 0: ï¿½ï¿½Ô¼ï¿½ï¿½Ä£Ê½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½Ä£Ê½
+	short optMode;                      // ï¿½Ç·ï¿½ï¿½dvmaxÔ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å»ï¿½
+}TGroupDvMaxLimit;
+
+GT_API GTN_GroupLookAheadEnable(short core, short group, TListInfo* pListInfo=NULL);
+GT_API GTN_GroupLookAheadDisable(short core, short group, TListInfo* pListInfo=NULL);
+GT_API GTN_SetGroupLookAheadParameter(short core, short group, TGroupLookAheadParameter* pLookAheadPrm, TListInfo* pListInfo=NULL);
+GT_API GTN_GetGroupLookAheadSegCount(short core,short group,int32_t *pSegCount);
+GT_API GTN_GetLookAheadErrorInfo(short core, short group, TLookAheadErrorInfo* pLaErrorInfo);
+GT_API GTN_SetGroupBlendingParameter(short core, short group, TGroupBlendingParameter* pPrm, TListInfo* pListInfo=NULL);
+GT_API GTN_SetGroupCartesianCoordinateAxisLimit(short core,short group,short enable,TListInfo *pListInfo=NULL);
+GT_API GTN_SetGroupLookAheadFunc(short core,short group,short mode,void *pLookAheadFunc,TListInfo *pListInfo=NULL);
+GT_API GTN_SetGroupMinLinearLength(short core,short group,short type,double value,TListInfo *pListInfo=NULL);
+
+typedef struct
+{
+    double value[2];
+    double reserve[14];
+}TRotateAxisPos;
+
+typedef struct
+{
+    double value[3];
+    double reserve[13];
+}TToolVector;
+
+typedef union
+{
+    TRotateAxisPos rotateAxisPos;
+    TToolVector toolVector;
+    double value[16];
+}TInclinePlaneRotateAxisInfoUnion;
+
+typedef struct
+{
+    short mode;
+    short pad[3];
+    TInclinePlaneRotateAxisInfoUnion data;
+}TInclinedPlaneRotateAxisInfo;
+
+typedef struct
+{
+    short configIndex;
+    short reserve1[3];
+    double reserve2[9];
+}TSelectConfig;
+
+typedef union
+{
+    TSelectConfig select;
+    double value[10];
+}TGroupInclinedPlanePrmUnion;
+
+typedef struct
+{
+    short mode;
+    short reserve[3];
+    TGroupInclinedPlanePrmUnion data;
+}TGroupInclinedPlanePrm;
+
+GT_API GTN_SetGroupInclinedPlaneRotateAxisPos(short core, short group, TInclinedPlaneRotateAxisInfo* pInfo, double* pRotateAxisPos, short activeRotateAxis = 1, TListInfo* pListInfo = NULL);
+GT_API GTN_GetGroupInclinedPlaneRotateAxisPos(short core, short group, double* pRotateAxisPos);
+GT_API GTN_CalGroupInclinedPlaneRotateAxisPos(short core, short group, TToolVector* pToolVector, double* pRotateAxisPos1, double* pRotateAxisPos2, TListInfo* pListInfo = NULL);
+GT_API GTN_SetGroupInclinedPlanePrm(short core, short group, TGroupInclinedPlanePrm* pPrm, TListInfo* pListInfo=NULL);
+GT_API GTN_GetGroupInclinedPlanePrm(short core, short group, TGroupInclinedPlanePrm* pPrm);
+GT_API GTN_SetGroupInclinedPlaneMode(short core,short group,short mode,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupInclinedPlaneMode(short core,short group,short *pMode);
+
+#define GROUP_MOVE_PRM_RESERVE2_POS_MASK                    (0) // Î»ï¿½ï¿½ï¿½ï¿½Ð§ï¿½á£¬0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã¶ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½Ð§
+#define GROUP_MOVE_PRM_RESERVE2_START_POINT_MODE            (2) // ï¿½ï¿½ï¿½Î»ï¿½ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Ò»ï¿½Îµï¿½ï¿½Õµã£¬1ï¿½ï¿½ï¿½ï¿½ï¿½ÎªÖ´ï¿½Ðµï¿½ï¿½ï¿½Ö¸ï¿½ï¿½Ê±ÊµÊ±ï¿½ï¿½È¡ï¿½Äµï¿½Ç°ï¿½ï¿½Î»ï¿½ï¿½
+typedef struct
+{
+    double velocity;			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double acceleration;        // ï¿½ï¿½ï¿½Ù¶ï¿½
+	double reserve1[3];
+    double deceleration;        // ï¿½ï¿½ï¿½Ù¶ï¿½
+    short  overrideSelect;		// ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½
+    short  endVelocityMode;     // ï¿½Õµï¿½ï¿½Ù¶ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½Ùµï¿½ï¿½ã£¬2ï¿½ï¿½ÎªÖ¸ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short  orientationDir;      // ï¿½ï¿½Ì¬ï¿½ä»¯ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short  reserve2[3];
+    int32_t   reserve3[3];
+} TGroupMoveParameter;
+
+// Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define CIRCULAR_PARAMETER_MAX_ERROR             (0) // Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define CIRCULAR_PARAMETER_ORIENTAION_PASS_MODE  (1) // Ô²ï¿½ï¿½ï¿½Ç·ñ¾­¹ï¿½ï¿½Ð¼ï¿½ï¿½ï¿½ï¿½ï¿½Ì¬
+#define CIRCULAR_PARAMETER_AUXILIARY_START_MASTER_POS (2) // Ô²ï¿½ï¿½ï¿½ï¿½ï¿½Ä¶ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+#define CIRCULAR_PARAMETER_AUXILIARY_MASTER_POS  (3) // Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¶ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+
+//Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+#define CIRCULAR_MODE_PLANE_CENTER_DIR           (0) //ï¿½Õµï¿½+Ô²ï¿½ï¿½+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½Ô²ï¿½ï¿½
+#define CIRCULAR_MODE_PLANE_RADIUS_DIR           (1) //ï¿½Õµï¿½+ï¿½ë¾¶(ï¿½Ð·ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/ï¿½Ó»ï¿½)+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½Ô²ï¿½ï¿½
+#define CIRCULAR_MODE_SPACE_BORDER               (2) //ï¿½Õµï¿½+ï¿½Ð¼ï¿½ã£¬ï¿½ï¿½ï¿½Ú¿Õ¼ï¿½Ô²ï¿½ï¿½
+#define CIRCULAR_MODE_SPACE_CENTER               (3) //ï¿½Õµï¿½+Ô²ï¿½ï¿½+ï¿½ï¿½/ï¿½Ó»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¿Õ¼ï¿½Ô²ï¿½ï¿½
+#define CIRCULAR_MODE_SPACE_RADIUS               (4) //ï¿½Õµï¿½+ï¿½ï¿½Ö±Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½+ï¿½ë¾¶(ï¿½Ð·ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/ï¿½Ó»ï¿½)+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¿Õ¼ï¿½Ô²ï¿½ï¿½
+#define CIRCULAR_MODE_PLANE_RELATIVE_CENTER_DIR  (5) //ï¿½Õµï¿½+ï¿½ï¿½ï¿½Ô²ï¿½ï¿½+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½Ô²ï¿½ï¿½
+#define CIRCULAR_MODE_SPACE_BORDER_FOUR          (6) //ï¿½Õµï¿½+ï¿½Ð¼ï¿½ï¿½+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½Õ¼ï¿½Ô²ï¿½ï¿½
+#define CIRCULAR_MODE_PLANE_CENTER_DIR_SPIRAL              (10) //ï¿½Õµï¿½+Ô²ï¿½ï¿½+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½å²¹
+#define CIRCULAR_MODE_PLANE_RELATIVE_CENTER_DIR_SPIRAL     (11) //ï¿½Õµï¿½+ï¿½ï¿½ï¿½Ô²ï¿½ï¿½+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½å²¹
+
+//Ô²ï¿½ï¿½ï¿½å²¹Æ½ï¿½ï¿½
+#define CIRCULAR_PLANE_XY                        (0)
+#define CIRCULAR_PLANE_YZ                        (1)
+#define CIRCULAR_PLANE_ZX                        (2)
+#define CIRCULAR_PLANE_XYZ                       (3)
+#define CIRCULAR_PLANE_XY_HELIX                  (10)
+#define CIRCULAR_PLANE_YZ_HELIX                  (11)
+#define CIRCULAR_PLANE_ZX_HELIX                  (12)
+
+//ï¿½Õµï¿½Ö¸ï¿½ï¿½Ä£Ê½
+#define CIRCULAR_END_POINT_MODE_END_POINT        (0) //ï¿½Õµï¿½ï¿½ï¿½ï¿½Õµï¿½Î»ï¿½ï¿½Ö¸ï¿½ï¿½
+#define CIRCULAR_END_POINT_MODE_CENTRAL_ANGLE    (1) //ï¿½Õµï¿½ï¿½ï¿½Ô²ï¿½Ä½ï¿½Ö¸ï¿½ï¿½
+
+#define CIRCULAR_PATH_CHOICE_CW					 (0) //Ë³Ê±ï¿½ï¿½
+#define CIRCULAR_PATH_CHOICE_CCW				 (1) //ï¿½ï¿½Ê±ï¿½ï¿½
+
+typedef struct
+{
+    short endPointMode;        //Ô²ï¿½ï¿½ï¿½Õµï¿½Ö¸ï¿½ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½Õµï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½Î»ï¿½Ã£ï¿½1ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½Ô²ï¿½Ä½Ç¾ï¿½ï¿½ï¿½
+    short arcPlane;            //Ô²ï¿½ï¿½ï¿½å²¹Æ½ï¿½æ£¬XY,YZ,ZX
+    short arcPathChoice;       //Ô²ï¿½ï¿½Â·ï¿½ï¿½Ñ¡ï¿½ï¿½Æ½ï¿½ï¿½Ô²ï¿½ï¿½Ê±Îªï¿½ï¿½ï¿½ï¿½(1ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ë£¬-1ï¿½ï¿½Ë³Ê±ï¿½ï¿½)ï¿½ï¿½ï¿½Õ¼ï¿½Ô²ï¿½ï¿½Îªï¿½ï¿½ï¿½Ó»ï¿½(1ï¿½ï¿½ï¿½Ó»ï¿½ï¿½ï¿½-1ï¿½ï¿½ï¿½Å»ï¿½)
+    short pad;
+    double centralAngle;       //Ô²ï¿½Ä½ï¿½
+    double centerPoint[8];     //Ô²ï¿½ï¿½Ô²ï¿½ï¿½
+}TCircularPlaneCenterDirData;
+
+typedef struct
+{
+    short endPointMode;        //Ô²ï¿½ï¿½ï¿½Õµï¿½Ö¸ï¿½ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½Õµï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½Î»ï¿½Ã£ï¿½1ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½Ô²ï¿½Ä½Ç¾ï¿½ï¿½ï¿½
+    short arcPlane;            //Ô²ï¿½ï¿½ï¿½å²¹Æ½ï¿½æ£¬XY,YZ,ZX
+    short arcPathChoice;       //Ô²ï¿½ï¿½Â·ï¿½ï¿½Ñ¡ï¿½ï¿½Æ½ï¿½ï¿½Ô²ï¿½ï¿½Ê±Îªï¿½ï¿½ï¿½ï¿½(1ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ë£¬-1ï¿½ï¿½Ë³Ê±ï¿½ï¿½)ï¿½ï¿½ï¿½Õ¼ï¿½Ô²ï¿½ï¿½Îªï¿½ï¿½ï¿½Ó»ï¿½(1ï¿½ï¿½ï¿½Ó»ï¿½ï¿½ï¿½-1ï¿½ï¿½ï¿½Å»ï¿½)
+    short pad;
+    double centralAngle;       //Ô²ï¿½Ä½ï¿½
+    double arcRadius;          //Ô²ï¿½ï¿½ï¿½ë¾¶
+}TCircularPlaneRadiusDirData;
+
+typedef struct
+{
+    short endPointMode;        //Ô²ï¿½ï¿½ï¿½Õµï¿½Ö¸ï¿½ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½Õµï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½Î»ï¿½Ã£ï¿½1ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½Ô²ï¿½Ä½Ç¾ï¿½ï¿½ï¿½
+    short pad[3];
+    double centralAngle;       //Ô²ï¿½Ä½ï¿½
+    double auxPoint[8];        //ï¿½Ð¼ï¿½ï¿½
+}TCircularSpaceBorderData;
+
+typedef struct
+{
+    short endPointMode;                 //Ô²ï¿½ï¿½ï¿½Õµï¿½Ö¸ï¿½ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½Õµï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½Î»ï¿½Ã£ï¿½1ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½Ô²ï¿½Ä½Ç¾ï¿½ï¿½ï¿½
+    short auxPointCommandCoord;         //ï¿½Ð¼ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµ
+    short auxPointOrientationMode;      //ï¿½Ð¼ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¬
+    short auxPointConfigIndex;          //ï¿½Ð¼ï¿½ã¹¹ï¿½Í½ï¿½
+    short auxStartPointCommandCoord;    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµ
+    short auxStartPointOrientationMode; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¬
+    short auxStartPointConfigIndex;     //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ã¹¹ï¿½Í½ï¿½
+    short pad;
+    double centralAngle;       //Ô²ï¿½Ä½ï¿½
+    double auxPoint[8];        //ï¿½Ð¼ï¿½ï¿½
+    double auxStartPoint[8];   //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô²ï¿½ï¿½
+}TCircularSpaceBorderFourData;
+
+typedef struct
+{
+    short endPointMode;        //Ô²ï¿½ï¿½ï¿½Õµï¿½Ö¸ï¿½ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½Õµï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½Î»ï¿½Ã£ï¿½1ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½Ô²ï¿½Ä½Ç¾ï¿½ï¿½ï¿½
+    short arcPlane;            //Ô²ï¿½ï¿½ï¿½å²¹Æ½ï¿½æ£¬XY,YZ,ZX
+    short arcPathChoice;       //Ô²ï¿½ï¿½Â·ï¿½ï¿½Ñ¡ï¿½ï¿½Æ½ï¿½ï¿½Ô²ï¿½ï¿½Ê±Îªï¿½ï¿½ï¿½ï¿½(1ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ë£¬-1ï¿½ï¿½Ë³Ê±ï¿½ï¿½)ï¿½ï¿½ï¿½Õ¼ï¿½Ô²ï¿½ï¿½Îªï¿½ï¿½ï¿½Ó»ï¿½(1ï¿½ï¿½ï¿½Ó»ï¿½ï¿½ï¿½-1ï¿½ï¿½ï¿½Å»ï¿½)
+    short periodCount;         //È¦ï¿½ï¿½
+    double centralAngle;       //Ô²ï¿½Ä½ï¿½
+    double centerPoint[8];     //Ô²ï¿½ï¿½Ô²ï¿½ï¿½
+    double periodDeltaRadius;  //Ò»È¦ï¿½ï¿½Ó¦ï¿½Ä°ë¾¶ï¿½ä»¯ï¿½ï¿½
+}TCircularPlaneCenterDirSpiralData;
+
+typedef union
+{
+    TCircularPlaneCenterDirData centerDir;       //ï¿½ï¿½Ô²ï¿½ï¿½Ä£Ê½ÎªÔ²ï¿½Ä·ï¿½ï¿½ò£¬»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô²ï¿½Ä·ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ã¸Ã½á¹¹ï¿½ï¿½
+    TCircularPlaneRadiusDirData radiusDir;
+    TCircularSpaceBorderData spaceBorder;
+    TCircularSpaceBorderFourData spaceBorderFour;
+    TCircularPlaneCenterDirSpiralData spiral;    //ï¿½ï¿½Ô²ï¿½ï¿½Ä£Ê½ÎªÔ²ï¿½Ä·ï¿½ï¿½ò£¬»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô²ï¿½Ä·ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ã¸Ã½á¹¹ï¿½ï¿½
+    double data[32];
+}TCircularModeUnion;
+
+typedef struct
+{
+    short arcMode;             //Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+    short pad[3];
+    TCircularModeUnion data;
+}TCircularParameter;
+
+#define GATE_MODE_NORMAL                         (0)
+
+typedef struct
+{
+	double h1;     // ï¿½ï¿½ã´¹Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ß¶ï¿½
+	double h2;     // ï¿½Õµã´¹Ö±ï¿½Â½ï¿½ï¿½ß¶ï¿½
+	double h3;     // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¶Îµï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½É¸ß¶ï¿½
+	double k1;     // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¶ï¿½Æ½ï¿½ï¿½ï¿½ï¿½Õ¼Æ½ï¿½Æ¶ÎµÄ°Ù·Ö±ï¿½
+	double k2;     // ï¿½Â½ï¿½ï¿½ï¿½ï¿½ß¶ï¿½Æ½ï¿½ï¿½ï¿½ï¿½Õ¼Æ½ï¿½Æ¶ÎµÄ°Ù·Ö±ï¿½
+	short curveMode;       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+	short oriChangeMode;   // ï¿½ï¿½Ì¬ï¿½ä»¯Ä£Ê½
+	short reserve1[6];
+	double reserve2[8];
+}TGate;
+
+typedef union
+{
+	TGate gate;
+	double data[32];
+}TGateUnion;
+
+typedef struct
+{
+	short mode;             //ï¿½ï¿½ï¿½Í¹ì¼£ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+	short reserve[3];
+	TGateUnion data;
+}TGatePrm;
+
+GT_API GTN_MoveGateAbsolute(short core,short group,double endPoint[],TGatePrm *pGatePrm,TGroupMoveParameter *pPrm,TListInfo *pListInfo=NULL);
+GT_API GTN_MoveLinearAbsolute(short core, short group, double pos[], short dir[], TGroupMoveParameter* pPrm, TListInfo* pListInfo = NULL);
+GT_API GTN_MoveCircularAbsolute(short core, short group, double endPoint[], TCircularParameter* pCircularPrm, TGroupMoveParameter* pPrm, TListInfo* pListInfo = NULL);
+
+
+#define WEAVE_TYPE_SINE                            (0)
+#define WEAVE_TYPE_SINE_DIR_X                      (WEAVE_TYPE_SINE+100)
+
+// ï¿½ï¿½ï¿½ï¿½ï¿½Ú»ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½
+typedef struct  
+{
+	short type;           // ï¿½Ú»ï¿½ï¿½ï¿½ï¿½ï¿½
+	short weaveMode;      // ï¿½Ú»ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½Ã½á¹¹ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½Ú»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½Ã½á¹¹ï¿½ï¿½ï¿½ï¿½ï¿½ÎªÔ¤ï¿½Ú»ï¿½ï¿½ï¿½ï¿½ï¿½
+	short frequencyMode;  // Æµï¿½ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú»ï¿½ÎªÍ¬Ò»Æµï¿½Ê£ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú»ï¿½Í¨ï¿½ï¿½weavePrm[0]ï¿½ï¿½weavePrm[1]ï¿½ï¿½ï¿½ï¿½Æµï¿½Ê±ï¿½ï¿½ï¿½
+	short pad1;
+	double amplitude;     // ï¿½Ú»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½mm 
+	double frequency;     // ï¿½Ú»ï¿½Æµï¿½Ê£ï¿½ï¿½ï¿½Î»ï¿½ï¿½Hz
+	double weavePrm[10];  // ï¿½Ú»ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½
+	short startPosition;  // ï¿½Ú»ï¿½ï¿½ï¿½Ê¼Î»ï¿½ï¿½
+	short dweelFullStop;  // ï¿½ï¿½È«Í£Ö¹Ê¹ï¿½ï¿½
+	short pad2[2];
+	double dweelLeft;     // ï¿½Ú»ï¿½ï¿½ï¿½Í£ï¿½ï¿½Ê±ï¿½ä£¬ï¿½ï¿½Î»ï¿½ï¿½ms
+	double dwellMid;      // ï¿½Ú»ï¿½ï¿½ï¿½Í£ï¿½ï¿½Ê±ï¿½ä£¬ï¿½ï¿½Î»ï¿½ï¿½ms
+	double dwellRight;    // ï¿½Ú»ï¿½ï¿½ï¿½Í£ï¿½ï¿½Ê±ï¿½ä£¬ï¿½ï¿½Î»ï¿½ï¿½ms
+	short oriControlMode; // ï¿½Ú»ï¿½ï¿½ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+	short pad3[3];
+	double rotateAngleX;  // ï¿½ï¿½ï¿½ï¿½Ç£ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½
+	double rotateAngleY;  // Ç°ï¿½ï¿½Ç£ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½
+	double rotateAngleZ;  // ï¿½ï¿½×ªï¿½Ç£ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½
+}TGroupWeaveParameter;
+
+#define GROUP_SUPERPOSITION_TABLE_MAX       (4)    // ï¿½ï¿½ï¿½ï¿½ï¿½Ó±ï¿½ï¿½ï¿½ï¿½ï¿½
+#define GROUP_SUPERPOSITION_TABLE_DATA_MAX  (128)  // ï¿½ï¿½ï¿½Ó±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¸ï¿½ï¿½ï¿½
+
+typedef struct
+{
+	short mode;              // Ä£Ê½ï¿½ï¿½Ä¿Ç°Ö»Ö§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+	short dataCount;         // ï¿½ï¿½ï¿½Ó±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ýµï¿½ï¿½ï¿½ï¿½
+	short reserve1[6];       
+	double period;           // ï¿½ï¿½ï¿½Ó±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	double reserve2[5];
+} TGroupSuperpositionTablePrm;
+
+typedef struct
+{
+	double value[8];
+} TGroupSuperpositionTableData;
+
+typedef struct
+{
+	short workIndex;
+	short reserve1[7];
+	double reserve2[14];
+} TGroupSuperpositionTableStatus;
+
+#define GROUP_SUPERPOSITION_MODE_DIRECT            (0)  // Ö±ï¿½Óµï¿½ï¿½ï¿½Ä£Ê½
+#define GROUP_SUPERPOSITION_MODE_WEAVE             (1)  // ï¿½Ú»ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+#define GROUP_SUPERPOSITION_MODE_WEAVE_EX          (2)  // ï¿½Ú»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹Ä£Ê½
+#define GROUP_SUPERPOSITION_MODE_TABLE             (3)  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+#define GROUP_SUPERPOSITION_MODE_DIRECT_RELATIVE   (10) // ï¿½ï¿½Ôµï¿½ï¿½ï¿½Ä£Ê½
+
+// ï¿½ï¿½ï¿½ï¿½Ö±ï¿½Óµï¿½ï¿½ï¿½Öµ
+typedef struct  
+{
+	double value[8];                         // ï¿½ï¿½ï¿½ï¿½Öµ
+	double reserve[24];
+}TGroupSuperpositionValueDirect;
+
+#define GROUP_SUPERPOSITON_WEAVE_EX_RESERVE_STOP_VEL	   (0)       // ï¿½Ú»ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹ï¿½Ù¶ï¿½
+typedef struct
+{
+	short mode;                              // ï¿½Ú»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ 0ï¿½ï¿½ï¿½Ú»ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ 1ï¿½ï¿½Ô¤ï¿½Ú»ï¿½Ä£Ê½
+	short pad[3];                            // ï¿½ï¿½ï¿½ï¿½
+	double time;                             // Ô¤ï¿½Ú»ï¿½Ä£Ê½ï¿½Ä³ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+	double velocity;                         // Ô¤ï¿½Ú»ï¿½Ä£Ê½ï¿½ï¿½ï¿½Ù¶ï¿½
+	double reserve[29];
+}TGroupSuperpositionWeaveEx;
+
+#define GROUP_SUPERPOSITON_TABLE_RESERVE2_STOP_VEL	       (0)        // ï¿½Ú»ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹ï¿½Ù¶ï¿½
+typedef struct
+{
+	short mode;                              // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ 0ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½Ä£Ê½ 1ï¿½ï¿½Ô¤ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+	short startIndex;                        // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Ó±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	short count;                             // ï¿½ï¿½ï¿½Ó±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½count=1Ê±ï¿½ï¿½ï¿½ï¿½Ê¾Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªstartIndexï¿½Ä±ï¿½ï¿½ï¿½count>1Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Îµï¿½ï¿½Ó´ï¿½startIndexï¿½ï¿½Ê¼ï¿½ï¿½countï¿½ï¿½ï¿½ï¿½
+	short reserve1[5];                       
+	double time;                             // Ô¤ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½Ä³ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+	double velocity;                         // Ô¤ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½Ù¶ï¿½
+	double reserve2[28];
+}TGroupSuperpositionTable;
+
+typedef union  
+{
+	TGroupSuperpositionValueDirect direct;   // Ö±ï¿½Óµï¿½ï¿½ï¿½Öµ
+	TGroupSuperpositionWeaveEx weaveEx;      // ï¿½Ú»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹Ä£Ê½
+	TGroupSuperpositionTable table;          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+	double data[32];
+}TGroupSuperpositionUnion;
+
+typedef struct  
+{
+	short enable;         // ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½Ê¹ï¿½ï¿½
+	short mode;           // ï¿½ï¿½ï¿½ï¿½Ä£Ê½ 0ï¿½ï¿½Ö±ï¿½Óµï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Ð°Ú»ï¿½ï¿½ï¿½ï¿½ï¿½ 2ï¿½ï¿½ï¿½Ú»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹Ä£Ê½
+	short pad[2];
+	double smoothTime;    // Æ½ï¿½ï¿½Ê±ï¿½ï¿½
+	TGroupSuperpositionUnion data;
+}TGroupSuperposition;
+
+GT_API GTN_SetGroupWeaveParameter(short core,short group,TGroupWeaveParameter *pWeave,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupWeaveParameter(short core,short group,TGroupWeaveParameter *pWeave);
+GT_API GTN_SetGroupSuperpositionTable(short core,short group,short tableIndex,TGroupSuperpositionTablePrm *pTablePrm,TGroupSuperpositionTableData *pData);
+GT_API GTN_GetGroupSuperpositionTable(short core,short group,short tableIndex,TGroupSuperpositionTablePrm *pTablePrm,TGroupSuperpositionTableData *pData);
+GT_API GTN_GetGroupSuperpositionTableStatus(short core,short group,TGroupSuperpositionTableStatus *pTableStatus);
+GT_API GTN_SetGroupSuperposition(short core,short group,short coordSystem,short index,TGroupSuperposition *pGroupSuperposition,TListInfo *pListInfo=NULL);
+GT_API GTN_GetGroupSuperposition(short core,short group,short coordSystem,short index,TGroupSuperposition *pGroupSuperposition);
+GT_API GTN_GetGroupSuperpositionValue(short core,short group,short coordSystem,short index,double *pValue);
+
+/*-----------------------------------------------------------*/
+/* CBT Command                                               */
+/*-----------------------------------------------------------*/
+#define CBT_MODE_CONTINUOUS  (0)
+#define CBT_MODE_INTERMITTEN (1)
+
+#define CBT_EXECUTE_MODE_AUTO          (0)    // ï¿½Ô¶ï¿½Ä£Ê½
+#define CBT_EXECUTE_MODE_COMMAND       (1)    // Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+
+#define CBT_MASTER_MOTION_TYPE_LINEAR  (0)    // Ö±ï¿½ß´ï¿½ï¿½Í´ï¿½
+#define CBT_MASTER_MOTION_TYPE_ROTATE  (1)    // ï¿½ï¿½×ªï¿½ï¿½ï¿½Í´ï¿½
+
+typedef struct
+{
+	short masterMode;     // ï¿½ï¿½ï¿½ï¿½Ä£Ê½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í´ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½Ðªï¿½ï¿½ï¿½Í´ï¿½
+	short masterType;     // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	short masterIndex;    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	short cbtTag;         // ï¿½ï¿½ï¿½Í´ï¿½ï¿½ï¿½Ê¶ï¿½ï¿½ï¿½ï¿½Ó¦TCbtPieceDataï¿½Ðµï¿½cbtTagï¿½ï¿½ï¿½ï¿½ï¿½Ú±ï¿½Ê¶ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½Îªï¿½ï¿½ï¿½Í´ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½Ä¹ï¿½ï¿½ï¿½
+
+	double detectPos;     // ï¿½ï¿½ï¿½Í´ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½Ô´ï¿½ï¿½Í´ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½Xï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½
+	double parkPos;       // ï¿½ï¿½ï¿½Í´ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½Ô´ï¿½ï¿½Í´ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½Xï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½
+	double stopPos;       // ï¿½ï¿½ï¿½Í´ï¿½Í£Ö¹Î»ï¿½ï¿½Ô´ï¿½ï¿½Í´ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½Xï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½
+	double delay;         // Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½Ê±Ê±ï¿½ï¿½
+	double sampleTime;    // ï¿½ï¿½ï¿½Í´ï¿½ï¿½Ù¶È²ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+	double velMax;        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×·ï¿½ï¿½ï¿½Ù¶ï¿½
+	double acc;           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×·ï¿½Ï¼ï¿½ï¿½Ù¶ï¿½
+	double cbOrigin[6];   // ï¿½ï¿½ï¿½Í´ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½Ô»ï¿½ï¿½ï¿½ï¿½ï¿½MCSï¿½ï¿½Æ«ï¿½Æºï¿½ï¿½ï¿½×ª
+
+	short group;          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	short masterMotionType;// ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½Í£ï¿½0ï¿½ï¿½Ö±ï¿½ß´ï¿½ï¿½Í´ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½Í´ï¿½
+	short masterMotionDir; // ï¿½ï¿½Ô´ï¿½ï¿½Í´ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ò£¬½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½Í´ï¿½ï¿½ï¿½Ð§ï¿½ï¿½0ï¿½ï¿½Ë³Ê±ï¿½ë£¬1ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+	short reserve1[5];
+	double reserve2[10];
+}TCbtPrm;
+
+typedef struct
+{
+	short group;
+	short pieceConfigIndex;// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½Í´ï¿½ï¿½ÏµÄ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½Ï½ï¿½ï¿½Ð¹ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½Î»ï¿½ã£©ï¿½Ä¹ï¿½ï¿½Í½ï¿½
+	short waitMode;        // 0ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ØµÈ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½È´ï¿½Î»ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½
+	short waitProfileCoord;
+	short waitCmdPosCoord;
+	short waitConfigIndex;// ï¿½ï¿½ï¿½ï¿½ï¿½Ë´ï¿½ï¿½ÚµÈ´ï¿½Î»ï¿½Ä¹ï¿½ï¿½Í½ï¿½
+	short reserve1[2];
+
+	double locatePoint[6];// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í´ï¿½ï¿½ÏµÄ¹ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ã£¬ÎªPCSï¿½Âµï¿½Î»ï¿½Ãºï¿½ï¿½ï¿½Ì¬
+	double waitPoint[6];  // ï¿½ï¿½ï¿½Í´ï¿½Ã»ï¿½Ð¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¹ï¿½ï¿½ï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë»Øµï¿½ï¿½È´ï¿½Î»ï¿½ï¿½ÎªMCSï¿½Âµï¿½Î»ï¿½Ãºï¿½ï¿½ï¿½Ì¬
+
+	double groupVel;      // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½Ù¶ï¿½
+	double groupAcc;      // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+	double groupDec;      // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+
+	short reserve2[8];
+	double reserve3[10];
+}TCbtGroupPrm;
+
+typedef struct
+{
+	short cbtTag;            // ï¿½ï¿½ï¿½Í´ï¿½ï¿½ï¿½Ê¶ï¿½ï¿½ï¿½ï¿½Ó¦TCbtPrmï¿½Ðµï¿½cbtTagï¿½ï¿½ï¿½ï¿½ï¿½Ú±ï¿½Ê¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ÎªcbtIndexï¿½ï¿½Ó¦ï¿½Ä´ï¿½ï¿½Í´ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½Ä¹ï¿½ï¿½ï¿½   
+	short pieceTag;          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú±ï¿½Ê¶Ã¿Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	short reserve1[2];
+	double masterPos;        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+	double pose[6];          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½Í´ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Î»ï¿½Ãºï¿½ï¿½ï¿½Ì¬
+	double reserve2[5];
+	double processTime;      // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+}TCbtPieceData;
+
+typedef struct
+{
+	short cbtIndex1;
+	short cbtIndex2;
+	short reserve1[2];
+	double reserve2[10];
+}TCoupleCbtPrm;
+
+typedef struct
+{
+	short executeMode;
+	short reserve1[3];
+	double reserve2[10];
+}TStartCbtPrm;
+
+#define CBT_STATE_IDLE                    (0) //ï¿½ï¿½ï¿½ï¿½×´Ì¬
+#define CBT_STATE_BACK_TO_WAIT_POINT      (10) //Ã»ï¿½Ð¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Øµï¿½ï¿½È´ï¿½Î»
+#define CBT_STATE_WAITTING_PIECE          (20) //ï¿½ï¿½Ô­Î»ï¿½ï¿½ï¿½ßµÈ´ï¿½Î»ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½
+#define CBT_STATE_LOCATING                (110) //ï¿½È´ï¿½ï¿½ï¿½Ðµï¿½Öµï¿½Î»
+#define CBT_STATE_WAITING_SYNCHRONIZATION (120) //ï¿½È´ï¿½ï¿½ï¿½Ðµï¿½ÖºÍ´ï¿½ï¿½Í´ï¿½Í¬ï¿½ï¿½
+#define CBT_STATE_SYNCHRONIZATION         (130) //Í¬ï¿½ï¿½×´Ì¬
+#define CBT_STATE_DELAY                   (140) //ï¿½ï¿½Ê±×´Ì¬
+#define CBT_STATE_EXECUTING_TASK          (150) //Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ï¿½×´Ì¬
+#define CBT_STATE_EXITING_SYNCHRONIZATION (160) //ï¿½Ë³ï¿½Í¬ï¿½ï¿½ï¿½ï¿½
+#define CBT_STATE_STOPPING                (300) //Í£Ö¹×´Ì¬
+#define CBT_STATE_DONE                    (400) //ï¿½ï¿½ï¿½×´Ì¬
+
+// CBTÍ£Ö¹ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ï¢
+#define CBT_STOP_INFO_NONE                               (0)
+#define CBT_STOP_INFO_CU_OUT_OF_RANGE                    (1)
+#define CBT_STOP_INFO_GET_CU_INFO                        (2)
+#define CBT_STOP_INFO_ENABLE_GROUP_DYNAMICA_TRANSFORM    (3)
+#define CBT_STOP_INFO_DISABLE_GROUP_DYNAMICA_TRANSFORM   (4)
+#define CBT_STOP_INFO_START_GROUP_LOCATE_MOTION          (5)
+#define CBT_STOP_INFO_START_GROUP_WAIT_MOTION            (6)
+#define CBT_STOP_INFO_START_CU                           (7)
+#define CBT_STOP_INFO_USER_STOP                          (10)
+#define CBT_STOP_INFO_USER_STOP_COMMAND_LIST             (11)
+#define CBT_STOP_INFO_USER_STOP_IN_LIST                  (12)
+#define CBT_STOP_INFO_GROUP_ERROR                        (50)
+#define CBT_STOP_INFO_PROFILE_ERROR                      (51)
+
+typedef struct
+{
+	short execute;                    // ï¿½ï¿½ï¿½Í´ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	short state;                      // ï¿½ï¿½ï¿½Í´ï¿½ï¿½ï¿½Ö´ï¿½ï¿½×´Ì¬
+	short stopInfo;                   // ï¿½ï¿½ï¿½Í´ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹Ê±ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ï¢
+	short reserve1[3];
+	short pieceTag;                   // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½Ä¹ï¿½ï¿½ï¿½ï¿½ï¿½Ê¶  
+	short pieceEmpty;                 // ï¿½ï¿½ï¿½ï¿½fifoï¿½Ç·ï¿½Îªï¿½ï¿½
+	uint32_t pieceReceive;       // ï¿½ï¿½ï¿½Í´ï¿½ï¿½ï¿½ï¿½Üµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	uint32_t pieceRemainder;     // ï¿½ï¿½ï¿½Í´ï¿½Ê£ï¿½à»¹Î´ï¿½ï¿½ï¿½ï¿½ï¿½Ä¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	uint32_t pieceProcess;       // ï¿½ï¿½ï¿½Í´ï¿½ï¿½Ñ´ï¿½ï¿½ï¿½ï¿½Ä¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	uint32_t validPieceProcess;  // ï¿½ï¿½ï¿½Í´ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½Ä¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 
+	uint32_t reserve2[6];
+
+	double catchUpStartPos;          // ×·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½Í´ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Î»ï¿½ï¿½
+	double actualPiecePos;           // Êµï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½Í´ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Î»ï¿½ï¿½
+	double virtualPiecePos;          // ï¿½ï¿½×·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åµï¿½ï¿½ï¿½ï¿½â¹¤ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½Í´ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Î»ï¿½ï¿½
+}TCbtInfo;
+
+GT_API GTN_SetCbtPrm(short core,short cbtIndex,TCbtPrm *pPrm);
+GT_API GTN_GetCbtPrm(short core,short cbtIndex,TCbtPrm *pPrm);
+GT_API GTN_SetCbtGroupPrm(short core,short cbtIndex,TCbtGroupPrm *pPrm);
+GT_API GTN_GetCbtGroupPrm(short core,short cbtIndex,TCbtGroupPrm *pPrm);
+GT_API GTN_ClearCbtPieceData(short core,short cbtIndex,short type);
+GT_API GTN_SetCbtPieceData(short core,short cbtIndex,TCbtPieceData *pCbtPieceData,short count=1);
+GT_API GTN_GetCbtDiscardPieceData(short core,short cbtIndex,short count,TCbtPieceData *pCbtPieceData,short *pActualCount);
+GT_API GTN_SetCbtTask(short core,short cbtIndex,short taskType,void *pTaskData);
+GT_API GTN_GetCbtTask(short core,short cbtIndex,short *pTaskType,void *pTaskData);
+GT_API GTN_StartCoupleCbt(short core,short coupleCbtIndex,TCoupleCbtPrm *pPrm);
+GT_API GTN_StopCoupleCbt(short core,short coupleCbtIndex);
+GT_API GTN_GetCbtInfo(short core,short cbtIndex,TCbtInfo *pInfo);
+GT_API GTN_ClearCbtInfo(short core,short beltIndex);
+GT_API GTN_StartCbt(short core,short cbtIndex,TStartCbtPrm *pStartCbtPrm,TListInfo *pListInfo=NULL);
+GT_API GTN_StopCbt(short core,short cbtIndex,TListInfo *pListInfo=NULL);
+GT_API GTN_WaitCbtPiece(short core,short cbtIndex,TListInfo *pListInfo=NULL);
+
+/*-----------------------------------------------------------*/
+/* CollisionCheck Command                                    */
+/*-----------------------------------------------------------*/
+#define COLLISION_CHECK_MAX            (8)       // ï¿½ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define COLLISION_CHECK_OBJECT_MAX     (16)      // ï¿½ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+#define OBJECT_TYPE_NONE               (-1)      // Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define OBJECT_TYPE_CUBOID             (1)       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define OBJECT_TYPE_CYLINDER           (2)       // Ô²ï¿½ï¿½ï¿½ï¿½
+
+#define OBJECT_LOCATE_FIX              (0)       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¶ï¿½ï¿½ï¿½ï¿½ï¿½
+#define OBJECT_LOCATE_TOOL             (1)       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ú¹ï¿½ï¿½ß²ï¿½
+#define OBJECT_LOCATE_WORK_PIECE       (2)       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ú¹ï¿½ï¿½ï¿½ï¿½ï¿½
+
+#define AXIS_SIDE_TOOL                 (0)       // Ö±ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ú¹ï¿½ï¿½ß²ï¿½
+#define AXIS_SIDE_WORK_PIECE           (1)       // Ö±ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ú¹ï¿½ï¿½ï¿½ï¿½ï¿½
+
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+typedef struct
+{
+    double axis[3][3];                           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½3ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½Îª1
+    double length[3];                            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½3ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½
+} TObjectCuboid;
+
+// Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+typedef struct
+{
+    double axis[3];                              // Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½Îª1
+    double radius;                               // Ô²ï¿½ï¿½ï¿½ï¿½ë¾¶
+    double height;                               // Ô²ï¿½ï¿½ï¿½ï¿½Ä¸ß¶ï¿½
+} TObjectCylinder;
+
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´ï¿½ï¿½Ï¢
+typedef union
+{
+    TObjectCuboid cuboid;                        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+    TObjectCylinder cylinder;                    // Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+    double data[32];
+} TObjectShape;
+
+// ï¿½ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½
+typedef struct
+{
+    short shapeType;                             // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short reserve1[3];                           // ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    TObjectShape shape;                          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+
+    short source;                                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã²Î¿ï¿½Ô´ï¿½ï¿½MC_GROUP_PROFILEï¿½ï¿½MC_PROFILEï¿½ï¿½MC_NONEï¿½ï¿½
+                                                 // ï¿½Î¿ï¿½Ô´Îªgroupï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½groupï¿½Ðµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ÏµÎªgroupï¿½ï¿½MCSï¿½ï¿½ï¿½ï¿½Ïµ
+                                                 // ï¿½Î¿ï¿½Ô´ÎªMC_PROFILEï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É¹æ»®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ÏµÎªï¿½æ»®ï¿½ï¿½ï¿½ï¿½ï¿½
+                                                 // ï¿½Î¿ï¿½Ô´ÎªMC_NONEÊ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ÏµÎªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    short index[3];                              // ï¿½Î¿ï¿½Ô´ï¿½ï¿½ï¿½ï¿½
+                                                 // ï¿½Î¿ï¿½Ô´Îªgroupï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½index[0]Îªgroupï¿½ï¿½ï¿½ï¿½ï¿½ï¿½index[1~2]ï¿½ï¿½ï¿½ï¿½Îª0
+                                                 // ï¿½Î¿ï¿½Ô´ÎªMC_PROFILEï¿½ï¿½index[0~3]ï¿½Ö±ï¿½Ö¸Ê¾ï¿½ï¿½ï¿½Å¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½XYZï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¬ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã³ï¿½0
+                                                 // ï¿½Î¿ï¿½Ô´ÎªMC_NONEÊ±ï¿½ï¿½index[0~3]ï¿½ï¿½ï¿½ï¿½Îª0
+
+    short locate;                                // ï¿½ï¿½ï¿½Î¿ï¿½Ô´Îªgroupï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                                                 // OBJECT_LOCATE_FIXï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¶ï¿½ï¿½ï¿½ï¿½ï¿½
+                                                 // OBJECT_LOCATE_TOOLï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ú¹ï¿½ï¿½ß²à£¬ï¿½É¹ï¿½ï¿½ß²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½
+                                                 // OBJECT_LOCATE_WORK_PIECEï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ú¹ï¿½ï¿½ï¿½ï¿½à£¬ï¿½É¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½
+    short side[3];                               // ï¿½ï¿½ï¿½Î¿ï¿½Ô´Îªgroupï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½Ö±ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ú¹ï¿½ï¿½ß²à»¹ï¿½Ç¹ï¿½ï¿½ï¿½ï¿½à£¬0ï¿½ï¿½ï¿½ï¿½ï¿½ß²à£¬1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    double offset[3];                            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô²Î¿ï¿½Ô´ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½
+                                                 // ï¿½Î¿ï¿½Ô´Îªgroupï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½locateÎªOBJECT_LOCATE_TOOLÊ±ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½Æ«ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½groupï¿½ï¿½ï¿½ï¿½ï¿½å¹¤ï¿½ï¿½Ä©ï¿½Ëµï¿½ï¿½ï¿½ï¿½ê£¬locateÎªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½Æ«ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½MCSï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                                                 // ï¿½Î¿ï¿½Ô´Îªprofileï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½Î¿ï¿½Ô´ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½
+                                                 // ï¿½Î¿ï¿½Ô´ÎªMC_NONEÊ±ï¿½ï¿½ï¿½Î¿ï¿½Ô´ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    short reserve2[4];                           // ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+} TCollisionCheckObjectPrm;
+
+typedef struct
+{
+    short objectIndex[2];                        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short reserve1[2];                           // ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    short rotateMode;                            // ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã²Î¿ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½0ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½Ö»ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ß·ï¿½ï¿½ï¿½Í¨ï¿½ï¿½dirï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½Ä¿Ç°ï¿½ï¿½Ö§ï¿½ï¿½Ä£Ê½0.
+    short dir[3];                                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã²Î¿ï¿½Ô´XYZï¿½Ä·ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½0ï¿½ï¿½Í¬ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                                                 // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½Ô´ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ß´ï¿½ï¿½Ú¹Ì¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½Ô´ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½È»Í¬ï¿½ï¿½
+
+    double originOffset[3];                      // ï¿½ï¿½Î»ï¿½Ã²Î¿ï¿½Ô´ï¿½ï¿½Ò»ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ã½ï¿½ï¿½ï¿½ï¿½ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä²Î¿ï¿½ï¿½ï¿½ï¿½ï¿½Æ«ï¿½Æ£ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½Ô´Ò»ï¿½ï¿½ï¿½ï¿½ï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+                                                 // ï¿½ï¿½ï¿½Æ«ï¿½ï¿½Îªï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôµï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½Í·ï¿½ï¿½ï¿½ï¿½Æ«ï¿½Æ¾ï¿½ï¿½ï¿½
+
+    double distance;                             // ï¿½ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double reserve2[8];                          // ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+} TCollisionCheckPrm;
+
+typedef struct
+{
+    short enable;                                // ï¿½ï¿½×²ï¿½ï¿½ï¿½Ê¹ï¿½Ü±ï¿½Ö¾
+    short checkResult;                           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×²ï¿½ï¿½â·¶Î§
+    short reserve1[6];
+    double reserve2[4];
+}TCollisionCheckStatus;
+
+/**
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½
+ * @param core ï¿½Ëºï¿½
+ * @param objectIndex ï¿½ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pPrm ï¿½ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½
+ * @return 
+*/
+GT_API GTN_SetCollisionCheckObjectPrm(short core,short objectIndex,TCollisionCheckObjectPrm *pPrm);
+GT_API GTN_GetCollisionCheckObjectPrm(short core,short objectIndex,TCollisionCheckObjectPrm *pPrm);
+
+/**
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×²ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½
+ * @param core ï¿½Ëºï¿½
+ * @param checkIndex ï¿½ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pPrm ï¿½ï¿½×²ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½
+ * @return 
+*/
+GT_API GTN_SetCollisionCheckPrm(short core,short checkIndex,TCollisionCheckPrm *pPrm);
+GT_API GTN_GetCollisionCheckPrm(short core,short checkIndex,TCollisionCheckPrm *pPrm);
+
+/**
+ * @brief Ê¹ï¿½Ü»ï¿½Ø±ï¿½ï¿½ï¿½×²ï¿½ï¿½â¹¦ï¿½ï¿½
+ * @param core ï¿½Ëºï¿½
+ * @param checkIndex ï¿½ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param enable Ê¹ï¿½Ü²ï¿½ï¿½ï¿½
+ * @param pListInfo Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return 
+*/
+GT_API GTN_SetCollisionCheckEnable(short core,short checkIndex,short enable,TListInfo *pListInfo=NULL);
+
+/**
+ * @brief ï¿½ï¿½È¡ï¿½ï¿½×²ï¿½ï¿½â¹¦ï¿½Üµï¿½×´Ì¬
+ * @param core ï¿½Ëºï¿½
+ * @param checkIndex ï¿½ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pStatus ï¿½ï¿½×²ï¿½ï¿½ï¿½Ä£ï¿½ï¿½×´Ì¬
+ * @return 
+*/
+GT_API GTN_GetCollisionCheckStatus(short core,short checkIndex,TCollisionCheckStatus *pStatus);
+
+/**
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½×²ï¿½ï¿½â¹¦ï¿½Üµï¿½×´Ì¬
+ * @param core ï¿½Ëºï¿½
+ * @param checkIndex ï¿½ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @return 
+*/
+GT_API GTN_ClearCollisionCheckStatus(short core,short checkIndex);
 /*--------- -------------------------------------------------*/
 /* Gantry                                                    */
 /*-----------------------------------------------------------*/
-#define GANTRY_MODE_NONE					 			(-1)
-#define GANTRY_MODE_OPEN_LOOP_GANTRY					(1)
-#define GANTRY_MODE_DECOUPLE_POSITION_LOOP				(2)
-#define GANTRY_MODE_RINGNET_DRIVER						(10)
+#define GANTRY_MODE_NONE                                (-1)
+#define GANTRY_MODE_OPEN_LOOP_GANTRY                    (1)
+#define GANTRY_MODE_DECOUPLE_POSITION_LOOP              (2)
+#define GANTRY_MODE_RINGNET_DRIVER                      (10)
 
-GT_API GTN_SetGantryMode(short core,short group,short master,short slave,short mode,int32_t syncErrorLimit=1000);
-GT_API GTN_GetGantryMode(short core,short group,short *pMaster,short *pSlave,short *pMode,int32_t *pSyncErrorLimit);
-GT_API GTN_SetGantryPid(short core,short group,TPid *pGantryPid,TPid *pYawPid);
-GT_API GTN_GetGantryPid(short core,short group,TPid *pGantryPid,TPid *pYawPid);
-GT_API GTN_GantryAxisOn(short core,short group);
-GT_API GTN_GantryAxisOff(short core,short group);
+GT_API GTN_SetGantryMode(short core, short group, short master, short slave, short mode, int32_t syncErrorLimit = 1000);
+GT_API GTN_GetGantryMode(short core, short group, short* pMaster, short* pSlave, short* pMode, int32_t* pSyncErrorLimit);
+GT_API GTN_SetGantryPid(short core, short group, TPid* pGantryPid, TPid* pYawPid);
+GT_API GTN_GetGantryPid(short core, short group, TPid* pGantryPid, TPid* pYawPid);
+GT_API GTN_GantryAxisOn(short core, short group);
+GT_API GTN_GantryAxisOff(short core, short group);
 
-GT_API GTN_SetAxisInputShapeVerI(short core,short axis, short enable, short freq, double z);
+GT_API GTN_SetAxisInputShapeVerI(short core, short axis, short enable, short freq, double z);
 
 typedef struct
 {
-	short windowSize;										// ´°¿Ú´óÐ¡
-	short lostSize;											// Ê¹ÄÜºó¶àÉÙÅÄÒÔºó¿ªÊ¼¼ì²é
-	int32_t torqueLimitMax;									// ×î´óÖµ
-	int32_t torqueLimitMin;									// ×îÐ¡Öµ
+    short windowSize;                                    // ï¿½ï¿½ï¿½Ú´ï¿½Ð¡
+    short lostSize;                                      // Ê¹ï¿½Üºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôºï¿½Ê¼ï¿½ï¿½ï¿½
+    int32_t torqueLimitMax;                                 // ï¿½ï¿½ï¿½Öµ
+    int32_t torqueLimitMin;                                 // ï¿½ï¿½Ð¡Öµ
 
-	short continuousProtectCount;							// ´°¿í·¶Î§ÄÚ£¬Êµ¼ÊµçÁ÷Á¬ÐøÕâÃ´¶àÅÄ³¬¹ý×î´óÖµ»òÕß×îÐ¡ÖµÔò±£»¤´¥·¢
-	short oscillationPositiveProtectCount;					// ´°¿í·¶Î§ÄÚ£¬Êµ¼ÊµçÁ÷×Ü¹²ÕâÃ´¶àÅÄ´óÓÚ×î´óÖµÔò±£»¤´¥·¢
-	short oscillationNegativeProtectCount;					// ´°¿í·¶Î§ÄÚ£¬Êµ¼ÊµçÁ÷×Ü¹²ÕâÃ´¶àÅÄÐ¡ÓÚ×îÐ¡ÖµÔò±£»¤´¥·¢
-	short reserve[15];
+    short continuousProtectCount;                        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î§ï¿½Ú£ï¿½Êµï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã´ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡Öµï¿½ò±£»ï¿½ï¿½ï¿½ï¿½ï¿½
+    short oscillationPositiveProtectCount;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î§ï¿½Ú£ï¿½Êµï¿½Êµï¿½ï¿½ï¿½ï¿½Ü¹ï¿½ï¿½ï¿½Ã´ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ò±£»ï¿½ï¿½ï¿½ï¿½ï¿½
+    short oscillationNegativeProtectCount;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î§ï¿½Ú£ï¿½Êµï¿½Êµï¿½ï¿½ï¿½ï¿½Ü¹ï¿½ï¿½ï¿½Ã´ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½Ð¡Öµï¿½ò±£»ï¿½ï¿½ï¿½ï¿½ï¿½
+    short reserve[15];
 } TGantryTorqueProtectPrm;
-GT_API GTN_SetGantryProtectPrm(short core,short group,short torqueProtectType,TGantryTorqueProtectPrm *pPrm);
-GT_API GTN_GetGantryProtectPrm(short core,short group,short torqueProtectType,TGantryTorqueProtectPrm *pPrm);
-GT_API GTN_GantryProtectEnable(short core,short group,short enable,short protectType,short subProtectType);
+GT_API GTN_SetGantryProtectPrm(short core, short group, short torqueProtectType, TGantryTorqueProtectPrm* pPrm);
+GT_API GTN_GetGantryProtectPrm(short core, short group, short torqueProtectType, TGantryTorqueProtectPrm* pPrm);
+GT_API GTN_GantryProtectEnable(short core, short group, short enable, short protectType, short subProtectType);
 
 typedef struct
 {
-	int32_t torqueProtectSts;												// ´¥·¢×´Ì¬
-	int32_t torqueProtectEnable;											// ´¥·¢Ê¹ÄÜ×´Ì¬
-	short reserve[20];
+    int32_t torqueProtectSts;                               // ï¿½ï¿½ï¿½ï¿½×´Ì¬
+    int32_t torqueProtectEnable;                            // ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½×´Ì¬
+    short reserve[20];
 } TGantryInf;
-GT_API GTN_GetGantryInf(short core,short group,TGantryInf *pPrm);
+GT_API GTN_GetGantryInf(short core, short group, TGantryInf* pPrm);
 
-GT_API GTN_SetGantrySynchErrorCompensate2DTable(short core,short tableIndex,TCompensate2DTable *pTable,int32_t *pData,short extend);
-GT_API GTN_GetGantrySynchErrorCompensate2DTable(short core,short tableIndex,TCompensate2DTable *pTable,short *pExtend);
-GT_API GTN_SetGantrySynchErrorCompensate2D(short core,short group,TCompensate2D *pComp2d);
-GT_API GTN_GetGantrySynchErrorCompensate2D(short core,short group,TCompensate2D *pComp2d);
-GT_API GTN_GetGantrySynchErrorCompensate2DValue(short core,short group,double *pValue);
+GT_API GTN_SetGantrySynchErrorCompensate2DTable(short core, short tableIndex, TCompensate2DTable* pTable, int32_t* pData, short extend);
+GT_API GTN_GetGantrySynchErrorCompensate2DTable(short core, short tableIndex, TCompensate2DTable* pTable, short* pExtend);
+GT_API GTN_SetGantrySynchErrorCompensate2D(short core, short group, TCompensate2D* pComp2d);
+GT_API GTN_GetGantrySynchErrorCompensate2D(short core, short group, TCompensate2D* pComp2d);
+GT_API GTN_GetGantrySynchErrorCompensate2DValue(short core, short group, double* pValue);
 
 typedef struct SecondOrderFilterPara
 {
-	short active;
+    short active;
 
-	double a0;
-	double a1;
-	double a2;
+    double a0;
+    double a1;
+    double a2;
 
-	double b1;
-	double b2;
+    double b1;
+    double b2;
 
 } TSecondOrderFilterPara;
 
-#define TYPE_CONTROL_OUTPUT_FILTER			(1)
-#define TYPE_YAW_CONTROL_OUTPUT_FILTER		(2)
-#define FILTER_COUNT_MAX					(2)
+#define TYPE_CONTROL_OUTPUT_FILTER          (1)
+#define TYPE_YAW_CONTROL_OUTPUT_FILTER      (2)
+#define FILTER_COUNT_MAX                    (2)
 
-GT_API GTN_SetSecondOrderFilterPara(short core,short control,short type,short index,TSecondOrderFilterPara *pFilterPrm);
-GT_API GTN_GetSecondOrderFilterPara(short core,short control,short type,short index,TSecondOrderFilterPara *pFilterPrm);
+GT_API GTN_SetSecondOrderFilterPara(short core, short control, short type, short index, TSecondOrderFilterPara* pFilterPrm);
+GT_API GTN_GetSecondOrderFilterPara(short core, short control, short type, short index, TSecondOrderFilterPara* pFilterPrm);
 
 typedef struct _OCA_CTRL_GEN_
 {
-	short  s16Gain;
-	short  s16Offset;
-	double dFrq;
-	int32_t   u32RunPeriod;
-	short  u16SigType;
+    short  s16Gain;
+    short  s16Offset;
+    double dFrq;
+    int32_t   u32RunPeriod;
+    short  u16SigType;
 } OCA_CTRL_GEN;
 
 typedef struct ExcitationPara
 {
-	short gain;
-	short offset;
-	short frq;		// hz
-	double runTime;	// s
+    short gain;
+    short offset;
+    short frq;      // hz
+    double runTime; // s
 } TExcitationPara;
 
 typedef struct ExcitationTrapPara
 {
-	double vel;
-	double acc;
-	double dec;
-	double runTime;	// s
+    double vel;
+    double acc;
+    double dec;
+    double runTime;  // s
 } TExcitationTrpPara;
 
-#define NO_EXCIT						(0xff)
-#define OPEN_LOOP_EXCIT					(1)
-#define SIGNAL_TYPE_STEP				(3)
-#define SIGNAL_TYPE_SIN					(0x10)
-#define SIGNAL_TYPE_TRAP				(0x11)
-#define SIGNAL_TYPE_NOTHING				(0xFF)
+#define NO_EXCIT                        (0xff)
+#define OPEN_LOOP_EXCIT                 (1)
+#define SIGNAL_TYPE_STEP                (3)
+#define SIGNAL_TYPE_SIN                 (0x10)
+#define SIGNAL_TYPE_TRAP                (0x11)
+#define SIGNAL_TYPE_NOTHING             (0xFF)
 
-GT_API GTN_SetGenerator(short core,OCA_CTRL_GEN *pGenStr);
-GT_API GTN_GetGenerator(short core,OCA_CTRL_GEN *pGenStr);
-GT_API GTN_StepResponse(short core,short control,short gain,double time);
-GT_API GTN_SetExctLoopMode(short core,short control,short exciteLoopMode);
-GT_API GTN_GetExctLoopMode(short core,short control,short *pExciteLoopMode);
+GT_API GTN_SetGenerator(short core, OCA_CTRL_GEN* pGenStr);
+GT_API GTN_GetGenerator(short core, OCA_CTRL_GEN* pGenStr);
+GT_API GTN_StepResponse(short core, short control, short gain, double time);
+GT_API GTN_SetExctLoopMode(short core, short control, short exciteLoopMode);
+GT_API GTN_GetExctLoopMode(short core, short control, short* pExciteLoopMode);
 
 
 /*-----------------------------------------------------------*/
@@ -3309,8 +5376,8 @@ GT_API GTN_GetRetainValue(short core,uint32_t address,short count,short *pData);
 
 typedef struct
 {
-	short direction;
-	short reserve[3];
+    short direction;
+    short reserve[3];
 } TGPIOConfig;
 GT_API GTN_SetGPIOConfig(short core,short station,int32_t effectiveLevel,int32_t direction);
 GT_API GTN_SetGPIOConfigEx(short core,short station,short index,TGPIOConfig *pGPIOConfig,short count);
@@ -3326,42 +5393,45 @@ GT_API GTN_GetNetStatus(short core,short *pNetSts);
 GT_API GTN_GetPowerSts(short core,int32_t *pSts);
 GT_API GTN_SynchPrfPosWithEncPos(short core,short profile,short encoder);
 
-
+GT_API GTN_SetServoTime(short core, int32_t servoTime, int32_t delay, int32_t stepCoef);
+GT_API GTN_GetServoTime(short core, int32_t* pServoTime, int32_t* pDelay, int32_t* pStepCoef);
 GT_API GTN_SetProfileTime(short core,int32_t profileTime,int32_t delay,int32_t stepCoef);
 GT_API GTN_GetProfileTime(short core,int32_t *pProfileTime,int32_t *pDelay,int32_t *pStepCoef);
 GT_API GTN_SetCoreTime(short core,int32_t profileTime,int32_t delay,int32_t stepCoef);
 GT_API GTN_GetCoreTime(short core,int32_t *pProfileTime,int32_t *pDelay,int32_t *pStepCoef);
-
+GT_API GTN_SetCorePeriod(short core,double period);
+GT_API GTN_GetCorePeriod(short core,double *pPeriod,short *pFlag,short *pInfo);
 typedef struct ControlInfo
 {
-	double refPos;
-	double refPosFilter;
-	double refPosFilter2;
-	double cntPos;
-	double cntPosFilter;
+    double refPos;
+    double refPosFilter;
+    double refPosFilter2;
+    double cntPos;
+    double cntPosFilter;
 
-	double error;
-	double refVel;
-	double refAcc;
+    double error;
+    double refVel;
+    double refAcc;
 
-	short value;
-	short valueFilter;
+    short value;
+    short valueFilter;
 
-	short offset;
+    short offset;
 } TControlInfo;
 
 typedef struct
 {
-	uint32_t notify;
-	uint32_t receive;
-	uint32_t execute;
-	uint32_t retry;
-	uint32_t receiveError;
-	uint32_t echo;
+    uint32_t notify;
+    uint32_t receive;
+    uint32_t execute;
+    uint32_t retry;
+    uint32_t receiveError;
+    uint32_t echo;
 } TCommandCount;
 
 GT_API GTN_ClearCommandCount(short core);
 GT_API GTN_GetCommandCount(short core,TCommandCount *pCommandCount);
+GT_API GTN_GetControlInfo(short core,short control,TControlInfo *pControlInfo);
 
 
 GT_API GTN_SetLongVar(short core,short index,int32_t value);
@@ -3372,30 +5442,40 @@ GT_API GTN_GetDoubleVar(short core,short index,double *pValue);
 GT_API GTN_GetBufWaitDiStatus(short core,short crd,short *pDiType,unsigned short *pDiIndex,unsigned short *pLevel, short *pContinueTime,int32_t *pOverTime,short *pFlagMode,int32_t *pSegNum,short *pEnable,int32_t *pCount,short fifo);
 GT_API GTN_GetBufWaitLongVarStatus(short core,short crd,short *pIndex,int32_t *pValue,short *pFlagMode,int32_t *pSegNum,short *pEnable,short *pStatus,short fifo);
 GT_API GTN_ClearBufWaitStatus(short core,short crd,short fifo);
-GT_API GTN_BufWaitDi(short core,short crd, short diType, unsigned short diIndex,unsigned short level, short continueTime, int32_t overTime, short flagMode,int32_t segNum, short fifo);
-GT_API GTN_BufWaitLongVar(short core,short crd, short index,int32_t value,int32_t overTime,short flagMode,int32_t segNum,short fifo);
+GT_API GTN_BufWaitDi(short core, short crd, short diType, unsigned short diIndex, unsigned short level, short continueTime, int32_t overTime, short flagMode, int32_t segNum, short fifo);
+GT_API GTN_BufWaitLongVar(short core, short crd, short index, int32_t value, int32_t overTime, short flagMode, int32_t segNum, short fifo);
+GT_API GTN_BufWaitWatchVar(short core, short crd, TWatchCondition* pWatchCondition, TWaitTimeout* pWaitTimeout, int32_t segNum, short fifo);
 
 GT_API GTN_BufDoBit(short core,short crd,unsigned short doType,unsigned short index,short value,short fifo);
 GT_API GTN_BufDoBitDelay(short core,short crd,unsigned short doType,unsigned short index,short value,int32_t delayTime,short fifo);
-
+GT_API GTN_BufSetOverride(short core,short crd,double synVelRatio,short mode,short fifo);
 
 typedef struct
 {
-	short type;
-	short enable;
-	short flagMode;
-	short diType;
-	short diIndex;
-	short diValue;
-	unsigned short continueTime;
-	unsigned short trigDelay;
-	uint32_t overTime;
-	uint32_t counter;
-	int32_t longVar;
-	int32_t segNum;
-	short stop;
-	short overTimeStop;
-	short pad1[2];
+    double stopPos;
+    short mode;
+    short pad[3];
+}TStopPos;
+GT_API GTN_BufStopPos(short core,short crd,short profile,TStopPos *pStopPos,short modal,short fifo);
+GT_API GTN_BufSetSoftLimit(short core,short crd,short axis,int32_t positive,int32_t negative,short fifo);
+
+typedef struct
+{
+    short type;
+    short enable;
+    short flagMode;
+    short diType;
+    short diIndex;
+    short diValue;
+    unsigned short continueTime;
+    unsigned short trigDelay;
+    uint32_t overTime;
+    uint32_t counter;
+    int32_t longVar;
+    int32_t segNum;
+    short stop;
+    short overTimeStop;
+    short pad1[2];
 }TBufWaitDiStatusEx;
 GT_API GTN_GetBufWaitDiStatusEx(short core,short crd,short fifo,TBufWaitDiStatusEx *pStatus);
 
@@ -3405,55 +5485,56 @@ GT_API GTN_GetBufWaitDiStatusEx(short core,short crd,short fifo,TBufWaitDiStatus
 //Standard Home
 //////////////////////////////////////////////////////////////////////////
 
-#define STANDARD_HOME_STAGE_IDLE              (0)   //Î´Æô¶¯»ØÔ­µã
-#define STANDARD_HOME_STAGE_START             (1)   //Æô¶¯»ØÔ­µã
-#define HOME_STAGE_ON_HOME_LIMIT_ESCAPE		  (2)
-#define STANDARD_HOME_STAGE_SEARCH_HOME       (20)  //ÕýÔÚËÑË÷Home
-#define STANDARD_HOME_STAGE_SEARCH_INDEX      (30)  //ÕýÔÚËÑË÷Index
-#define STANDARD_HOME_STAGE_GO_HOME           (80)  //ÕýÔÚÔË¶¯µ½Ô­µã
-#define STANDARD_HOME_STAGE_END               (100) //»ØÔ­µã½áÊø
-#define STANDARD_HOME_STAGE_START_CHECK       (-1)  //Æô¶¯»ØÔ­µãÇ°×Ô¼ì
-#define STANDARD_HOME_STAGE_CHECKING          (-2)  //×Ô¼ìÖÐ
+#define STANDARD_HOME_STAGE_IDLE              (0)   //Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ï¿½
+#define STANDARD_HOME_STAGE_START             (1)   //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ï¿½
+#define HOME_STAGE_ON_HOME_LIMIT_ESCAPE       (2)
+#define STANDARD_HOME_STAGE_SEARCH_HOME       (20)  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Home
+#define STANDARD_HOME_STAGE_SEARCH_INDEX      (30)  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Index
+#define STANDARD_HOME_STAGE_GO_HOME           (80)  //ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½Ô­ï¿½ï¿½
+#define STANDARD_HOME_STAGE_END               (100) //ï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½ï¿½
+#define STANDARD_HOME_STAGE_START_CHECK       (-1)  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ï¿½Ç°ï¿½Ô¼ï¿½
+#define STANDARD_HOME_STAGE_CHECKING          (-2)  //ï¿½Ô¼ï¿½ï¿½ï¿½
 
-#define STANDARD_HOME_ERROR_NONE		      (0)   //Î´·¢Éú´íÎó
-#define STANDARD_HOME_ERROR_DISABLE	          (10)  //Ö´ÐÐ»ØÔ­µãµÄÖáÎ´Ê¹ÄÜ
-#define STANDARD_HOME_ERROR_ALARM		      (20)  //Ö´ÐÐ»ØÔ­µãµÄÖá±¨¾¯
-#define STANDARD_HOME_ERROR_STOP		      (30)  //Î´Íê³É»ØÔ­µã£¬±»Í£Ö¹ÔË¶¯
-#define STANDARD_HOME_ERROR_ON_LIMIT          (40)  //´¥·¢ÁËÏÞÎ»ÎÞ·¨¼ÌÐø
-#define STANDARD_HOME_ERROR_NO_HOME	          (50)  //Î´ÕÒµ½Home
-#define STANDARD_HOME_ERROR_NO_INDEX          (60)  //Î´ÕÒµ½Index
-#define STANDARD_HOME_ERROR_NO_LIMIT          (70)  //Î´ÕÒµ½ÏÞÎ»
-#define STANDARD_HOME_ERROR_ENCODER_DIR_SCALE (-1)  //¹æ»®Æ÷Óë±àÂëÆ÷·½Ïò·½ÏòÏà·´»òÕßµ±Á¿²»Ò»ÖÂ
+#define STANDARD_HOME_ERROR_NONE              (0)   //Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define STANDARD_HOME_ERROR_DISABLE           (10)  //Ö´ï¿½Ð»ï¿½Ô­ï¿½ï¿½ï¿½ï¿½ï¿½Î´Ê¹ï¿½ï¿½
+#define STANDARD_HOME_ERROR_ALARM             (20)  //Ö´ï¿½Ð»ï¿½Ô­ï¿½ï¿½ï¿½ï¿½á±¨ï¿½ï¿½
+#define STANDARD_HOME_ERROR_STOP              (30)  //Î´ï¿½ï¿½É»ï¿½Ô­ï¿½ã£¬ï¿½ï¿½Í£Ö¹ï¿½Ë¶ï¿½
+#define STANDARD_HOME_ERROR_ON_LIMIT          (40)  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Þ·ï¿½ï¿½ï¿½ï¿½ï¿½
+#define STANDARD_HOME_ERROR_NO_HOME           (50)  //Î´ï¿½Òµï¿½Home
+#define STANDARD_HOME_ERROR_NO_INDEX          (60)  //Î´ï¿½Òµï¿½Index
+#define STANDARD_HOME_ERROR_NO_LIMIT          (70)  //Î´ï¿½Òµï¿½ï¿½ï¿½Î»
+#define STANDARD_HOME_ERROR_ENCODER_DIR_SCALE (-1)  //ï¿½æ»®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½à·´ï¿½ï¿½ï¿½ßµï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½
 
 
 typedef struct
 {
-	short mode;		      // »ØÔ­µãÄ£Ê½È¡Öµ·¶Î§1~36
-	double highSpeed;     // ËÑË÷HomeµÄËÙ¶È£¬µ¥Î»pulse/ms
-	double lowSpeed;	  // ËÑË÷IndexµÄËÙ¶È£¬µ¥Î»pulse/ms
-	double acc;		      // »ØÁã¼ÓËÙ¶È£¬µ¥Î»pulse/ms^2
-	int32_t offset;          // »ØÁãÆ«ÒÆÁ¿£¬µ¥Î»pulse
-	short check;          // ÊÇ·ñÆôÓÃ×Ô¼ì¹¦ÄÜ£¬1-ÆôÓÃ£¬ÆäËüÖµ-²»ÆôÓÃ
-	short autoZeroPos;    // »ØÁãÍê±ÏÊÇ·ñ×Ô¶¯ÇåÁã£¬1-×Ô¶¯ÇåÁã£¬ÆäËüÖµ-²»ÇåÁã
-	int32_t motorStopDelay;  //µç»úµ½Î»ÑÓÊ±£¬µ¥Î»£º¿ØÖÆÖÜÆÚ
-	short pad1[3];	      // ±£Áô£¨²»ÐèÒªÉèÖÃ£©
+    short mode;		      // ï¿½ï¿½Ô­ï¿½ï¿½Ä£Ê½È¡Öµï¿½ï¿½Î§1~36
+    double highSpeed;     // ï¿½ï¿½ï¿½ï¿½Homeï¿½ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½Î»pulse/ms
+    double lowSpeed;	  // ï¿½ï¿½ï¿½ï¿½Indexï¿½ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½Î»pulse/ms
+    double acc;		      // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½Î»pulse/ms^2
+    int32_t offset;       // ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»pulse
+    short check;          // ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ì¹¦ï¿½Ü£ï¿½1-ï¿½ï¿½ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ï¿½Öµ-ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short autoZeroPos;    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ã£¬1-ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½Öµ-ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int32_t motorStopDelay; //ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short pad1[3];	      // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½Ã£ï¿½
 } TStandardHomePrm;
 
 typedef struct
 {
-	short run;           // ÊÇÕýÔÚ½øÐÐ»ØÔ­µã£¬0¡ªÒÑÍ£Ö¹ÔË¶¯£¬1-ÕýÔÚ»ØÔ­µã
-	short stage;         // »ØÔ­µãÔË¶¯µÄ½×¶Î
-	short error;         // »ØÔ­µã¹ý³ÌµÄ·¢ÉúµÄ´íÎó
-	short pad1[3];       // ±£Áô£¨ÎÞ¾ßÌåº¬Òå£©
-	int32_t capturePos;     // ²¶»ñµ½Home»òIndexÊ±¿ÌµÄ±àÂëÆ÷Î»ÖÃ
-	int32_t targetPos;      // ÐèÒªÔË¶¯µ½µÄÄ¿±êÎ»ÖÃ£¨Ô­µãÎ»ÖÃ»òÕßÔ­µãÎ»ÖÃ+Æ«ÒÆÁ¿£©£¬ÔÚËÑË÷LimitÊ±»òÕßËÑË÷Home»òIndexÊ±£¬ÉèÖÃµÄËÑË÷¾àÀëÎª0£¬ÄÇÃ´¸ÃÖµÏÔÊ¾Îª805306368
+    short run;           // ï¿½ï¿½ï¿½ï¿½ï¿½Ú½ï¿½ï¿½Ð»ï¿½Ô­ï¿½ã£¬0ï¿½ï¿½ï¿½ï¿½Í£Ö¹ï¿½Ë¶ï¿½ï¿½ï¿½1-ï¿½ï¿½ï¿½Ú»ï¿½Ô­ï¿½ï¿½
+    short stage;         // ï¿½ï¿½Ô­ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½Ä½×¶ï¿½
+    short error;         // ï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½ÌµÄ·ï¿½ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½
+    short pad1[3];       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¾ï¿½ï¿½åº¬ï¿½å£©
+    int32_t capturePos;  // ï¿½ï¿½ï¿½ï¿½Homeï¿½ï¿½IndexÊ±ï¿½ÌµÄ±ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+    int32_t targetPos;   // ï¿½ï¿½Òªï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½Î»ï¿½Ã£ï¿½Ô­ï¿½ï¿½Î»ï¿½Ã»ï¿½ï¿½ï¿½Ô­ï¿½ï¿½Î»ï¿½ï¿½+Æ«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½LimitÊ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Homeï¿½ï¿½IndexÊ±ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½ï¿½ï¿½Ã´ï¿½ï¿½Öµï¿½ï¿½Ê¾Îª805306368
 } TStandardHomeStatus;
 
 GT_API GTN_ExecuteStandardHome(short core,short axis,TStandardHomePrm *pHomePrm);
 GT_API GTN_GetStandardHomePrm(short core,short axis,TStandardHomePrm *pHomePrm);
 GT_API GTN_GetStandardHomeStatus(short core,short axis,TStandardHomeStatus *pHomeStatus);
 
-
+#define POS_COMPARE_RESULT_FIFO_MODE_STATIC                (0)
+#define POS_COMPARE_RESULT_FIFO_MODE_LOOP                  (1)
 
 GT_API GTN_SetPosCompareFifoMode(short core,short index,short mode);
 GT_API GTN_GetPosCompareFifoMode(short core,short index,short *pMode);
@@ -3461,48 +5542,57 @@ GT_API GTN_GetPosCompareLatchValue(short core,short index,int32_t count,int32_t 
 
 
 
+/*-----------------------------------------------------------*/
+/* Event Task                                                */
+/*-----------------------------------------------------------*/
 typedef struct
 {
-	uint32_t profileMask;
-	int32_t offset;
-	double vel;
-	double acc;
+    uint32_t profileMask;
+    int32_t offset;
+    double vel;
+    double acc;
 }TTaskMoveEscape;
 
 typedef struct
 {
-	short eventHit;
-	short pad1[3];
-	int32_t pad2[2];
-	double pad3[2];
+    short eventHit;
+    short occupyStatus;
+    short enableStatus;
+    short pad1;
+    int32_t pad2[2];
+    double pad3[2];
 }TEventStatus;
 
 typedef struct
 {
-	short start;
-	short execute;
-	short pad1[2];
-	int32_t pad2[2];
-	double pad3[2];
-}TaskStatus;
+    short start;
+    short execute;
+    short occupyStatus;
+    short executeCount;
+    int32_t pad2[2];
+    double pad3[2];
+}TTaskStatus;
 
 GT_API GTN_GetEventStatus(short core,short index,TEventStatus *pStatus);
-GT_API GTN_GetTaskStatus(short core,short index,TaskStatus *pStatus);
+GT_API GTN_GetTaskStatus(short core,short index, TTaskStatus *pStatus);
 GT_API GTN_SetTriggerMoveEscape(short core,short trigger,TTaskMoveEscape *pPrm);
 GT_API GTN_GetPrfRemainderPos(short core,short profile,double *pValue,short count,uint32_t *pClock);
 
 
 /*-----------------------------------------------------------*/
-/* MPG							                                        */
+/* MPG                                                       */
 /*-----------------------------------------------------------*/
 typedef struct
 {
-	double pos;
-	double vel;
-	double reserve[2];
-	int32_t di;
-	int32_t reserve1[3];
+    double pos;
+    double vel;
+    double reserve[2];
+    int32_t di;
+    int32_t reserve1[3];
 }TMpgInfo;
+
+GT_API GTN_EnableMpgRoundOff(short core,short mpgIndex,short count=1);
+GT_API GTN_DisableMpgRoundOff(short core,short mpgIndex,short count=1);
 GT_API GTN_ReadMpgInfo(short core,short mpg,TMpgInfo *pMpgInfo);
 GT_API GTN_WriteMpgPos(short core,short mpg,double *pPos,short count=1);
 GT_API GTN_ReadAuEncPos(short core,short encoder,double *pPos,short count=1);
@@ -3531,43 +5621,70 @@ GT_API GTN_RN_MltPcPduWrUpdate(short core,unsigned char des_id);
 //////////////////////////////////////////////////////////////////////////
 //Command List
 //////////////////////////////////////////////////////////////////////////
+
+#define LIST_STATUS_RESERVE2_REVERSE_LAST_USER_TAG          (4)      // Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Îµï¿½ï¿½Ã»ï¿½ï¿½ï¿½Ç©
+#define COMMAND_LIST_MODE_STATIC        (0)
+#define COMMAND_LIST_MODE_DYNAMIC       (1)
+
 typedef struct
 {
-	short execute;
-	short empty;
-	short stopInfo;
-	short reserve1;
-	short motionDone;
-	short commandType;
-	short command;
-	short direction;
-	int32_t executeSegNum;
-	int32_t remainderSegCount;
-	int32_t reserve2[6];
+    short execute;
+    short empty;
+    short stopInfo;
+    short reserve1;
+    short motionDone;
+    short commandType;
+    short command;
+    short direction;
+    int32_t executeSegNum;
+    int32_t remainderSegCount;
+	int32_t userTag;
+	int32_t reserve2[5];
 } TCommandListStatus;
 
 typedef struct
 {
-	short mode;
-	short elementSize;
-	short reserve1[6];
-	int32_t forwardSpace;
-	int32_t reverseSpace;
-	int32_t reserve2[6];
+    short mode;
+    short elementSize;
+    short reserve1[6];
+    int32_t forwardSpace;
+    int32_t reverseSpace;
+    int32_t reserve2[6];
 } TCommandListConfig;
 
 typedef struct
 {
-	short command;
-	short index[2];
-	short reserve[5];
+    short command;
+    short index[2];
+    short reserve[5];
 } TCommandListLink;
 
 typedef struct
 {
-	short startMode;
-	short reserve1[15];
+    short startMode;
+    short reserve1[15];
 } TCommandListStartParameter;
+
+typedef struct  
+{
+    uint32_t loop;
+    short reserve1[10];
+    int32_t reserve2[2];
+} TCommandListStaticParameter;
+
+typedef struct  
+{
+	double velOverride;
+	double reserve[40];
+} TCommandListEstimatePrm;
+
+typedef struct  
+{
+	short mode;
+	short reserve1[3];
+	double time;
+	double reserve2[8];
+} TCommandListEstimateInfo;
 
 GT_API GTN_GetCommandListSpace(short core,short list,int32_t *pSpace);
 GT_API GTN_GetCommandListStatus(short core,short list,TCommandListStatus *pStatus);
@@ -3579,7 +5696,7 @@ GT_API GTN_StopCommandList(short core,short index,short stopMode,TListInfo *pLis
 GT_API GTN_SetCommandListStartParameter(short core,short list,TCommandListStartParameter *pPrm,TListInfo *pListInfo);
 GT_API GTN_GetCommandListStartParameter(short core,short list,TCommandListStartParameter *pPrm);
 GT_API GTN_StopMultiCommandList(short core,uint32_t mask,short stopMode,TListInfo *pListInfo=NULL);
-GT_API GTN_ClearCommandListStatus(short core,short index,TListInfo *pListInfo);
+GT_API GTN_ClearCommandListStatus(short core, short index, TListInfo* pListInfo = NULL);
 GT_API GTN_SetCommandListConfig(short core,short index,TCommandListConfig *pConfig);
 GT_API GTN_GetCommandListConfig(short core,short index,TCommandListConfig *pConfig);
 GT_API GTN_SetCommandListLink(short core,short linkId,short list,TCommandListLink *pLink);
@@ -3593,38 +5710,77 @@ GT_API GTN_GetCommandListDirection(short core,short index,short *pDirection);
 GT_API GTN_CommandListDataPush(short core,short list);
 GT_API GTN_SetCommandListLinkGroup(short core,short list,uint32_t linkGroupMask);
 GT_API GTN_GetCommandListLinkGroup(short core,short list,uint32_t *pLinkGroupMask);
+GT_API GTN_SetCommandListStaticParameter(short core,short list,TCommandListStaticParameter *pPrm);
+GT_API GTN_GetCommandListStaticParameter(short core,short list,TCommandListStaticParameter *pPrm);
+GT_API GTN_SetCommandListEstimateMode(short core,short list,short mode,TCommandListEstimatePrm *pEstimatePrm);
+GT_API GTN_GetCommandListEstimateInfo(short core,short list,TCommandListEstimateInfo *pEstimateInfo);
 
+// ï¿½Â¼Ü¹ï¿½DMAÖ¸ï¿½î£¬
+GT_API GTN_CommandListHsMode(short core,short list,short hsEnable,short link,unsigned short threshold=1,short lookAheadInMc=0);
+GT_API GTN_BatchListCommandBegin(short core,short list);
+GT_API GTN_BatchListCommandEnd(short core,short list);
 
+#define COMMAND_LIST_MPG_MODE_BIDIRECTION				        (0)			//ï¿½ï¿½ï¿½ï¿½ï¿½ò¶¼¿ï¿½ï¿½Ô¹Ì¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+#define COMMAND_LIST_MPG_MODE_POS						        (1)			//MPGï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½å²¹
+#define COMMAND_LIST_MPG_MODE_NEG						        (-1)		//MPGï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½å²¹
+#define COMMAND_LIST_MPG_MODE_WINDOW 					        (2)			//ï¿½ï¿½ï¿½ï¿½ï¿½ò¶¼¿ï¿½ï¿½Ô¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+#define COMMAND_LIST_MPG_MODE_SIM						        (100)
+
+#define COMMAND_LIST_MPG_FIXED_VEL_COUNT_MAX     (8)
 typedef struct
 {
-	short  count;
-	short  reverse1[3];
-	double alpha[4];
-	double beta[4];
+	short enable;                                                    // Ê¹ï¿½Ü±ï¿½Ö¾
+	short master;                                                    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	short filterTime;                                                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½Ê±ï¿½ï¿½
+	short mode;                                                      // ï¿½ï¿½ï¿½Öµï¿½Ä£Ê½
+	short fixedMpgVelCount;                                          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½Î»ï¿½ï¿½ï¿½ï¿½
+	short pad1[3];
+	int32_t masterEven;                                              // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	int32_t slaveEven;                                               // ï¿½ï¿½ï¿½Ö´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	int32_t pad2[2];
+	double fixedMpgVel[COMMAND_LIST_MPG_FIXED_VEL_COUNT_MAX];        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½Î»RatioÖµ
+	double ratioUpdateTime;                                          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¢ï¿½ï¿½Ê±ï¿½ï¿½
+	double pad3[3];
+}TCommandListMpgPrm;
+
+GT_API GT_SetCommandListMpgMode(short list,TCommandListMpgPrm *pCommandListMpgPrm,TListInfo *pListInfo);
+GT_API GT_GetCommandListMpgMode(short list,TCommandListMpgPrm *pCommandListMpgPrm);
+GT_API GTN_SetCommandListMpgMode(short core,short list,TCommandListMpgPrm *pCommandListMpgPrm,TListInfo *pListInfo);
+GT_API GTN_GetCommandListMpgMode(short core,short list,TCommandListMpgPrm *pCommandListMpgPrm);
+typedef struct
+{
+    short  count;
+    short  reverse1[3];
+    double alpha[4];
+    double beta[4];
 }TProfileScale;
 GT_API GTN_SetAxisScale(short core,short profile,TProfileScale *pScale,TListInfo *pListInfo=NULL);
 GT_API GTN_GetAxisScale(short core,short profile,TProfileScale *pScale);
 
+/*-----------------------------------------------------------*/
+/* Axis                                                      */
+/*-----------------------------------------------------------*/
+#define AXIS_MOTION_CONSTRAINT_RESERVE1_DV_MAX_LIMIT       (0) // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½dvmaxï¿½ï¿½Ô¼ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½Ð§ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½Ä¬ï¿½Ï£ï¿½1ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½-1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
 typedef struct
 {
-	double velMax;
-	double accMax;
-	double decMax;
-	double jerkMax;
-	double dvMax;
-	short reverseLimitMode;
-	short reserve1[3];
-	double reserve2[8];
+    double velMax;
+    double accMax;
+    double decMax;
+    double jerkMax;
+    double dvMax;
+    short reverseLimitMode;
+    short reserve1[3];
+    double reserve2[8];
 } TAxisMotionConstraint;
 GT_API GTN_SetAxisMotionConstraint(short core,short axis,TAxisMotionConstraint *pPrm,TListInfo *pListInfo);
 GT_API GTN_GetAxisMotionConstraint(short core,short axis,TAxisMotionConstraint *pPrm);
 
 typedef struct
 {
-	short  count;
-	short  reserve[3];
-	double alpha[4];
-	double beta[4];
+    short  count;
+    short  reserve[3];
+    double alpha[4];
+    double beta[4];
 }TScaleParameter;
 GT_API GTN_SetScaleParameter(short core,short type,short index,TScaleParameter *pScalePrm,TListInfo *pListInfo);
 GT_API GTN_GetScaleParameter(short core,short type,short index,TScaleParameter *pScalePrm);
@@ -3634,19 +5790,19 @@ GT_API GTN_GetAxisGearRatio(short core,short profile,double *pGearRatio,short co
 
 typedef struct
 {
-	double currentToTorqueCoef;
-	double ratedCurrent;
-	double reserve[4];
+    double currentToTorqueCoef;
+    double ratedCurrent;
+    double reserve[4];
 } TAxisMotorParameter;
 GT_API GTN_SetAxisMotorParameter(short core,short profile,TAxisMotorParameter *pPrm,TListInfo *pListInfo);
 GT_API GTN_GetAxisMotorParameter(short core,short profile,TAxisMotorParameter *pPrm);
 
 typedef struct
 {
-	double deceleration;
-	double jerk;
-	short reserve1[4];
-	double reserve2[5];
+    double deceleration;
+    double jerk;
+    short reserve1[4];
+    double reserve2[5];
 } TAxisStopParameter;
 GT_API GTN_SetAxisStopParameter(short core,short profile,short type,TAxisStopParameter *pPrm,TListInfo *pListInfo);
 GT_API GTN_GetAxisStopParameter(short core,short profile,short type,TAxisStopParameter *pPrm);
@@ -3678,7 +5834,8 @@ GT_API GTN_GetVelOverride(short core,short index,double *pVelRatio);
 #define WATCH_CONDITION_NE					(2)
 #define WATCH_CONDITION_GE					(3)
 #define WATCH_CONDITION_LE					(4)
-
+#define WATCH_CONDITION_GT  				(5)
+#define WATCH_CONDITION_LT  				(6)
 #define WATCH_CONDITION_CHANGE_TO			(11)
 #define WATCH_CONDITION_CHANGE				(12)
 #define WATCH_CONDITION_UP					(13)
@@ -3698,7 +5855,8 @@ GT_API GTN_GetVelOverride(short core,short index,double *pVelRatio);
 #define WATCH_VAR_NONE						(0)
 
 #define WATCH_VAR_UUID						(1000)
-
+#define WATCH_VAR_USER_TIMER_COUNT          (1010)
+#define WATCH_VAR_USER_TIMER_MS             (1011)
 #define WATCH_VAR_POWER_ON_COUNT			(1060)
 
 #define WATCH_VAR_DSP_PROGRAM_COUNT			(1070)
@@ -3741,6 +5899,8 @@ GT_API GTN_GetVelOverride(short core,short index,double *pVelRatio);
 #define WATCH_VAR_PRF_JERK_F32				(6013)
 
 #define WATCH_VAR_PRF_VEL_64				(6021)
+#define WATCH_VAR_PRF_VEL_MS				(6031)
+#define WATCH_VAR_PRF_ACC_MS				(6032)
 
 #define WATCH_VAR_PRF_RUN					(6200)
 #define WATCH_VAR_LIMIT_POSITIVE_STATUS     (6201)
@@ -3773,6 +5933,9 @@ GT_API GTN_GetVelOverride(short core,short index,double *pVelRatio);
 
 #define WATCH_VAR_CRD_PRF_TEMP_DATA         (8010)
 
+#define WATCH_VAR_CRD_PRF_VEL_MS			(8031)
+#define WATCH_VAR_CRD_PRF_ACC_MS			(8032)
+
 #define WATCH_VAR_CRD_RUN					(8200)
 
 #define WATCH_VAR_CRD_SEGMENT_NUMBER		(8202)
@@ -3790,9 +5953,63 @@ GT_API GTN_GetVelOverride(short core,short index,double *pVelRatio);
 #define WATCH_VAR_CONTOUR_PRF_POS_SHAPING	(8802)
 #define WATCH_VAR_CONTOUR_ENC_POS			(8803)
 #define WATCH_VAR_CONTOUR_DAC               (8804)
-
+#define WATCH_VAR_CONTOUR_ERROR				(8805)
 #define WATCH_VAR_CONTOUR_FIFO_POINT_COUNT	(8808)
 #define WATCH_VAR_CONTOUR_FIFO_POINT_MAX	(8809)
+#define WATCH_VAR_PCS_PRF_POS_UI            (9000)
+#define WATCH_VAR_PCS_PRF_POS_FILTER_UI     (9003)
+#define WATCH_VAR_PCS_ENC_POS_UI            (9006)
+#define WATCH_VAR_MCS_PRF_POS_UI            (9010)
+#define WATCH_VAR_MCS_PRF_POS_FILTER_UI     (9013)
+#define WATCH_VAR_MCS_ENC_POS_UI            (9016)
+#define WATCH_VAR_ACS_PRF_POS_UI            (9020)
+#define WATCH_VAR_ACS_PRF_POS_FILTER_UI     (9023)
+#define WATCH_VAR_ACS_ENC_POS_UI            (9026)
+
+#define WATCH_VAR_GROUP_PRF_VEL_MS			(9031)
+#define WATCH_VAR_GROUP_PCS_SYN_VEL_MS  	(9032)
+#define WATCH_VAR_GROUP_MCS_SYN_VEL_MS		(9033)
+#define WATCH_VAR_GROUP_ACS_SYN_VEL_MS		(9034)
+
+#define WATCH_VAR_PCS_PRF_POS               (9100)
+#define WATCH_VAR_PCS_PRF_VEL               (9101)
+#define WATCH_VAR_PCS_PRF_ACC               (9102)
+
+#define WATCH_VAR_PCS_PRF_POS_FILTER        (9103)
+#define WATCH_VAR_PCS_PRF_VEL_FILTER        (9104)
+#define WATCH_VAR_PCS_PRF_ACC_FILTER        (9105)
+
+#define WATCH_VAR_PCS_ENC_POS               (9106)
+#define WATCH_VAR_PCS_ENC_VEL               (9107)
+#define WATCH_VAR_PCS_ENC_ACC               (9108)
+
+#define WATCH_VAR_MCS_PRF_POS               (9110)
+#define WATCH_VAR_MCS_PRF_VEL               (9111)
+#define WATCH_VAR_MCS_PRF_ACC               (9112)
+
+#define WATCH_VAR_MCS_PRF_POS_FILTER        (9113)
+#define WATCH_VAR_MCS_PRF_VEL_FILTER        (9114)
+#define WATCH_VAR_MCS_PRF_ACC_FILTER        (9115)
+
+#define WATCH_VAR_MCS_ENC_POS               (9116)
+#define WATCH_VAR_MCS_ENC_VEL               (9117)
+#define WATCH_VAR_MCS_ENC_ACC               (9118)
+
+#define WATCH_VAR_ACS_PRF_POS               (9120)
+#define WATCH_VAR_ACS_PRF_VEL               (9121)
+#define WATCH_VAR_ACS_PRF_ACC               (9122)
+
+#define WATCH_VAR_ACS_PRF_POS_FILTER        (9123)
+#define WATCH_VAR_ACS_PRF_VEL_FILTER        (9124)
+#define WATCH_VAR_ACS_PRF_ACC_FILTER        (9125)
+
+#define WATCH_VAR_ACS_ENC_POS               (9126)
+#define WATCH_VAR_ACS_ENC_VEL               (9127)
+#define WATCH_VAR_ACS_ENC_ACC               (9128)
+
+#define WATCH_VAR_GROUP_AXIS_TORQUE         (9130)
+
+#define WATCH_VAR_GROUP_RUN					(9200)
 
 #define WATCH_VAR_LIST_EXECUTE				(9240)
 #define WATCH_VAR_LIST_SEG_NUM              (9250)
@@ -3860,6 +6077,8 @@ GT_API GTN_GetVelOverride(short core,short index,double *pVelRatio);
 #define WATCH_VAR_AXIS_PRF_POS_FILTER_BEFORE_COMP (20013)
 
 #define WATCH_VAR_AXIS_PRF_VEL_64			(20021)
+#define WATCH_VAR_AXIS_PRF_VEL_MS			(20031)
+#define WATCH_VAR_AXIS_PRF_ACC_MS			(20032)
 
 #define WATCH_VAR_AXIS_STATUS		        (20100)
 
@@ -3917,18 +6136,29 @@ GT_API GTN_GetVelOverride(short core,short index,double *pVelRatio);
 #define WATCH_VAR_GPI						(31000)
 #define WATCH_VAR_LIMIT_POSITIVE			(31010)
 #define WATCH_VAR_LIMIT_NEGATIVE			(31020)
-#define WATCH_VAR_ALARM   		        	(31030)
-#define WATCH_VAR_HOME             			(31040)
-#define WATCH_VAR_ARRIVE           			(31050)
+#define WATCH_VAR_ALARM                     (31030)
+#define WATCH_VAR_HOME                      (31040)
+#define WATCH_VAR_ARRIVE                    (31050)
+#define WATCH_VAR_ARRIVE_DI                                (31055)  // ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½
+#define WATCH_VAR_SERVO_READY_DI                           (31056)  // ï¿½Å·ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½
+#define WATCH_VAR_SERVO_READY_TO_SWITCH_ON_DI              (31057)  // ï¿½Å·ï¿½Ê¹ï¿½ï¿½×¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½
 #define WATCH_VAR_BANK_GPI					(31060)
+
+#define WATCH_VAR_GPI_RAW                   (31100)
+#define WATCH_VAR_LIMIT_POSITIVE_RAW        (31110)
+#define WATCH_VAR_LIMIT_NEGATIVE_RAW        (31120)
+#define WATCH_VAR_ALARM_RAW                 (31130)
+#define WATCH_VAR_HOME_RAW                  (31140)
+#define WATCH_VAR_ARRIVE_RAW                (31150)
 
 #define WATCH_VAR_GPO						(32000)
 #define WATCH_VAR_ENABLE					(32010)
 #define WATCH_VAR_CLEAR 					(32020)
 
-#define WATCH_VAR_AI     					(33000)
+#define WATCH_VAR_AI                        (33000)
+#define WATCH_VAR_AU_AI                     (33100)
 
-#define WATCH_VAR_AO     					(34000)
+#define WATCH_VAR_AO                        (34000)
 
 #define WATCH_VAR_TRIGGER_EXECUTE			(38000)
 #define WATCH_VAR_TRIGGER_STATUS			(38001)
@@ -3983,3088 +6213,34 @@ GT_API GTN_GetVelOverride(short core,short index,double *pVelRatio);
 
 #define WATCH_VAR_TERMINAL_PRF_POS				(53030)
 
-#define WATCH_VAR_TERMINAL_TRIGGER_POSITION	    (53040)
-#define WATCH_VAR_TERMINAL_TRIGGER_STATUS	    (53041)
+#define WATCH_VAR_TERMINAL_TRIGGER_POSITION     (53040)
+#define WATCH_VAR_TERMINAL_TRIGGER_STATUS       (53041)
 
 #define WATCH_VAR_TERMINAL_COMMAND				(53100)
 #define WATCH_VAR_TERMINAL_STATUS				(53101)
 
+#define WATCH_VAR_DRIVER_FOLLOW_ERROR	        (53112)//ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½Ê¸ï¿½ï¿½ï¿½ï¿½ï¿½î£¬ï¿½Ç¸ï¿½ï¿½Ý±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ê¡£
+
 #define WATCH_VAR_EVENT_HIT						(60000)
 #define WATCH_VAR_TASK_START					(61000)
 #define WATCH_VAR_TASK_WORK						(61001)
 
+#define WATCH_VAR_ATL_TORQUE			        (61201)//ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµÎªï¿½ï¿½Öµ1000ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-#define VAR_FORMAT_INT						(1)
-#define VAR_FORMAT_FLOAT					(2)
-#define VAR_FORMAT_DOUBLE					(3)
-
-#define WATCH_LOAD_MODE_NONE				(0)
-#define WATCH_LOAD_MODE_BOOT				(2)
-#define WATCH_LOAD_MODE_RUN					(3)
-
-
-
-#define VAR_CALCULATE_MAX					(32)
-
-#define VAR_CALCULATE_NONE					(0)
-#define VAR_CALCULATE_OR					(1)
-#define VAR_CALCULATE_AND					(3)
-#define VAR_CALCULATE_NOT					(5)
-
-#define VAR_CALCULATE_ADD					(11)
-#define VAR_CALCULATE_SUB					(12)
-#define VAR_CALCULATE_MUL					(13)
-#define VAR_CALCULATE_DIV					(14)
-
-// ÓÃ»§½Ó¿Ú¸ßËÙ¶ÁÔªËØ½á¹¹Ìå
-typedef struct
-{
-	int32_t code;                                      // ÐèÒª¶ÁÈ¡µÄ¸ßËÙ¶ÁÔªËØ±àÂë,²Î¼ûWATCH±äÁ¿±àÂë
-	short index;                                    // ÐèÒª¶ÁÈ¡µÄ¸ßËÙ¶ÁÔªËØË÷Òý,´Ó1¿ªÊ¼
-	short subIndex;                                 // ÐèÒª¶ÁÈ¡µÄ¸ßËÙ¶ÁÔªËØ×ÓË÷Òý,´Ó1¿ªÊ¼
-	short pad1[2];                                  // Ô¤Áô
-}TReadHsCommand;
-GT_API GTN_AddReadHs(short core,TReadHsCommand *pCommand);
-GT_API GTN_LoadReadHsConfig(short core,char *pFile);
-GT_API GTN_ReadHsOn(short core,short enable,short mode,double interval);
-GT_API GTN_ClearReadHs(short core);
-GT_API GTN_SetReadHs(short core,short enable,short mode,short interval);
-GT_API GTN_ReadHsReadBuffer(short core,short *pData,int32_t count);
-GT_API GTN_FlushReadHs(short core,short wait);
-
-
-typedef struct
-{
-	short mode;
-	short pad0;
-	int32_t band;		//¿ØÖÆÆ÷ÅÐ¶Ïµ½Î»Îó²î´ø
-	int32_t time;		//¿ØÖÆÆ÷ÅÐ¶Ïµ½Î»Ê±¼ä
-	int32_t pad1[2];
-}TAxisArrivePrm;
-GT_API GTN_SetAxisArriveMode(short core,short axis,TAxisArrivePrm *pPrm);
-GT_API GTN_GetAxisArriveMode(short core,short axis,TAxisArrivePrm *pPrm);
-
-
-#define MAX_CRDMPG_FIXEDMPGVEL 8
-typedef struct
-{
-	short enable;                                                        //Ê¹ÄÜ±êÖ¾
-	short master;                                                        //ÊÖÂÖÖ÷ÖáºÅ
-	short filterTime;                                                    //ÊÖÂÖÖ÷ÖáÂË²¨Ê±¼ä
-	short mode;                                                          //ÊÖÂÖµÄÄ£Ê½
-	short fixedMpgVelCount;                                              //ÊÖÂÖÒýµ¼µÄµ²Î»¸öÊý
-	short pad1[3];
-	int32_t masterEven;                                                     //ÊÖÂÖÖ÷Öá±ÈÀý
-	int32_t slaveEven;                                                      //ÊÖÂÖ´ÓÖá±ÈÀý
-	int32_t pad2[2];
-	double fixedMpgVel[MAX_CRDMPG_FIXEDMPGVEL];                          //ÊÖÂÖÒýµ¼µÄµ²Î»RatioÖµ
-	double ratioUpdateTime;                                              //ÊÖÂÖÒýµ¼±¶ÂÊË¢ÐÂÊ±¼ä
-	double pad3[3];
-}TCrdMpgPrm;
-GT_API GTN_SetCrdMPGMode(short core,short crd,short enable,short master,int32_t masterEven,int32_t slaveEven,short filterTime,short mode);
-GT_API GTN_GetCrdMPGMode(short core,short crd,short *pEnable,short *pMaster,int32_t *pMasterEven,int32_t *pSlaveEven,short *pFilterTime,short *pMode,short *pFifoEnd);
-GT_API GTN_SetCrdMPGModeEx(short core,short crd,TCrdMpgPrm *pMpgPrm);
-GT_API GTN_GetCrdMPGModeEx(short core,short crd,short *pFifoEnd,TCrdMpgPrm *pCrdMpgPrm);
-
-
-typedef struct
-{
-	short mode;	    //ÔË¶¯ÀàÐÍ,0-µãÎ»£¬6-PVT£¬ÆäËüÀàÐÍÔÝÊ±²»Ö§³Ö
-	short enable;   //ÊÇ·ñÊ¹ÄÜ£¬0-²»Ê¹ÄÜ£¬1-Ê¹ÄÜ
-	short trigger;	//triggerË÷Òý£¬È¡Öµ´Ó1¿ªÊ¼
-	short pad1;		//±£Áô
-	int32_t distance;	//´¥·¢Ê±Æ«ÒÆÁ¿£¬¿ÉÕý¿É¸º£¬µ¥Î»£ºÂö³å
-	int32_t posLimit;  //ÖØÐÂ¹æ»®ºó£¬´¥·¢Î»ÖÃ+Æ«ÒÆÁ¿²»ÄÜ³¬¹ý¸ÃÖµ
-	double vel;     //Ä¿±êËÙ¶È£¬ÖØÐÂ¹æ»®µÄÄ¿±êËÙ¶È£¬µ¥Î»£ºÂö³å/ms
-	double acc;     //ÐèÒªÌáËÙÊ±µÄ¼ÓËÙ¶È£¬µ¥Î»£ºÂö³å/ms
-	double dec;		//ÔË¶¯µ½´¥·¢Æ«ÒÆÁ¿µÄ¼õËÙ¶È£¬µ¥Î»£ºÂö³å/ms
-	double percent;	//¼õËÙ¶ÎSÐÍÇúÏßÊ±¼ä°Ù·Ö±È£¬ÀýÈç60±íÊ¾60%
-	double reserve[4];
-}TTriggerProfilePrm;
-
-typedef struct
-{
-	short mode;
-	short enable;
-	short execute;			//ÊÇ·ñÖ´ÐÐÖÐ,0-Î´Ö´ÐÐ£¬1-Ö´ÐÐ
-	short status;			//Ö´ÐÐ¹ý³ÌÖÐµÄ×´Ì¬£¬Õý³£Îª0£¬Òì³£Ôò·µ»Ø´íÎóÂë
-	int32_t endPos;			//ÖÕµãÎ»ÖÃ£¨²¶»ñ+Æ«ÒÆÁ¿£©
-	int32_t reserve[7];
-}TTriggerProfileStatus;
-
-GT_API GTN_SetTriggerProfilePrm(short core,short profile,TTriggerProfilePrm *pPrm);
-GT_API GTN_GetTriggerProfileStatus(short core,short profile,TTriggerProfileStatus *pSts);
-
-
-/*-----------------------------------------------------------*/
-/* DEBUG INFO                                                */
-/*-----------------------------------------------------------*/
-GT_API GTN_PrintLogInfo(short core,const char *pFileName,int32_t start,int32_t count);
-GT_API GTN_PrintLogInfoDebug(short core,const char *pFileName,int32_t start,int32_t count);
-GT_API GTN_PrintMcStsInfo(short core,const char *pFileName,short type,short index,short count);
-GT_API GTN_PrintCommandInfo(short core,const char *pFileName,int32_t start,int32_t count);
-
-#define COMMANDINFO_DATA_MAX	     (225)
-typedef struct
-{
-	uint32_t   commandCode;                   //ÈÕÖ¾µÄÖ¸Áî×Ö
-	short   commandRtn;							   //2word¶ÔÆë
-	short   errorCode;
-	uint32_t  clockTime;                      //¿ØÖÆÆ÷µÄÊ±ÖÓ
-	int32_t    segmentNum;                            //¶ÎºÅ
-	int32_t    userTag;                               //ÓÃ»§±êÇ©
-	short   dataLength;
-	unsigned short  data16[COMMANDINFO_DATA_MAX];  //
-} TCommandInfoData;
-//»ñÈ¡Ö¸Áî´íÎóÐÅÏ¢
-GT_API GTN_GetLastCommandError(short core,TCommandInfoData *getCommandInfoData,int32_t start,int32_t count);
-
-/*-----------------------------------------------------------*/
-/* ILC                                                       */
-/*-----------------------------------------------------------*/
-struct TIlcResult
-{
-	double ErrorMax;
-	double ErrorAvg;
-	double ErrorRms;
-	double pad1[9];
-	short  pad2[10];
-};
-
-GT_API GTN_InitIlc(short core);
-GT_API GTN_StartIlc(short core,short crd);
-GT_API GTN_StopIlc(short core,short crd,TIlcResult *pPrm);
-GT_API GTN_SaveIlcFile(short core,char *pIlcFile);
-GT_API GTN_LoadIlcFile(short core,short crd,char *filePath);
-
-GT_API GTN_SetIterationLearnData(short core,short axis,double *pData,uint32_t count);
-GT_API GTN_EnableIterationLearn(short core,short axis,short mode,double k);
-
-GT_API GTN_SetIteraionData(short core,int32_t count,double xPrf,double yPrf,double xEnc,double yEnc,short pso);
-GT_API GTN_GetIteraionData(short core,int32_t count,double *xPrf,double *yPrf,double *xEnc,double *yEnc,double *xRef,double *yRef,double *error,double *xErr,double *yErr, short *pso,int32_t *index);
-
-/*----------------*/
-/*Õñ¾µ¼¤¹âÏà¹ØÖ¸Áî*/
-/*----------------*/
-#define    SCAN_LASER_MODE_DUTY_RATIO          (0)
-#define    SCAN_LASER_MODE_FREQUENCY           (1)
-#define    SCAN_LASER_MODE_ANALOG              (2)
-#define    SCAN_LASER_MODE_PARALLEL            (4)
-#define    SCAN_LASER_MODE_NONE               (10)
-
-/*Õ¼¿Õ±ÈÄ£Ê½¹Ì¶¨²ÎÊý*/
-typedef struct
-{
-	double minDutyRatio;
-	double maxDutyRatio;
-	double frequency;
-}TLaserDutyRatioModeParameterPro;
-/*ÆµÂÊÄ£Ê½¹Ì¶¨²ÎÊý*/
-typedef struct
-{
-	double minFrequency;
-	double maxFrequency;
-	double pulseWidth;
-}TLaserFrequencyModeParameterPro;
-/*Ä£ÄâÁ¿Ä£Ê½¹Ì¶¨²ÎÊý*/
-typedef struct
-{
-	double minVoltage;
-	double maxVoltage;
-}TlaserAnalogModeParameterPro;
-/*¼¤¹â¸÷¸öÄ£Ê½¹Ì¶¨²ÎÊý*/
-typedef union
-{
-	TLaserDutyRatioModeParameterPro dutyRatioModePrm;
-	TLaserFrequencyModeParameterPro frequencyModePrm;
-	TlaserAnalogModeParameterPro analogModePrm;
-	double data[8];
-}TLaserParameterUnionPro;
-/*¼¤¹âÐÅÏ¢²ÎÊý*/
-typedef struct
-{
-	unsigned short laserOn;   //¼¤¹â¿ª¹Ø×´Ì¬
-	unsigned short laserMode; //PWMÊä³öÄ£Ê½£¬ºê¶¨Òå
-	short pad[2];             //¶ÔÆë
-	double power;             //¼¤¹âÄÜÁ¿
-	TLaserParameterUnionPro laserPrm;
-}TLaserInfoPro;
-
-typedef struct
-{
-	unsigned short laserMode; //PWMÊä³öÄ£Ê½£¬¶¨Òåºê
-	short pad[3];             //¶ÔÆë
-	TLaserParameterUnionPro laserPrm;
-}TLaserParameterPro;
-
-GT_API GTN_GetScanLaserLinkPro(short core,short scanCrd,short *pLaserChannel);
-GT_API GTN_SetScanLaserLinkPro(short core,short scanCrd,short laserChannel,TListInfo *pListInfo=NULL);//Õñ¾µ¼¤¹â°ó¶¨,laserChannelÎª0ÔòÊÇ½â°ó
-GT_API GTN_GetScanLaserInfoPro(short core,short scanCrd,TLaserInfoPro *pPrm);
-GT_API GTN_SetScanLaserEnablePro(short core,short scanCrd,short laserEnable,TListInfo *pListInfo=NULL);//¼¤¹â¿ª¹Ø¹â
-GT_API GTN_SetScanLaserPrmPro(short core,short scanCrd,TLaserParameterPro *pLaserPrm,TListInfo *pListInfo=NULL);//¼¤¹âÄ£Ê½ºÍ¹Ì¶¨²ÎÊýÉèÖÃ
-GT_API GTN_SetScanLaserPowerPro(short core,short scanCrd,double power,TListInfo *pListInfo=NULL);//¼¤¹âÄÜÁ¿ÉèÖÃ
-GT_API GTN_SetScanLaserDelayPro(short core,short scanCrd,double laserOnDelay,double laserOffDelay,TListInfo *pListInfo);
-
-/*----------------*/
-/*Õñ¾µÏà¹ØÖ¸Áî    */
-/*----------------*/
-#define    SCAN_MOTION_MODE_NONE                (0)
-#define    SCAN_MOTION_MODE_JUMP                (1)
-#define    SCAN_MOTION_MODE_JUMP_POINT          (2)
-#define    SCAN_MOTION_MODE_JUMP_TIME           (3)
-#define    SCAN_MOTION_MODE_JUMP_TIME_POINT     (4)
-#define    SCAN_MOTION_MODE_MARK                (5)
-#define    SCAN_MOTION_MODE_MARK_TIME           (6)
-
-#define    SCAN_MOTION_CIRCLE_DIR_CW            (0)
-#define    SCAN_MOTION_CIRCLE_DIR_CCW           (1)
-/*Õñ¾µÇ°Õ°²ÎÊý*/
-typedef struct
-{
-	short lookAheadNum;   //Ç°Õ°¶ÎÊý
-	short highSpeedMode;
-	short pad[2];         //¶ÔÆë
-	double time;          //Ê±¼ä³£Êý
-	double radiusRatio;   //ÇúÂÊÏÞÖÆµ÷½Ú²ÎÊý
-	double reserve[2];    //±£Áô
-}TScanLookAheadParameterPro;
-
-/*Õñ¾µ×´Ì¬*/
-typedef struct
-{
-	short run;                    //Õñ¾µÔË¶¯±êÖ¾
-	short space;
-	unsigned short fifoEmpty;     //ÅÜ¿Õ±êÖ¾
-	short pad1;                   //¶ÔÆë
-	uint32_t segmentNumber;  //Ö´ÐÐ¶ÎºÅ
-	uint32_t commandReceive; //½ÓÊÕµ½µÄÖ¸ÁîÊý
-	uint32_t commandSend;    //ÒÑ·¢ËÍµÄÖ¸ÁîÊý
-	int32_t pad2;                    //¶ÔÆë
-	double prfVel;                //ºÏ³É¹æ»®ËÙ¶È
-}TScanStatusPro;
-
-//JumpÔË¶¯¡¢MarkÔË¶¯
-typedef struct
-{
-	double acc;
-	double dec;
-	double vel;
-}TVelModePro;
-
-typedef struct
-{
-	double acc;
-	double dec;
-	uint32_t time;
-	int32_t pad;//¶ÔÆë
-}TTimeModePro;
-
-typedef struct
-{
-	double acc;
-	double dec;
-	double vel;
-	uint32_t motionDelayTime;
-	uint32_t laserDelayTime;
-}TVelPointModePro;
-
-typedef struct
-{
-	double acc;
-	double dec;
-	uint32_t time;
-	uint32_t motionDelayTime;
-	uint32_t laserDelayTime;
-	int32_t pad;//¶ÔÆë
-}TTimePointModePro;
-
-typedef union
-{
-	TVelModePro velMode;
-	TTimeModePro timeMode;
-	TVelPointModePro velPointMode;
-	TTimePointModePro timePointMode;
-	double data[8];
-}TScanMotionPrmUnionPro;
-
-typedef struct
-{
-	double pos[3];
-	double reserve;
-	TScanMotionPrmUnionPro motionPrm;
-}TScanLinearMotionPro;
-
-typedef struct
-{
-	double endPos[3];
-	double radius;//°ë¾¶Õý¸ºÇø·ÖÓÅ»¡ÁÓ»¡
-	short dir;
-	short pad[3];//¶ÔÆë
-	TScanMotionPrmUnionPro motionPrm;
-}TScanCircularMotionPro;
-
-typedef struct
-{
-	short multiMarkDelayMode;
-	unsigned short jumpDelayLengthLimit;
-	short pad[2];//¶ÔÆë
-	double multiMarkLaserOffDelay;
-	double multiMarkDelayConst;
-	double markDelay;
-	double minJumpDelay;
-	double maxJumpDelay;
-}TScanDelayParameterPro;
-
-GT_API GTN_ScanInitPro(short core,short scanCrd,TScanLookAheadParameterPro *pPrm,TListInfo *pListInfo);
-GT_API GTN_GetScanCrdPosPro(short core,short scanCrd,double *pPos);
-GT_API GTN_GetScanStatusPro(short core,short scanCrd,TScanStatusPro *pPrm);
-GT_API GTN_ScanLinearPro(short core,short scanCrd,short motionMode,TScanLinearMotionPro *pPrm,TListInfo *pListInfo);
-GT_API GTN_ScanCircularPro(short core,short scanCrd,short motionMode,TScanCircularMotionPro *pPrm,TListInfo *pListInfo);
-GT_API GTN_SetScanDelayPrmPro(short core,short scanCrd,TScanDelayParameterPro *pPrm,TListInfo *pListInfo=NULL);
-GT_API GTN_SetScanMotionDelayPro(short core,short scanCrd,double delayTime,TListInfo *pListInfo);
-GT_API GTN_GetScanExecuteTimePro(short core,short scanCrd,double *pExecuteTime);
-GT_API GTN_ClearScanExecuteTimePro(short core,short scanCrd);
-
-//20200713Í¬²½GTSµÄ±ùº£¶¨ÖÆ£¬±àÂëÆ÷¶ÏÏß¼ì²â
-GT_API GTN_SetEncResponseCheck(short core,short control,short dacThreshold,double minEncVel,int32_t time);
-GT_API GTN_GetEncResponseCheck(short core,short control,short *pDacThreshold,double *pMinEncVel,int32_t *pTime);
-GT_API GTN_EnableEncResponseCheck(short core,short control);
-GT_API GTN_DisableEncResponseCheck(short core,short control);
-
-/************************************************************************/
-/* Ðý×ªÖá¹¦ÄÜ                                                           */
-/************************************************************************/
-#define ROTARY_DIRECTION_SELECT_MODE_DEFAULT                  (0)
-#define ROTARY_DIRECTION_SELECT_MODE_SMART                    (1)
-
-typedef struct
-{
-	short rotary;
-	short pad[3];
-	double start;
-	double length;
-	double reserve;
-	double pulse;
-} TRotaryConfig;
-
-typedef struct
-{
-	short fifo;
-	short overrideNum;
-	short g0Mode;
-	short reserve1[5];
-	int32_t segNum;
-	int32_t reserve2[3];
-	double vel;
-	double acc;
-	double velEnd;
-	double velLimit;
-	double reserve3[8];
-} TLineAbsolutePrm;
-
-GT_API GTN_GetAxisPrfPosRotary(short core,short axis,double *pTheta,double *pRound,short count=1);
-GT_API GTN_GetProfileRotaryConfig(short core,short profile,TRotaryConfig *pConfig);
-GT_API GTN_GetPrfPosRotary(short core,short profile,double *pTheta,double *pRound,short count=1);
-GT_API GTN_SetCrdScale(short core,short crd,short dimension,double alpha,double beta);
-GT_API GTN_GetCrdScale(short core,short crd,short dimension,double *pAlpha,double *pBeta);
-GT_API GTN_GetCrdRotaryConfig(short core,short crd,short dimension,TRotaryConfig *pConfig);
-GT_API GTN_GetCrdPosRotary(short core,short crd,short dimension,double *pTheta,double *pRound,short count=1);
-GT_API GTN_GetEncoderRotaryConfig(short core,short encoder,TRotaryConfig *pConfig);
-GT_API GTN_GetEncPosRotary(short core,short encoder,double *pTheta,double *pRound,short count=1);
-GT_API GTN_SetAxisRotaryConfig(short core,short axis,TRotaryConfig *pConfig);
-GT_API GTN_GetAxisRotaryConfig(short core,short axis,TRotaryConfig *pConfig);
-GT_API GTN_ZeroAxisRotaryRound(short core,short axis,short count=1);
-GT_API GTN_LineAbsoluteEx(short core,short crd,double *pPos,short *pDir,TLineAbsolutePrm *pPrm);
-GT_API GTN_SetAxisRotaryDirectionSelectMode(short core,short axis,short mode);
-GT_API GTN_GetAxisRotaryDirectionSelectMode(short core,short axis,short *pMode);
-
-
-/*-----------------------------------------------------------*/
-//Ô­config.h£ºÅäÖÃ¹¦ÄÜ£¬°üÀ¨Ö÷¿¨ºÍÄ£¿é                       */
-/*-----------------------------------------------------------*/
-/*-----------------------------------------------------------*/
-/* conifg of controller                                      */
-/*-----------------------------------------------------------*/
-#define RES_LIMIT                       (8)
-#define RES_ALARM                       (8)
-#define RES_HOME                        (8)
-#define RES_GPI                         (16)
-#define RES_ARRIVE                      (8)
-#define RES_MPG                         (7)
-#define RES_ENABLE                      (8)
-#define RES_CLEAR                       (8)
-#define RES_GPO                         (16)
-#define RES_DAC                         (12)
-#define RES_STEP                        (8)
-#define RES_PULSE                       (8)
-#define RES_ENCODER                     (11)
-#define RES_LASER                       (2)
-#define AXIS_MAX                        (8)
-#define PROFILE_MAX                     (8)
-#define CONTROL_MAX                     (8)
-#define PRF_MAP_MAX                     (2)
-#define ENC_MAP_MAX                     (2)
-
-typedef struct DiConfig
-{
-	short active;
-	short reverse;
-	short filterTime;
-} TDiConfig;
-
-typedef struct CountConfig
-{
-	short active;
-	short reverse;
-	short filterType;
-
-	short captureSource;
-	short captureHomeSense;
-	short captureIndexSense;
-} TCountConfig;
-
-typedef struct DoConfig
-{
-	short active;
-	short axis;
-	short axisItem;
-	short reverse;
-} TDoConfig;
-
-typedef struct StepConfig
-{
-	short active;
-	short axis;
-	short mode;
-	short parameter;
-	short reverse;
-} TStepConfig;
-
-typedef struct DacConfig
-{
-	short active;
-	short control;
-	short reverse;
-	short bias;
-	short limit;
-} TDacConfig;
-
-typedef struct AdcConfig
-{
-	short active;
-	short reverse;
-	double a;
-	double b;
-	short filterMode;
-} TAdcConfig;
-
-typedef struct ControlConfig
-{
-	short active;
-	short axis;
-	short encoder1;
-	short encoder2;
-	int32_t  errorLimit;
-	short filterType[3];
-	short encoderSmooth;
-	short controlSmooth;
-} TControlConfig;
-
-typedef struct ControlConfigEx
-{
-	short refType;
-	short refIndex;
-
-	short feedbackType;
-	short feedbackIndex;
-
-	int32_t  errorLimit;
-	short feedbackSmooth;
-	short controlSmooth;
-} TControlConfigEx;
-
-typedef struct ProfileConfig
-{
-	short  active;
-	double decSmoothStop;
-	double decAbruptStop;
-} TProfileConfig;
-
-typedef struct AxisConfig
-{
-	short active;
-	short alarmType;
-	short alarmIndex;
-	short limitPositiveType;
-	short limitPositiveIndex;
-	short limitNegativeType;
-	short limitNegativeIndex;
-	short smoothStopType;
-	short smoothStopIndex;
-	short abruptStopType;
-	short abruptStopIndex;
-	int32_t  prfMap;
-	int32_t  encMap;
-	short prfMapAlpha[PRF_MAP_MAX];
-	short prfMapBeta[PRF_MAP_MAX];
-	short encMapAlpha[ENC_MAP_MAX];
-	short encMapBeta[ENC_MAP_MAX];
-} TAxisConfig;
-
-
-GT_API GTN_SaveConfig(short core,char *pFile);
-GT_API GTN_SetDiConfig(short core,short diType,short diIndex,TDiConfig *pDi);
-GT_API GTN_GetDiConfig(short core,short diType,short diIndex,TDiConfig *pDi);
-GT_API GTN_SetDoConfig(short core,short doType,short doIndex,TDoConfig *pDo);
-GT_API GTN_GetDoConfig(short core,short doType,short doIndex,TDoConfig *pDo);
-GT_API GTN_SetStepConfig(short core,short step,TStepConfig *pStep);
-GT_API GTN_GetStepConfig(short core,short step,TStepConfig *pStep);
-GT_API GTN_SetDacConfig(short core,short dac,TDacConfig *pDac);
-GT_API GTN_GetDacConfig(short core,short dac,TDacConfig *pDac);
-GT_API GTN_SetAdcConfig(short core,short adc,TAdcConfig *pAdc);
-GT_API GTN_GetAdcConfig(short core,short adc,TAdcConfig *pAdc);
-GT_API GTN_SetCountConfig(short core,short countType,short countIndex,TCountConfig *pCount);
-GT_API GTN_GetCountConfig(short core,short countType,short countIndex,TCountConfig *pCount);
-GT_API GTN_SetControlConfig(short core,short control,TControlConfig *pControl);
-GT_API GTN_GetControlConfig(short core,short control,TControlConfig *pControl);
-GT_API GTN_SetControlConfigEx(short core,short control,TControlConfigEx *pControl);
-GT_API GTN_GetControlConfigEx(short core,short control,TControlConfigEx *pControl);
-GT_API GTN_SetProfileConfig(short core,short profile,TProfileConfig *pProfile);
-GT_API GTN_GetProfileConfig(short core,short profile,TProfileConfig *pProfile);
-GT_API GTN_SetAxisConfig(short core,short axis,TAxisConfig *pAxis);
-GT_API GTN_GetAxisConfig(short core,short axis,TAxisConfig *pAxis);
-GT_API GTN_ProfileScale(short core,short axis,short alpha,short beta);
-GT_API GTN_EncScale(short core,short axis,short alpha,short beta);
-
-/*-----------------------------------------------------------*/
-/* Config of Laser and Scan                                  */
-/*-----------------------------------------------------------*/
-struct TScanCommandMotion
-{
-	int32_t segmentNumber;
-	short x;
-	short y;
-	int32_t deltaX;
-	int32_t deltaY;
-	int32_t vel;
-	int32_t acc;
-};
-
-struct TScanCommandMotionDelay
-{
-	int32_t delay;
-};
-
-struct TScanCommandDo
-{
-	short doType;
-	short doMask;
-	short doValue;
-};
-
-struct TScanCommandDoDelay
-{
-	int32_t delay;
-};
-
-struct TScanCommandLaser
-{
-	short mask;
-	short value;
-} ;
-
-struct TScanCommandLaserDelay
-{
-	int32_t laserOnDelay;
-	int32_t laserOffDelay;
-} ;
-
-struct TScanCommandLaserPower
-{
-	int32_t power;
-} ;
-
-struct TScanCommandLaserFrequency
-{
-	int32_t frequency;
-} ;
-
-struct TScanCommandLaserPulseWidth
-{
-	int32_t pulseWidth;
-} ;
-
-struct TScanCommandDa
-{
-	short daIndex;
-	short daValue;
-} ;
-
-typedef struct
-{
-	short module;
-	short fifo;
-} TScanMap;
-
-GT_API GTN_SetScanMap(short core,short scan,TScanMap *pMap);
-GT_API GTN_GetScanMap(short core,short scan,TScanMap *pMap);
-GT_API GTN_ClearScanMap(short core);
-GT_API GTN_UpdateScanMap(short core);
-
-/*-----------------------------------------------------------*/
-//Ô­ringnet.h£ººÍµÈ»·ÍøÍøÂçÏà¹Ø¹¦ÄÜµÄÖ¸Áî                    */
-/*-----------------------------------------------------------*/
-/*-----------------------------------------------------------*/
-/* Ringnet                                                  */
-/*-----------------------------------------------------------*/
-#define RTN_SUCCESS				                    (0)
-#define RTN_MALLOC_FAIL						            (-100) /* malloc memory fail */
-#define RTN_FREE_FAIL							       			(-101) /* free memory or delete the object fail */
-#define RTN_NULL_POINT						            (-102) /* the param point input is null */
-#define RTN_ERR_ORDER						            	(-103) /* call the function order is wrong, some msg isn't validable */
-#define RTN_PCI_NULL							        		(-104) /* the pci address is empty, can't access the pci device*/
-#define RTN_PARAM_OVERFLOW			              (-105) /* the param input is too larget*/
-#define RTN_LINK_FAIL							       			(-106) /* the two ports both link fail*/
-#define RTN_IMPOSSIBLE_ERR				            (-107) /* it means the system or same function work wrong*/
-#define RTN_TOPOLOGY_CONFLICT			            (-108) /* the id conflict*/
-#define RTN_TOPOLOGY_ABNORMAL		              (-109) /* scan the net abnormal*/
-#define RTN_STATION_ALONE				              (-110) /* the device no id, it means the device id is 0xF0 */
-#define RTN_WAIT_OBJECT_OVERTIME	            (-111) /* multi thread wait for object overtime */
-#define RTN_ACCESS_OVERFLOW			              (-112) /* data[i];  i is larger than the define */
-#define RTN_NO_STATION						            (-113) /* the station accessed not existent */
-#define RTN_OBJECT_UNCREATED			            (-114) /* the object not created yet*/
-#define RTN_PARAM_ERR						            	(-115) /* the param input is wrong*/
-#define RTN_PDU_CFG_ERR                       (-116) /*Pdu DMA Cfg Err*/
-#define RTN_PCI_FPGA_ERR					            (-117) /*PCI op err or FPGA op err*/
-#define RTN_CHECK_RW_ERR					            (-118) /*data write to reg, then rd out, and check err */
-#define RTN_REMOTE_UNEABLE				            (-119) /*the device which will be ctrl by net can't be ctrl by net function*/
-
-#define RTN_NET_REQ_DATA_NUM_ZERO		          (-120) /*mail op or pdu op req data num can't be 0*/
-#define RTN_WAIT_NET_OBJECT_OVERTIME	        (-121) /* net op multi thread wait for object overtime */
-#define RTN_WAIT_NET_RESP_OVERTIME		        (-122) /* Can't wait for resp */
-#define RTN_WAIT_NET_RESP_ERR				          (-123) /*wait mailbox op err*/
-#define RTN_INITIAL_ERR								    		(-124) /*initial the device err*/
-#define RTN_PC_NO_READY							        	(-125) /*find the station'pc isn't work*/
-#define RTN_STATION_NO_EXIST					        (-126)
-#define RTN_MASTER_FUNCTION					          (-127) /* this funciton only used by master */
-
-#define RTN_NOT_ALL_RETURN							    	(-128) /* the GT_RN_PtProcessData funciton fail return */
-#define RTN_NUM_NOT_EQUAL							   			(-129) /* the station number of RingNet do not equal  the station number of CFG */
-
-#define RTN_CHECK_STATION_ONLINE_NUM_ERR		  (-130) /*Check no slave*/
-#define RTN_FILE_ERR_OPEN											(-131) /*open file error*/
-#define RTN_FILE_ERR_FORMAT							    	(-132) /*parse file error*/
-#define RTN_FILE_ERR_MISSMATCH					      (-133) /*file info is not match with the actual ones*/
-#define RTN_DMALIST_ERR_MISSMATCH			        (-134) /*can't find the slave*/
-
-#define RTN_REQUSET_MAIL_BUS_OVERTIME		      (-150) /*Requset Mail Bus Err*/
-#define RTN_INSTRCTION_ERR							    	(-151) /*instrctions err*/
-#define RTN_MAIL_RESP_REQ_ERR						    	(-152) /*RN_MailRespReq  err*/
-#define RTN_CTRL_SRC_ERR											(-153) /* the controlled source  is error */
-#define RTN_PACKET_ERR												(-154) /*packet is error*/
-#define RTN_STATION_ID_ERR							    	(-155) /*the device id is not in the right rang*/
-#define RTN_WAIT_NET_PDU_RESP_OVERTIME	      (-156) /*net pdu op wait overtime*/
-#define RTN_ETHCAT_ENC_POS_ERR					      (-157) /**/
-
-#define RTN_IDLINK_PACKET_ERR			            (-200) /*ilink master  decode err! packet_length is not match*/
-#define RTN_IDLINK_PACKET_END_ERR		          (-201) /* the ending of ilink packet is not 0xFF*/
-#define RTN_IDLINK_TYPER_ERR					        (-202) /* the type of ilink module is error*/
-#define RTN_IDLINK_LOST_CNT 					        (-203) /* the ilink module has lost connection*/
-#define RTN_IDLINK_CTRL_SRC_ERR			          (-204) /* the controlled source of ilink module is error */
-#define RTN_IDLINK_UPDATA_ERR				          (-205) /* the ilink module updata error*/
-#define RTN_IDLINK_NUM_ERR					         	(-206) /* the ilink num larger the IDLINK_MAX_NUM(30) */
-#define RTN_IDLINK_NUM_ZERO					          (-207) /* the ilink num is zero */
-
-#define RTN_NO_PACKET							        		(301)  /* no valid packet */
-#define RTN_RX_ERR_PDU_PACKET				          (-302) /* ERR PDU PACKET */
-#define RTN_STATE_MECHINE_ERR				          (-303)
-#define RTN_PCI_DSP_UN_FINISH				          (304)
-#define RTN_SEND_ALL_FAIL						        	(-305)
-#define RTN_STATION_CLOSE					            (310)
-#define RTN_STATION_RESP_FAIL				          (311)
-
-#define RTN_UPDATA_MODAL_ERR			            (-330) /* update the modal in normal way fail*/
-
-#define RTN_NO_MAIL_DATA						        	(340) /*There is no mail data*/
-#define RTN_NO_PDU_DATA						            (341) /*There is no pdu data*/
-
-#define RTN_FILE_PARAM_NUM_ERR					      (-500)
-#define RTN_FILE_PARAM_LEN_ERR					      (-501)
-#define RTN_FILE_MALLOC_FAIL									(-502)
-#define RTN_FILE_FREE_FAIL										(-503)
-#define RTN_FILE_PARAM_ERR							   		(-504)
-#define RTN_FILE_NOT_EXSITS						    		(505)
-#define RTN_FILE_CREATE_FAIL									(510)
-#define RTN_FILE_DELETE_FAIL									(511)
-#define RTN_FIFE_CRC_CHECK_ERR								(-512)
-#define RTN_FIFE_FUNCTION_ID_RETURN_ERR				(-600)
-#define RTN_DLL_WINCE													(-800)
-#define RTN_DLL_WIN32													(-801)
-#define RTN_XML_STATION_ERR										(-900)//dma config file confilit with slave type
-
-
-GT_API GTN_LoadRingNetConfig(short core,char*pFile);
-GT_API GTN_SaveRingNetConfig(short core,char *pFile);
-GT_API GTN_CheckRingNetStructure(short core,char *pFile,unsigned short *pStatus);
-
-
-/*-----------------------------------------------------------*/
-/* ¶ÁÈ¡SPORT°üÊý¾Ý                                           */
-/*-----------------------------------------------------------*/
-#define SPORT_COUNT                     (256)
-
-typedef struct
-{
-	uint32_t terminalTxBuf[SPORT_COUNT];
-	uint32_t terminalRxBuf[SPORT_COUNT];
-}TTerminalData;
-
-GT_API GTN_ReadTerminalData(short core,TTerminalData *pTerminalData);
-
-/*-----------------------------------------------------------*/
-/* Config of module                                          */
-/*-----------------------------------------------------------*/
-#define TERMINAL_OPERATION_NONE             (0)
-#define TERMINAL_OPERATION_SKIP             (1)
-#define TERMINAL_OPERATION_CLEAR            (2)
-#define TERMINAL_OPERATION_RESET_MODULE     (3)
-
-#define TERMINAL_OPERATION_PROGRAM          (11)
-
-typedef struct
-{
-	uint32_t portACrcOkCnt;
-	unsigned short portACrcErrorCnt;
-	uint32_t portBCrcOkCnt;
-	unsigned short portBCrcErrorCnt;
-	uint32_t reserve;//Ä¿Ç°ÓÃÓÚ¶ÁÈ¡FLASH×ÜÊý¾Ý³¤¶È
-} TRingNetCrcStatus;
-
-typedef struct
-{
-	unsigned short errorCountReceive;
-	unsigned short errorCountPackageDown;
-	unsigned short errorCountPackageUp;
-	unsigned short reserve[13];
-} TTerminalError;
-
-typedef struct
-{
-	short moduleDataType;
-	short moduleDataIndex;
-	short dataIndex;
-	short dataCount;
-} TTerminalMap;
-
-GT_API GTN_LoadTerminalConfig(short core,char *pFile);
-GT_API GTN_SaveTerminalConfig(short core,char *pFile);
-GT_API GTN_TerminalOn(short core,short index);
-GT_API GTN_TerminalSynch(short core,short index);
-GT_API GTN_TerminalSynchEx(short core,short index,short synchEnable,short synchSource);
-GT_API GTN_GetRingNetCrcStatus(short core,short index,TRingNetCrcStatus *pRingNetCrcStatus);
-GT_API GTN_GetTerminalError(short core,short index,TTerminalError *pTerminalError);
-
-GT_API GTN_GetTerminalPhyId(short core,short count,short *pPhyId);
-GT_API GTN_GetTerminalLinkStatus(short core,short count,short *ringNetType,short *pLinkStatus);
-GT_API GTN_SetTerminalMap(short core,short dataType,short moduleIndex,TTerminalMap *pMap);
-GT_API GTN_GetTerminalMap(short core,short dataType,short moduleIndex,TTerminalMap *pMap);
-GT_API GTN_ClearTerminalMap(short core,short dataType);
-GT_API GTN_SetTerminalMode(short core,short station,unsigned short mode);
-GT_API GTN_GetTerminalMode(short core,short station,unsigned short *pMode);
-GT_API GTN_SetTerminalTest(short core,short station,short index,unsigned short value);
-GT_API GTN_GetTerminalTest(short core,short station,short index,unsigned short *pValue);
-GT_API GTN_SetTerminalOperation(short core,short operation);
-GT_API GTN_GetTerminalOperation(short core,short *pOperation);
-
-
-
-#define TERMINAL_LOAD_MODE_NONE             (0)
-#define TERMINAL_LOAD_MODE_BOOT             (2)
-
-typedef struct
-{
-	unsigned short type;
-	short id;
-	int32_t status;
-	uint32_t synchCount;
-	uint32_t ringNetType;
-	uint32_t portStatus;
-	uint32_t sportDropCount;
-	uint32_t reserve[7];
-} TTerminalStatus;
-
-GT_API GTN_TerminalInit(short core,short detect=1);
-GT_API GTN_GetTerminalVersion(short core,short index,TVersion *pTerminalVersion);
-GT_API GTN_SetTerminalPermit(short core,short index,short dataType,unsigned short permit);
-GT_API GTN_GetTerminalPermit(short core,short index,short dataType,unsigned short *pPermit);
-GT_API GTN_SetTerminalPermitEx(short core,short station,short dataType,short *permit,short index,short count);
-GT_API GTN_GetTerminalPermitEx(short core,short station,short dataType,short *pPermit,short index,short count);
-
-GT_API GTN_SetTerminalSafeMode(short core,short index,short safeMode);
-GT_API GTN_GetTerminalSafeMode(short core,short index,short *pSafeMode);
-GT_API GTN_ClearTerminalSafeMode(short core,short index);
-GT_API GTN_GetTerminalStatus(short core,short index,TTerminalStatus *pTerminalStatus);
-GT_API GTN_GetTerminalType(short core,short count,unsigned short *pType,short *pTypeConnect=NULL);
-GT_API GTN_SetTerminalType(short core,short count,short *pType);
-GT_API GTN_GetTerminalMapCount(short core,short dataType,short moduleIndex,short *pMapCount);
-GT_API GTN_GetTerminalMapData(short core,short dataType,short moduleIndex,short mapIndex,TTerminalMap *pMap);
-
-GT_API GTN_FindStation(short core,short station,uint32_t time);
-
-GT_API GTN_ProgramTerminalConfig(short core,short loadMode);
-GT_API GTN_GetTerminalConfigLoadMode(short core,short *pLoadMode);
-
-
-
-
-GT_API GTN_SetMailbox(short core,short station,unsigned short byteAddress,unsigned short *pData,unsigned short wordCount,unsigned short dataMode,unsigned short desId,unsigned short type);
-GT_API GTN_GetMailbox(short core,short station,unsigned short byteAddress,unsigned short *pData,unsigned short wordCount,unsigned short dataMode,unsigned short desId,unsigned short type);
-
-/*-----------------------------------------------------------*/
-/* UUID					                                            */
-/*-----------------------------------------------------------*/
-GT_API GTN_SetUuid(short core,char *pUuid,short count);
-GT_API GTN_GetUuid(short core,char *pCode,short count);
-
-/*-----------------------------------------------------------*/
-/* FLASH					                                            */
-/*-----------------------------------------------------------*/
-GT_API GTN_SetFlashValue(short core,uint32_t address,short count,short *pData);
-GT_API GTN_GetFlashValue(short core,uint32_t address,short count,short *pData);
-
-/*-----------------------------------------------------------*/
-/* ÍøÂç»Ö¸´Ö¸Áî                                              */
-/*-----------------------------------------------------------*/
-GT_API GTN_RN_RingNetRecover(short core,short station);
-/*-----------------------------------------------------------*/
-/* GSHD×î´ó×îÐ¡Á¦¾ØÉèÖÃ                                      */
-/*-----------------------------------------------------------*/
-typedef struct
-{
-	unsigned short torqueMax;
-	unsigned short torquePostive;
-	unsigned short torqueNegitive;
-	short reserve1;
-	double reserve2[4];
-}TTorqueLimit;
-GT_API GTN_RN_SetMaxTorqueLimit(short core,unsigned short station, short axis, unsigned short torqueMax, unsigned short torquePostive,unsigned short torqueNegitive);
-GT_API GTN_RN_GetMaxTorqueLimit(short core,unsigned short station,short axis, unsigned short* torqueMax, unsigned short* torquePostive,  unsigned short* torqueNegitive);
-GT_API GTN_RN_SetTorqueLimit(short core,short axis,TTorqueLimit *pTorqueLimit);
-GT_API GTN_RN_GetTorqueLimit(short core,short axis, TTorqueLimit *pTorqueLimit);
-
-GT_API GTN_SetPrfTorque(short core,short axis,short prfTorque);
-GT_API GTN_GetAtlTorque(short core,short axis,short *atlTorque);
-GT_API GTN_SetPrfTorqueArray(short core,short axis,short *prfTorque,short count);
-GT_API GTN_GetAtlTorqueArray(short core,short axis,short *pAtlTorque,short count);
-GT_API GTN_GetSafeTorqueOffStatus(short core,int32_t *pSts);
-
-typedef struct TorqueTriggerPrm
-{
-	short	enable;
-	short	latchType;
-	short	latchIndex;
-	short	probeType;
-	short	probeIndex;
-	short	windowOnly;
-	int32_t	firstPosition;
-	int32_t	lastPosition;
-	int32_t	continueTime;
-	double	currentValue;
-	double	pad2[3];
-}TTorqueTriggerPrm;
-GT_API GTN_SetTorqueTriggerPrm(short core,short index,TTorqueTriggerPrm *pPrm);
-GT_API GTN_GetTorqueTriggerPrm(short core,short index,TTorqueTriggerPrm *pPrm);
-
-
-
-
-
-/*-----------------------------------------------------------*/
-/* GSHD±Õ»·²ÎÊýÉèÖÃ                                          */
-/*-----------------------------------------------------------*/
-typedef struct
-{
-	double value;
-	double reverse[4];
-}TServoPosLoopPidMode0;
-
-typedef union
-{
-	TServoPosLoopPidMode0 servoPosLoopPidMode0;
-}TServoPosLoopPidUnion;
-
-typedef struct
-{
-	short mode;
-	TServoPosLoopPidUnion servoPosLoopPidPrm;
-}TServoPosLoopPid;
-
-GT_API GTN_RN_SetServoPosLoopPid(short core,short axis,TServoPosLoopPid *pServoPosLoopPid);
-GT_API GTN_RN_GetServoPosLoopPid(short core,short axis,TServoPosLoopPid *pServoPosLoopPid);
-
-typedef struct
-{
-	double value;
-	double reverse[4];
-}TServoSpdLoopPidMode0;
-
-typedef union
-{
-	TServoSpdLoopPidMode0 servoSpdLoopPidMode0;
-}TServoSpdLoopPidUnion;
-
-typedef struct
-{
-	short mode;
-	short reverse[3];
-	TServoSpdLoopPidUnion servoSpdLoopPidPrm;
-}TServoSpdLoopPid;
-
-GT_API GTN_RN_SetServoSpdLoopPid(short core,short axis,TServoSpdLoopPid *pServoSpdLoopPid);
-GT_API GTN_RN_GetServoSpdLoopPid(short core,short axis,TServoSpdLoopPid *pServoSpdLoopPid);
-
-#define SERBVO_POS_LOOP                   (0)		// Çý¶¯Æ÷Î»ÖÃ»·
-#define SERBVO_SPD_LOOP                   (1)   // Çý¶¯Æ÷ËÙ¶È»·
-
-GT_API GTN_RN_GetServoPid(short core,short axis,short loop,short mode,void *pServoPid);
-GT_API GTN_RN_SetServoPid(short core,short axis,short loop,short mode,void *pServoPid);
-GT_API GTN_RN_SetServoPidRatio(short core,short axis,double ratio);
-GT_API GTN_RN_GetServoPidRatio(short core,short axis,double *pRatio);
-
-
-GT_API GTN_SetServoTime(short core,int32_t servoTime,int32_t delay,int32_t stepCoef);
-GT_API GTN_GetServoTime(short core,int32_t *pServoTime,int32_t *pDelay,int32_t *pStepCoef);
-GT_API GTN_GetControlInfo(short core,short control,TControlInfo *pControlInfo);
-/*-----------------------------------------------------------*/
-/* °²È«Ä£Ê½ÉèÖÃ                                              */
-/*-----------------------------------------------------------*/
-GT_API GTN_RN_ClearStationSafeModeStatus(short cardIndex,short stationPhyId);
-GT_API GTN_RN_IlinkSetSafeModeControl(short cardIndex,short stationPhyId,short modulePhyId,short enable,short clearMode);
-GT_API GTN_RN_IlinkClearSafeModeStatus(short cardIndex,short stationPhyId,short modulePhyId);
-GT_API GTN_RN_IlinkSetSafeModeOut(short cardIndex,short stationPhyId,short modulePhyId,short type,short index,short *pEnable,double *pValue,short count);
-GT_API GTN_RN_GetStationOfflineCount(short cardIndex,int32_t *pStationPhyId,short count,short *pStationOfflineCount);
-
-/*-----------------------------------------------------------*/
-//Ô­LookAheadEx.h£ººÍÇ°Õ°Ïà¹Ø¹¦ÄÜµÄÖ¸Áî                      */
-/*-----------------------------------------------------------*/
-#define LA_AXIS_NUM    8
-#define LA_WORK_AXIS_NUM  6
-#define LA_MACHINE_AXIS_NUM   5
-
-//ÖáµÄ²ÎÊýÐÅÏ¢£¨¸÷Öá×î´óËÙ¶È£¬¸÷Öá×î´ó¼ÓËÙ¶È£¬¸÷Öá×î´óËÙ¶È±ä»¯Á¿£©ÊÇ·ñÏÞÖÆËÙ¶ÈÄ£Ê½
-#define AXIS_LIMIT_NONE       0       //ÖáÎÞÏÞÖÆ
-#define AXIS_LIMIT_MAX_VEL    1       //Öá×î´óËÙ¶ÈÏÞÖÆ
-#define AXIS_LIMIT_MAX_ACC    2       //Öá×î´ó¼ÓËÙ¶ÈÏÞÖÆ
-#define AXIS_LIMIT_MAX_DV     4       //Öá×î´óËÙ¶ÈÌø±äÁ¿ÏÞÖÆ
-
-#define KIN_MSG_BUFFER_SIZE   32
-
-//ËÙ¶È¹æ»®Ä£Ê½
-enum EVelMode
-{
-	T_CURVE=0,
-	S_CURVE,
-	S_CURVE_NEW,                  //¸ù¾Ý¼Ó¼ÓËÙ¶È¡¢×î´ó¼ÓËÙ¶È½øÐÐSÇúÏßËÙ¶ÈÇ°Õ°£¬2015.11.16
-	S_CURVE_SMOOTH,
-
-	VEL_MODE_MAX=0x10000,         //È·±£³¤¶ÈÎª4Byte
-};
-
-//¹¤¼þ×ø±êÏµÏÂ¹ì¼£ÊÇ·ñÏÞÖÆËÙ¶ÈÄ£Ê½
-enum EWorkLimitMode
-{
-	WORK_LIMIT_INVALID=0,       //¹¤¼þ×ø±êÏµÐÅÏ¢²»ÏÞÖÆ
-	WORK_LIMIT_VALID,           //¹¤¼þ×ø±êÏµÏÞÖÆÉúÐ§
-
-	WORK_LIMIT_MODE_MAX=0x10000,//È·±£³¤¶ÈÎª4Byte
-};
-
-//ÉèÖÃµÄËÙ¶È¶¨Òå¹æÔò
-enum EVelSettingDef
-{
-	NORMAL_DEF_VEL=0,             //ÊäÈëÎªÖá×ø±êÏµËùÓÐÖáµÄºÏ³ÉËÙ¶È
-	NUM_DEF_VEL,                  //ÒÔNUMÏµÍ³µÄ¹æÔò¶¨Òå
-	CUT_DEF_VEL,                  //ËÙ¶ÈÎªÇÐÏ÷ËÙ¶È
-
-	VEL_SETTING_DEF_MAX=0x10000,  //È·±£³¤¶ÈÎª4Byte
-};
-
-//ÉèÖÃµÄ¼ÓËÙ¶È¶¨Òå¹æÔò
-enum EAccSettingDef
-{
-	NORMAL_DEF_ACC=0,             //ÊäÈë¼´Êä³ö
-	LONG_AXIS_ACC,                //³¤Öá×î´óËÙ¶È
-
-	ACC_SETTING_DEF_MAX=0x10000,  //È·±£³¤¶ÈÎª4Byte
-};
-
-//»ú´²ÀàÐÍ
-enum EMachineMode
-{
-	NORMAL_THREE_AXIS=0,      //±ê×¼ÈýÖá»ú´²Ä£Ê½
-	MULTI_AXES,               //¶àÖáÁª¶¯Ä£Ê½
-	FIVE_AXIS,                //ÎåÖá»ú´²Ä£Ê½,Öá×ø±êÏµÎªÖ÷£¬¹¤¼þ×ø±êÏµÎª¸¨
-	FIVE_AXIS_WORK,           //ÎåÖá»ú´²Ä£Ê½£¬¹¤¼þ×ø±êÏµÎªÖ÷£¬Öá×ø±êÏµÎª¸¨
-	ROBOT,                    //»úÆ÷ÈËÄ£Ê½£¬Öá×ø±êÏµÎªÖ÷£¬¹¤¼þ×ø±êÏµÎª¸¨£¬2014.12.3
-	ROBOT_WORK,
-
-	MACHINE_MODE_MAX=0x10000, //È·±£³¤¶ÈÎª4Byte
-};
-
-//Ç°Õ°²ÎÊý½á¹¹Ìå
-struct TLookAheadParameter
-{
-	int lookAheadNum;					//Ç°Õ°¶ÎÊý
-	double time;						//Ê±¼ä³£Êý
-	double radiusRatio;					//ÇúÂÊÏÞÖÆµ÷½Ú²ÎÊý
-	double vMax[LA_AXIS_NUM];			//¸÷ÖáµÄ×î´óËÙ¶È
-	double aMax[LA_AXIS_NUM];			//¸÷ÖáµÄ×î´ó¼ÓËÙ¶È
-	double DVMax[LA_AXIS_NUM];			//¸÷ÖáµÄ×î´óËÙ¶È±ä»¯Á¿£¨ÔÚÊ±¼ä³£ÊýÄÚ£©
-	double scale[LA_AXIS_NUM];			//¸÷ÖáµÄÂö³åµ±Á¿
-	short axisRelation[LA_AXIS_NUM];	//ÊäÈë×ø±êºÍÄÚ²¿×ø±êµÄ¶ÔÓ¦¹ØÏµ
-	char machineCfgFileName[128];		//»ú´²ÅäÖÃÎÄ¼þÃû
-};
-
-//////////////////////////////////////
-typedef struct
-{
-	short RobotType;
-	short reserved1;
-
-	short KinParUse[18];
-	double KinPar[18];
-	short KinLimitUse[12];
-	double KinLimitMin[12];
-	double KinLimitMax[12];
-	double KinLimitMinShift[12];
-	double KinLimitMaxShift[12];
-
-	short AxisUse[8];
-	char AxisPosSignSwitch[8];
-	double AxisPosOffset[8];
-
-	short CartUnitUse[6];
-	char CartPosKCSSignSwitch[6];
-	short reserved2[3];
-	double CartPosKCSOffset[6];
-}RC_KIN_CONFIG;
-
-typedef struct
-{
-	char Error;
-	short ErrorID;
-	char Message[129];
-}RC_ERROR_INTERFACE;
-
-typedef struct
-{
-	short ErrorID;
-	char Message[129];
-	char LogTime[32];
-	int32_t InternalID;
-}RC_MSG_BUFFER_ELEMENT;
-
-typedef struct
-{
-	short LastMsgIndex;
-	RC_MSG_BUFFER_ELEMENT MsgElement[KIN_MSG_BUFFER_SIZE];
-	int32_t LastMsgID;
-}RC_MSG_BUFFER;
-
-//ÕýÄæ½â·½Ïò
-enum ETransDir
-{
-	FORWARD_TRANS=0,            //Õý½â
-	INVERSE_TRANS,              //Äæ½â
-
-	TRANS_DIR_MAX = 0x10000,	// È·±£³¤¶ÈÎª4Byte
-};
-
-//Ðý×ªÖá·¶Î§ÉèÖÃ
-struct TRotationAxisRange
-{
-	int primaryAxisRangeOn;              //µÚÒ»Ðý×ªÖáÏÞ¶¨·¶Î§ÊÇ·ñÉúÐ§£¬0£º²»ÉúÐ§£¬1£ºÉúÐ§
-	int slaveAxisRangeOn;                //µÚ¶þÐý×ªÖáÏÞ¶¨·¶Î§ÊÇ·ñÉúÐ§£¬0£º²»ÉúÐ§£¬1£ºÉúÐ§
-	double maxPrimaryAngle;              //µÚÒ»Ðý×ªÖá×î´óÖµ
-	double minPrimaryAngle;              //µÚÒ»Ðý×ªÖá×îÐ¡Öµ
-	double maxSlaveAngle;                //µÚ¶þÐý×ªÖá×î´óÖµ
-	double minSlaveAgnle;                //µÚ¶þÐý×ªÖá×îÐ¡Öµ
-};
-
-//Ñ¡½â²ÎÊý
-enum EGroupSelect
-{
-	Continuous=0,
-	Group_1,
-	Group_2,
-};
-
-enum OptimizeState
-{
-	OPT_OFF=0,
-	OPT_ON,
-};
-
-enum OptimizeMethod
-{
-	NO_OPT=0,
-	OPT_BLENDING,
-	OPT_CIRCLEFITTING,
-	OPT_CUBICSPLINE,
-	OPT_BSPLINE,
-};
-
-enum ErrorID
-{
-	INIT_ERROR=1,		                    //Ã»ÓÐ½øÐÐ²ÎÊý³õÊ¼»¯
-	PASSWORD_ERROR,		                    //ÃÜÂë´íÎó£¬ÇëÔÚ¹Ì¸ßÔË¶¯¿ØÖÆÆ½Ì¨ÉÏÔËÐÐ
-	INDATA_ERROR,		                    //ÊäÈëÊý¾Ý´íÎó£¨¼ì²éÔ²»¡Êý¾ÝÊÇ·ñÕýÈ·£©
-	PRE_PROCESS_ERROR,
-	TOOL_RADIUS_COMPENSATE_ERROR_INOUT,		//µ¶¾ß°ë¾¶²¹³¥´íÎó£º½øÈë/½áÊøµ¶²¹´¦²»ÄÜÊÇÔ²»¡
-	TOOL_RADIUS_COMPENSATE_ERROR_NOCROSS,	//µ¶¾ß°ë¾¶²¹³¥´íÎó£ºÊý¾Ý²»ºÏÀí£¬ÎÞ·¨¼ÆËã½»µã
-	USERDATA_ERROR,
-};
-
-//¹ì¼£ÓÅ»¯²ÎÊý½á¹¹Ìå
-typedef struct OptimizeParamUser
-{
-	OptimizeState usePathOptimize;	//ÊÇ·ñÊ¹ÓÃÂ·¾¶ÓÅ»¯£ºOPT_OFF:²»Ê¹ÓÃ	OPT_ON:Ê¹ÓÃ
-
-	float tolerance;				//¹«²î(suggest: rough:0.1, pre-finish:0.05, finish:0.01)
-
-	OptimizeMethod optimizeMethod;	//Ñ¡ÔñÇúÏßÓÅ»¯·½Ê½
-
-	OptimizeState keepLargeArc;		//ÊÇ·ñ±£Áô´óÔ²»¡£ºOPT_OFF£º²»±£Áô£¬ OPT_ON£º±£Áô
-
-	float blendingMinError;			//blendingµÄ×îÐ¡Éè¶¨Îó²î
-
-	float blendingMaxAngle;			//blendingµÄ×î´ó½Ç¶ÈÏÞÖÆ£¨¼´µ±Ïß¶ÎÏòÁ¿½Ç¶È´óÓÚ¸Ã½Ç¶ÈÊ±£¬²»×öblending£¬µ¥Î»£º¶È£©
-
-}TOptimizeParamUser;
-
-struct TErrorInfo
-{
-	ErrorID errorID;		//´íÎóºÅ(INIT_ERROR:Î´³õÊ¼»¯²ÎÊý£»PRE_PROCESS_ERROR:Ô¤´¦ÀíÄ£¿é´íÎó£»
-	//TOOL_RADIUS_COMPENSATE_ERROR:µ¶¾ß°ë¾¶²¹³¥´íÎó£»)
-	int32_t errorRowNum;		//´íÎóÐÐºÅ
-};
-
-struct TPreStartPos
-{
-	double Pos[LA_AXIS_NUM];
-};
-
-enum EMachineType
-{
-	RW_C_ON_B=0,//B ÎªµÚÒ»Ðý×ªÖá£¬C ÎªµÚ¶þÐý×ªÖá
-	RW_B_ON_A,	//A ÎªµÚÒ»Ðý×ªÖá£¬B ÎªµÚ¶þÐý×ªÖá
-	RW_A_ON_B,	//B ÎªµÚÒ»Ðý×ªÖá£¬A ÎªµÚ¶þÐý×ªÖá
-	RW_C_ON_A,	//A ÎªµÚÒ»Ðý×ªÖá£¬C ÎªµÚ¶þÐý×ªÖá
-	DT_B_ON_A,	//A ÎªµÚÒ»Ðý×ªÖá£¬B ÎªµÚ¶þÐý×ªÖá
-	DT_A_ON_B,	//B ÎªµÚÒ»Ðý×ªÖá£¬A ÎªµÚ¶þÐý×ªÖá
-	DT_A_ON_C,	//C ÎªµÚÒ»Ðý×ªÖá£¬A ÎªµÚ¶þÐý×ªÖá
-	DT_B_ON_C,	//C ÎªµÚÒ»Ðý×ªÖá£¬B ÎªµÚ¶þÐý×ªÖá
-	T_A_W_B,	//A ÎªµÚÒ»Ðý×ªÖá£¬B ÎªµÚ¶þÐý×ªÖá
-	T_B_W_A,	//B ÎªµÚÒ»Ðý×ªÖá£¬A ÎªµÚ¶þÐý×ªÖá
-	T_A_W_C,	//A ÎªµÚÒ»Ðý×ªÖá£¬C ÎªµÚ¶þÐý×ªÖá
-	T_B_W_C,	//B ÎªµÚÒ»Ðý×ªÖá£¬C ÎªµÚ¶þÐý×ªÖá
-};
-struct TMachCfgInfo
-{
-	EMachineType machineType;            //»ú´²ÀàÐÍ
-	short reserve1[2];                   //±£Áô²ÎÊý
-	double primaryAxisPoint[3];          //µÚÒ»Ðý×ªÖáÖÐÐÄÔÚMCSµÄ×ø±ê
-	double slaveAxisPoint[3];            //µÚ¶þÐý×ªÖáÖÐÐÄÔÚMCSµÄ×ø±ê
-	double toolLocationPoint[3];         //µ¶¾ß×ø±êÏµÖÐÐÄÔÚMCSµÄ×ø±ê
-	short dirMode;                       //·½ÏòÃèÊöÄ£Ê½
-	short reserve2[2];                   //±£Áô²ÎÊý
-	short dir[5];                        //¸÷Öá·½Ïò
-	double axisVector[5][3];             //¸÷ÖáÖáÏß·½Ïò
-};
-
-struct TPos
-{
-	double machinePos[LA_MACHINE_AXIS_NUM];
-	double workPos[LA_WORK_AXIS_NUM];
-};
-
-GT_API GTN_SetupLookAheadCrd(short core,short crd,EMachineMode machineMode);
-GT_API GTN_SetAxisFollowModeLa(short core,short crd,int *pFollowMode);
-GT_API GTN_SetMinEvenVelTimeLa(short core,short crd, double evenTime);
-GT_API GTN_SetMinDccAngle(short core,short crd,double dccAngle);
-GT_API GTN_SetMinDccAngleLa(short core,short crd,double dccAngle);
-GT_API GTN_SetVelDefineModeLa(short core,short crd,EVelSettingDef velDefMode);
-GT_API GTN_SetAccDefineModeLa(short core,short crd,EAccSettingDef accDefMode);
-GT_API GTN_SetMaxOverrideLa(short core,short crd,double maxSynVelRatio);
-GT_API GTN_SetAxisLimitModeLa(short core,short crd,int *pAxisLimitMode);
-GT_API GTN_SetWorkLimitModeLa(short core,short crd,EWorkLimitMode workLimitMode);
-GT_API GTN_SetAxisVelValidModeLa(short core,short crd,int velValidAxis);
-GT_API GTN_SetAngleCoefTableLa(short core,short crd,short count,double *pAngle,double *pCoef);
-GT_API GTN_SetVelModeLa(short core,short crd,EVelMode velMode);
-GT_API GTN_SetVelSmoothModeLa(short core,short crd,short smoothMode);
-GT_API GTN_SetVelLimitAngleThresholdLa(short core,short crd,double angleThreshold);
-GT_API GTN_SetRadiusRatioTableLa(short core,short crd,short count,double *pRadius,double *pRatio);
-GT_API GTN_PrintLACmdLa(short core,short crd,int printFlag, int clearFile);
-GT_API GTN_UpdateMachineBuildingFileLa(short core,short crd, int update);
-GT_API GTN_InitialMachineBuilding(short core,short crd, char *pMachineCfgFileName,double *machineCoordCenter, double *workCoordCenter, double toolLength);
-GT_API GTN_InitialMachineBuildingEx(short core,short crd, char *pMachineCfgFileName,double *machineCoordCenter, double *workCoordCenter, double toolLength);
-GT_API GTN_InitialMachineBuildingPara(short core,short crd, TMachCfgInfo *pMachCfgInfo,double *machineCoordCenter, double *workCoordCenter, double toolLength);
-GT_API GTN_GetLookAheadParaEx(short core,short crd,short fifo,TLookAheadParameter *pLookAheadPrm,short *pMotionMode);
-
-// ÎåÖá
-GT_API GTN_CrdRTCPOn(short core,short crd,short fifo=0);
-GT_API GTN_CrdRTCPOff(short core,short crd,short fifo=0);
-GT_API GTN_SetNonlinearErrorControl(short core,short crd, int enable, double nonlinearError);
-GT_API GTN_EnableDiscreateArc(short core,short crd,short enable,double arcError);
-GT_API GTN_MachineForwardTrans(short core,short crd, double *pMachinePos, double *pWorkPos);
-GT_API GTN_MachineRTCPTrans(short core,short crd, double *pInputPos, double *pMachinePos, double *pWorkPos);
-GT_API GTN_SetCompToolLength(short core,short crd, double compToolLength);
-GT_API GTN_SetCompWorkCoordOffset(short core,short crd, double *pCompWorkOffset);
-GT_API GTN_UpdateMachineBuildingFile(short core,short crd, int update);
-GT_API GTN_SetRotationAxisRange(short core,short crd, TRotationAxisRange *pRotationAxisRange);
-GT_API GTN_SetInverseSolutionSelectPara(short core,short crd, EGroupSelect groupSelect, int priorAxisSet);
-GT_API GTN_SetPowerOffDo(short core,short mode,short doIndex,short doValue);
-GT_API GTN_MachineTransformation(short core,short crd, int posType, double *pPrePos, double *pPos, int *pPosNum, TPos **pReturnPos);
-GT_API GTN_SetStartPointProcessMode(short core,short crd,short enable, double z,short fifo);
-GT_API GTN_SetWorkCrdLaserFollowMode(short core,short crd,short enbale,short fifo,short chn);
-
-GT_API GTN_SetAxisVelValidCompModeLa(short core,short crd, int enable, int *pCompAxis);
-GT_API GTN_SetFollowAxisProcessModeLa(short core,short crd,int AxisFollowMode);
-GT_API GTN_SetCmdVelLimitLa(short core,short crd, int enable, int n1, int n2, int mode);
-GT_API GTN_InitLookAheadEx(short core,short crd,TLookAheadParameter *pLookAheadParameter,short fifo, short motionMode=0,TPreStartPos *pPreStartPos=NULL);
-GT_API GTN_InitLookAheadPara(short core,short crd,int32_t lookAheadNum,double time,double radiusRatio,double scale,short fifo);
-GT_API GTN_SetFollowAxisParaLa(short core,short crd,int *pAxisLimitMode,double *pVmax,double *pAmax,double *pDVmax);
-
-GT_API GTN_SetBlendingParaLa(short core,short crd, short paraType, double para, double minAngle, double maxAngle);
-
-
-GT_API GTN_GetLookAheadSegCountEx(short core,short crd,int32_t *pSegCount,short fifo=0);
-GT_API GTN_GetMotionTimeEx(short core,short crd,double *pTime,short fifo);
-GT_API GTN_SetUserSegNumEx(short core,short crd,int32_t segNum,short fifo);
-GT_API GTN_CrdDataEx(short core,short crd,TCrdData *pCrdData,short fifo=0);
-
-GT_API GTN_LnXYEx(short core,short crd,double x,double y,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_LnXYG0Ex(short core,short crd,double x,double y,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_LnXYZEx(short core,short crd,double x,double y,double z,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_LnXYZG0Ex(short core,short crd,double x,double y,double z,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_LnXYZAEx(short core,short crd,double x,double y,double z,double a,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_LnXYZAG0Ex(short core,short crd,double x,double y,double z,double a,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_LnXYZACEx(short core,short crd,double *pPos,short posMask,double synVel,double synAcc,int32_t segNum,short override2,short fifo);
-GT_API GTN_LnXYZACG0Ex(short core,short crd,double *pPos,short posMask,double synVel,double synAcc,int32_t segNum,short override2,short fifo);
-GT_API GTN_LnXYZACUVWEx(short core,short crd,double *pPos,short posMask,double synVel,double synAcc,int32_t segNum,short override2,short fifo);
-GT_API GTN_LnXYZACUVWG0Ex(short core,short crd,double *pPos,short posMask,double synVel,double synAcc,int32_t segNum,short override2,short fifo);
-GT_API GTN_ArcXYREx(short core,short crd,double x,double y,double radius,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_ArcYZREx(short core,short crd,double y,double z,double radius,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_ArcZXREx(short core,short crd,double z,double x,double radius,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_ArcXYCEx(short core,short crd,double x,double y,double xCenter,double yCenter,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_ArcYZCEx(short core,short crd,double y,double z,double yCenter,double zCenter,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_ArcZXCEx(short core,short crd,double z,double x,double zCenter,double xCenter,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_ArcXYZEx(short core,short crd,double x,double y,double z,double interX,double interY,double interZ,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_ArcXYRACEx(short core,short crd,double x,double y,double a,double c,double radius,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_ArcXYCACEx(short core,short crd,double x,double y,double a,double c,double xCenter,double yCenter,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_ArcXYZACEx(short core,short crd,double x,double y,double z,double a,double c,double interX,double interY,double interZ,double interA,double interC,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_HelixXYRZEx(short core,short crd,double x,double y,double z,double radius,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_HelixXYCZEx(short core,short crd,double x,double y,double z,double xCenter,double yCenter,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
-GT_API GTN_BufDelayEx(short core,short crd,unsigned short delayTime,short fifo=0);
-GT_API GTN_BufGearEx(short core,short crd,short gearAxis,double deltaPos,short fifo=0);
-GT_API GTN_BufMoveEx(short core,short crd,short moveAxis,double pos,double vel,double acc,short modal,short fifo=0);
-GT_API GTN_BufIOEx(short core,short crd,unsigned short doType,unsigned short doMask,unsigned short doValue,short fifo=0);
-GT_API GTN_BufEnableDoBitPulseEx(short core,short crd,short doType,short doIndex,unsigned short highLevelTime,unsigned short lowLevelTime,int32_t pulseNum,short firstLevel,short fifo);
-GT_API GTN_BufDisableDoBitPulseEx(short core,short crd,short doType,short doIndex,short fifo);
-GT_API GTN_BufDAEx(short core,short crd,short chn,short daValue,short fifo=0);
-
-GT_API GTN_BufFollowMasterEx(short core,short crd,TBufFollowMaster *pBufFollowMaster,short fifo=0);
-GT_API GTN_BufFollowEventCrossEx(short core,short crd,TBufFollowEventCross *pEventCross,short fifo=0);
-GT_API GTN_BufFollowEventTriggerEx(short core,short crd,TBufFollowEventTrigger *pEventTrigger,short fifo=0);
-GT_API GTN_BufFollowStartEx(short core,short crd,int32_t masterSegment,int32_t slaveSegment,int32_t masterFrameWidth,short fifo=0);
-GT_API GTN_BufFollowNextEx(short core,short crd,int32_t width,short fifo=0);
-GT_API GTN_BufFollowReturnEx(short core,short crd,double vel,double acc,short smoothPercent,short fifo=0);
-
-
-// Smart Cutter
-typedef struct
-{
-	short x;						// XÖá¶ÔÓ¦µÄ¹æ»®Öá
-	short y;						// YÖá¶ÔÓ¦µÄ¹æ»®Öá
-	short c;						// CÖá¶ÔÓ¦µÄ¹æ»®Öá
-
-	short tableRadiusIndex;			// °ë¾¶²¹³¥±íË÷Òý
-	short tableAngleIndex;			// CÖá²¹³¥±íË÷Òý
-
-	short directionReverse;			// Ä¬ÈÏ¹æ»®Î»ÖÃÔö´óÊ±½Ç¶ÈÒ²ÊÇÔö´óµÄ
-
-	int32_t offset;		            // CÖáÐý×ª½Ç¶ÈÎª0Ê±µÄ¹æ»®Î»ÖÃ
-	int32_t resolution;				// CÖáÃ¿×ªÂö³åÊý
-
-	short adcIndex;					// ADCË÷Òý
-	double adcThreshold;			// ADC´¥·¢²¹³¥µÄãÐÖµ
-} TSmartCutterPrm;
-
-typedef struct
-{
-	short enable;
-	short execute;
-	double radiusValue;
-	double angleValue;
-} TSmartCutterInfo;
-
-GT_API GTN_SmartCutterOn(short core,short index);
-GT_API GTN_SmartCutterOff(short core,short index);
-GT_API GTN_SetSmartCutterPrm(short core,short index,TSmartCutterPrm *pPrm);
-GT_API GTN_GetSmartCutterPrm(short core,short index,TSmartCutterPrm *pPrm);
-GT_API GTN_BufSmartCutterOn(short core,short crd,short smartCutterIndex,short fifo);
-GT_API GTN_BufSmartCutterOff(short core,short crd,short smartCutterIndex,short fifo);
-GT_API GTN_BufSmartCutterOnEx(short core,short crd,short index,short fifo=0);
-GT_API GTN_BufSmartCutterOffEx(short core,short crd,short index,short fifo=0);
-GT_API GTN_GetSmartCutterInfo(short core,short index,TSmartCutterInfo *pInfo);
-GT_API GTN_SetSmartCutterValue(short core,short index,double radiusValue,double angleValue);
-GT_API GTN_SmartCutterStart(short core,short index);
-
-
-GT_API GTN_BufWaitDiEx(short core,short crd, short diType, unsigned short diIndex,unsigned short level, short continueTime, int32_t overTime, short flagMode,int32_t segNum, short fifo);
-GT_API GTN_BufWaitLongVarEx(short core,short crd, short index,int32_t value,int32_t overTime,short flagMode,int32_t segNum,short fifo);
-
-GT_API GTN_BufDoBitEx(short core,short crd,unsigned short doType,unsigned short index,short value,short fifo);
-GT_API GTN_BufDoBitDelayEx(short core,short crd,unsigned short doType,unsigned short index,short value,int32_t delayTime,short fifo);
-
-// »º´æÇøÎ»ÖÃ±È½Ï
-GT_API GTN_BufPosComparePsoPrm(short core,short crd,short index,TPosComparePsoPrm *pPrm,short fifo);
-GT_API GTN_BufPosComparePsoPrmPro(short core,short crd,short index,TPosComparePsoPrmPro *pPrmPro,short fifo);
-GT_API GTN_BufPosCompareStart(short core,short crd,short fifo,short index);
-GT_API GTN_BufPosCompareStop(short core,short crd,short fifo,short index);
-
-GT_API GTN_BufPosComparePsoPrmEx(short core,short crd,short index,TPosComparePsoPrm *pPrm,short fifo);
-GT_API GTN_BufPosComparePsoPrmProEx(short core,short crd,short index,TPosComparePsoPrmPro *pPrmPro,short fifo);
-GT_API GTN_BufPosCompareStartEx(short core,short crd,short fifo,short index);
-GT_API GTN_BufPosCompareStopEx(short core,short crd,short fifo,short index);
-
-GT_API GTN_BufPosComparePulse(short core,short crd,short index,short outputMode,short level,unsigned short outputPulseWidth,short fifo);
-GT_API GTN_BufPosComparePulseEx(short core,short crd,short index,short outputMode,short level,unsigned short outputPulseWidth,short fifo);
-
-GT_API GTN_BufPsoStart(short core,short crd,short fifo,short index,int32_t x,int32_t y);
-GT_API GTN_BufPsoStop(short core,short crd,short fifo,short index,int32_t x,int32_t y);
-
-GT_API GTN_BufPsoStartEx(short core,short crd,short fifo,short index,double x,double y);
-GT_API GTN_BufPsoStopEx(short core,short crd,short fifo,short index,double x,double y);
-
-/*-----------------------------------------------------------*/
-/* Ñ¹Á¦²¹³¥                                            */
-/*-----------------------------------------------------------*/
-typedef struct
-{
-	double kp;
-	double ki;
-	double kd;
-	double integralLimit;	//»ý·Ö¼«ÏÞ
-	double derivativeLimit;	//Î¢·Ö¼«ÏÞ
-	double limit;			//µ÷½ÚÏÞÖÆ£¨Á¦»òµçÑ¹£©
-	double pad1[4];
-}TAxisPressPid;
-
-#define PRESS_COMPENSATE_MODE_LINEAR                       (0)                           // ÏßÐÔ²¹³¥
-#define PRESS_COMPENSATE_MODE_TABLE	                       (1)                           // ²é±í²¹³¥
-#define PRESS_COMPENSATE_MODE_REGION_LEARN                 (2)                           // ÇøÓòÄÚ×ÔÑ§Ï°²¹³¥
-
-typedef struct
-{
-	short enable;		           //ÊÇ·ñÊ¹ÄÜ£¬0-¹Ø±Õ£¬1-Ê¹ÄÜ
-	short type;			           //ÊäÈëÀàÐÍ£¬µçÑ¹»òÍøÂçÄ£¿éÊý¾Ý
-	short dimension;	           //²¹³¥ÊäÈëµÄÎ¬¶È£¬×î´ó3Î¬
-	short index[3];		           //ÊäÈëµÄË÷Òý,DAC´Ó1¿ªÊ¼£¬ECAT IOÄ£¿éÕ¾ºÅ´Ó0¿ªÊ¼
-	short subIndex[3];             //ÊäÈëµÄ×ÓË÷Òý£¬,DAC¸Ã²ÎÊýÎÞÐ§£¬ECAT IOÄ£¿éµÄIOMAP´Ó0¿ªÊ¼
-	short mode;			           //Ä£Ê½£¬ÏßÐÔ»¹ÊÇ²é±í
-	short revolveAxis;             //ÓÃÀ´¼ÆËãÐý×ª½Ç¶ÈµÄÖáºÅ
-	short regionAxisIndex;         //²¹³¥¹¦ÄÜÇø¼äÓÐÐ§µÄ²Î¿¼Öá
-	short relatedMasterIndex;      //Ëæ¶¯Ö÷ÖáµÄË÷Òý
-	short pad1[3];
-	double target;			       //Ä¿±êÁ¦»òµçÑ¹
-	double thredshold;		       //thredshold£¬Ê²Ã´Ê±ºò¿ªÊ¼²¹³¥
-	double deadZone;		       //ËÀÇøÁ¦»òµçÑ¹£¬ËÀÇøÄÚ²»²¹³¥
-	double factor;			       //Á¦ºÍÎ»ÒÆµÄ×ª»¯ÏµÊý
-	double revolveOffset;	       //³õÊ¼Ðý×ªµÄÂö³åÊý£¬Ä¬ÈÏºÏ³É·½ÏòºÍingdex[0]µÄ·½ÏòÖØºÏ
-	double revolveScale;	       //Ðý×ªÖáµÄÒ»È¦Âö³åÊý
-	TAxisPressPid pid;
-	int32_t compPosMaxP;              //Êä³ö²¹³¥Î»ÖÃÇø¼ä[N,P]µÄ¶ËµãP
-	int32_t compPosMaxN;              //Êä³ö²¹³¥Î»ÖÃÇø¼ä[N,P]µÄ¶ËµãN
-	double k;	                   //²¹³¥Á¿ÂË²¨ÏµÊý 0-1 ÊýÖµÔ½´óÂË²¨Ô½Ç¿
-	double pad2[4];
-	int32_t activeRegionP;            //²¹³¥¹¦ÄÜÓÐÐ§µÄ¹æ»®Î»ÖÃÇø¼ä[N,P]µÄ¶ËµãP
-	int32_t activeRegionN;            //²¹³¥¹¦ÄÜÓÐÐ§µÄ¹æ»®Î»ÖÃÇø¼ä[N,P]µÄ¶ËµãN
-	int32_t activeRegionInterval;     //²¹³¥¹¦ÄÜÓÐÐ§µÄ¹æ»®Î»ÖÃÇø¼äÄÚµÄ×ÔÑ§Ï°¼ä¸ô£¬µ±modeÎª×ÔÑ§Ï°PRESS_COMPENSATE_MODE_REGION_LEARNÊ±ÓÐÐ§
-	int32_t relatedMasterEven;        //Ëæ¶¯Ö÷ÖáµÄ±ÈÀý
-	int32_t relatedSlaveEven;         //Ëæ¶¯´ÓÖáµÄ±ÈÀý
-	int32_t pad3[3];
-} TAxisPressCompensate;
-
-GT_API GTN_SetAxisPressCompensate(short core,short axis,TAxisPressCompensate *pPressComp);
-GT_API GTN_GetAxisPressCompensate(short core,short axis,TAxisPressCompensate *pPressComp);
-GT_API GTN_SetAxisPressCompensateTable(short core,short axis,short index,int32_t count,double *pPressData,double *pPosData);
-GT_API GTN_SelectAxisPressCompensateTable(short core,short axis,short index);
-
-typedef struct
-{
-	short type;			      //ÊäÈëÀàÐÍ£¬µçÑ¹»òÍøÂçÄ£¿éÊý¾Ý
-	short dimension;	      //²¹³¥ÊäÈëµÄÎ¬¶È£¬×î´ó3Î¬
-	short index[3];		      //ÊäÈëµÄË÷Òý,DAC´Ó1¿ªÊ¼£¬ECAT IOÄ£¿éÕ¾ºÅ´Ó0¿ªÊ¼
-	short subIndex[3];        //ÊäÈëµÄ×ÓË÷Òý£¬,DAC¸Ã²ÎÊýÎÞÐ§£¬ECAT IOÄ£¿éµÄIOMAP´Ó0¿ªÊ¼
-
-	double targetMax;	      //±ê¶¨µÄÁ¦×î´óÖµ£¬´ïµ½»ò³¬¹ý¸ÃÖµÊ±±ê¶¨½áÊø
-	double targetMin;	      //±ê¶¨µÄÁ¦×îÐ¡Öµ£¬´ïµ½»òÐ¡ÓÚ¸ÃÖµÊ±±ê¶¨½áÊø
-	double factor;		      //Á¦ºÍÎ»ÒÆµÄ×ª»¯ÏµÊý£¬Æô¶¯Ê±´«Èë0,»ñÈ¡×´Ì¬Ê±µÃµ½±ê¶¨Öµ¡£
-
-	int32_t fixRegionP;          //±ê¶¨¹æ»®Î»ÖÃÇø¼ä[N,P]µÄ¶ËµãP£¬Æô¶¯Î»ÖÃµÄÏà¶ÔÎ»ÖÃ
-	int32_t fixRegionN;          //±ê¶¨¹æ»®Î»ÖÃÇø¼ä[N,P]µÄ¶ËµãN£¬Æô¶¯Î»ÖÃµÄÏà¶ÔÎ»ÖÃ
-	int32_t fixRegionInterval;   //±ê¶¨¹æ»®Î»ÖÃÇø¼äÄÚµÄ±ê¶¨¼ä¸ô
-
-	int32_t tmp[16];
-} TAxisPressCompensateFixFactor;
-
-GT_API GTN_StartAxisPressCompensateFixFactor(short core,short axis,TAxisPressCompensateFixFactor *pPressComp);
-GT_API GTN_GetAxisPressCompensateFixFactorStatus(short core,short axis,short *pFixFactorSts,TAxisPressCompensateFixFactor *pPressComp);
-
-typedef struct
-{
-	short type;			 //ÊäÈëÀàÐÍ£¬µçÑ¹»òÍøÂçÄ£¿éÊý¾Ý
-	short dimension;     //²¹³¥ÊäÈëµÄÎ¬¶È£¬×î´ó3Î¬
-	short index[3];		 //ÊäÈëµÄË÷Òý,DAC´Ó1¿ªÊ¼£¬ECAT IOÄ£¿éÕ¾ºÅ´Ó0¿ªÊ¼
-	short subIndex[3];   //ÊäÈëµÄ×ÓË÷Òý£¬,DAC¸Ã²ÎÊýÎÞÐ§£¬ECAT IOÄ£¿éµÄIOMAP´Ó0¿ªÊ¼
-
-	double target;		 //Ä¿±êÁ¦»òµçÑ¹
-	double factor;		 //Á¦ºÍÎ»ÒÆµÄ×ª»¯ÏµÊý
-	TAxisPressPid pid;
-
-	int32_t fixPosLimitP;   //±ê¶¨Î»ÖÃÇø¼ä[N,P]µÄ¶ËµãP
-	int32_t fixPosLimitN;   //±ê¶¨²¹³¥Î»ÖÃÇø¼ä[N,P]µÄ¶ËµãN
-	double thredshold;   //thredshold£¬Ê²Ã´Ê±ºò¿ªÊ¼²¹³¥
-	double deadZone;	 //ËÀÇøÁ¦»òµçÑ¹£¬ËÀÇøÄÚ²»²¹³¥
-
-	//×ÔÕû¶¨ÄÚ²¿²ÎÊý£¬µ÷ÊÔÊ¹ÓÃ£¬ºóÐøÓÃ»§½Ó¿ÚÃ»ÓÐ¸Ã²¿·Ö
-	double Knp;			 //Ñ¹Á¦»·È«¾ÖÔöÒæ
-	double K1;			 //È«¾ÖÔöÒæµÝÔöÏµÊý1
-	double K2;			 //È«¾ÖÔöÒæµÝÔöÏµÊý2
-	double K3;			 //È«¾ÖÔöÒæµÝÔöÏµÊý3
-	double Krise;		 //ÉÏÉýÏµÊý
-	double Kpeak;		 //·åÖµÏµÊý
-	double Tset;		 //Ä¿±êÏìÓ¦Ê±¼ä
-	double Td;			 //±£ÊØÏìÓ¦Ê±¼ä
-
-	double tmp[8];
-} TAxisPressCompensateFixPid;
-
-GT_API GTN_StartAxisPressCompensateFixPid(short core,short axis,TAxisPressCompensateFixPid *pPressComp);
-GT_API GTN_GetAxisPressCompensateFixPidStatus(short core,short axis,short *pFixPidSts,TAxisPressCompensateFixPid *pPressComp);
-
-GT_API GTN_AxisPressCompensateEnable(short core,short axis,short enable,double deadZone,double factor,TListInfo *pListInfo);
-GT_API GTN_SetAxisPressCompensateTarget(short core,short axis,double target,double thredshold,TListInfo *pListInfo);
-
-GT_API GTN_BufAxisPressCompensatePrmEx(short core,short crd,short axis,double target,double thredshold,short fifo=0);
-GT_API GTN_BufAxisPressCompensateEx(short core,short crd,short axis,short enable,double deadZone,double factor,short fifo=0);
-
-GT_API GTN_SetCrdUserDataEndVelLa(short core,short crd, short crdUserDataType,double endVel);
-
-/*-----------------------------------------------------------*/
-/* PVTÄ£Ê½»º³åÇø¼¤¹â²Ù×÷                                      */
-/*-----------------------------------------------------------*/
-#define PVT_OPERATION_TYPE_LASER_ON					(2)
-#define PVT_OPERATION_TYPE_BUF_DA					(4)
-#define PVT_OPERATION_TYPE_LASER_CMD				(5)
-#define PVT_OPERATION_TYPE_LASER_FOLLOW_RATIO		(6)
-#define PVT_OPERATION_TYPE_LASER_FOLLOW_MODE		(25)
-#define PVT_OPERATION_TYPE_LASER_FOLLOW_OFF			(26)
-#define PVT_OPERATION_TYPE_BUF_DO_BIT				(94)
-
-typedef struct
-{
-	short doType;
-	short index;
-	short value;
-}TPVTDoBit;
-
-typedef struct
-{
-	short chn;
-	short daValue;
-}TPVTDA;
-
-typedef struct
-{
-	short chn;
-	short enable;
-}TPVTLaserSwitch;
-
-typedef struct
-{
-	short chn;
-	double power;
-}TPVTLaserPrfCmd;
-
-typedef struct
-{
-	short  chn;
-	double ratio;
-	double minPower;
-	double maxPower;
-}TPVTLaserFollowRatio;
-
-typedef struct
-{
-	short  chn;
-}TPVTLaserFollowOff;
-
-typedef struct
-{
-	short  chn;
-	short  source;
-	double startPower;
-}TPVTLaserFollowMode;
-
-
-/*-----------------------------------------------------------*/
-/* ¾ø¶ÔÖµ±àÂëÆ÷	                                            */
-/*-----------------------------------------------------------*/
-GT_API GTN_RN_GetAbsEncPosEx(short core,short encoder, int64_t *pEncPos);
-GT_API GTN_RN_SetEncMultiLinesEx(short core, short encoder,uint64_t multiLines);
-
-GT_API GTN_RN_SetEncMultiLines(short core, short stationId, short axis,uint64_t multiLines);
-/*-----------------------------------------------------------*/
-/* ¼ÓÃÜ¹¦ÄÜ	                                            		*/
-/*-----------------------------------------------------------*/
-typedef struct
-{
-	char uuid[32];		// Ô­Ê¼ÃÜÔ¿
-	char mcInf[32];		//
-}TEncryptConfigPrm;
-
-typedef struct
-{
-	char keyValue[32];		// ÃÜÔ¿
-	char data[32];			// ¶ÁÈ¡µ½µÄ»òÕßÐ´ÏÂÈ¥µÄÐÂµÄÊý¾Ý
-}TEncryptData;
-
-typedef struct
-{
-	short type;					// Ð¾Æ¬ÀàÐÍ
-	short userKeySlotOffset;		// ÃØÔ¿²ÛÆ«ÖÃ
-	short userDataSlotOffset;		// Êý¾Ý²ÛÆ«ÖÃ
-	short cardType;		// ¿ØÖÆ¿¨ÀàÐÍ
-	short reverse1[8];
-}TEncryptChipInf;
-
-typedef struct
-{
-	char sn[9];				// Ð¾Æ¬ÐòÁÐºÅ
-	char random[32];		// ·µ»ØµÄËæ»úÊý
-	TEncryptChipInf chipInf;	// Ð¾Æ¬ÆäËûÐÅÏ¢
-}TEncryptAuxInf;
-
-typedef struct
-{
-	char data[32];			// ¶ÁÈ¡µ½µÄ¼ÓÃÜÊý¾Ý
-	char hMac[32];			//
-}TEncryptDataPro;
-
-GT_API GTN_SetEncryptConfig(short core,TEncryptConfigPrm *pConfigPrm, short *pSts);
-// »ù´¡°æ±¾¼ÓÃÜ¹¦ÄÜ
-//  ¼ÓÃÜ¶ÁÐ´Êý¾Ý
-GT_API GTN_GetEncryptData(short core,TEncryptData *pReadPrm);
-GT_API GTN_SetEncryptData(short core,TEncryptData *pWritePrm);
-// ½ú¼¶°æ±¾£¬¿ª·Å½âÃÜº¯Êý£¬ÓÃ»§¸ù¾Ý¶ÁÈ¡µÄÃÜÎÄ¡¢ÉèÖÃµÄÃÜÔ¿½âÃÜ
-GT_API GTN_GetEncryptAuxInf(short core,TEncryptAuxInf *pAuxInf,short *pSts);
-GT_API GTN_SetEncryptDataPro(short core,short slotIndex,short block,TEncryptDataPro *pWritePrm,short *pSts);
-GT_API GTN_GetEncryptDataPro(short core,short slotIndex,short block,TEncryptDataPro *pReadPrm,short *pSts);
-
-// ½ú¼¶°æ±¾£¬¸üÐÂÃØÔ¿
-typedef struct
-{
-	char oldKey[32];		// Ô­Ê¼ÃÜÔ¿
-	char newKey[32];		// ÐÂÃÜÔ¿
-}TEncryptKey;
-
-GT_API GTN_UpdateEncryptKey(short core,short keyIndex,TEncryptKey *pKeyInf,short *pSts);
-
-/*-----------------------------------------------------------*/
-/* press				                                           	 */
-/*-----------------------------------------------------------*/
-#define LOOP_MODE_POSITION               (0)
-#define LOOP_MODE_PRESS                  (1)
-#define LOOP_MODE_NONE                   (2)
-
-#define LIMIT_TYPE_PRESS				(7)
-#define LIMIT_TYPE_TORQUE				(8)
-
-#define MC_PRESS                        (600)
-#define MC_TORQUE                       (601)
-
-typedef struct
-{
-	short loopMode;
-	short pressProfileMode;
-	short pad[2];
-} TLoopMode;
-
-typedef struct
-{
-	short active;			// ¹¦ÄÜÊ¹ÄÜ
-	short pad1;
-	int32_t scale;				// µ±Á¿£¬ÎïÀíÁ¿1Å££¨N£©×ª»»µ½Âö³åµÄµ±Á¿¡£
-	short linkAxis;			// Ñ¹Á¦¹æ»®Æ÷ÓëÄÇ¸öÖáÏà¹ØÁª¡£
-	short pad2[3];
-} TPressPrm;
-
-typedef struct
-{
-	double acc;				// Á¦¾Ø¼ÓËÙ¶È
-	double dec;				// Á¦¾Ø¼ÓËÙ¶È
-	double pressStart;		// ÆðÌøÁ¦¾Ø
-	short  smoothTime;		// Æ½»¬Ê±¼ä
-	short pad[3];
-} TPressTargetPrm;
-
-typedef struct
-{
-	double pressTarget;		// Ä¿±êÑ¹Á¦
-	int32_t pressTime;			// ÅÀÉýÊ±¼ä msµ¥Î»
-	int32_t holdTime;			// ±£³ÖÊ±¼ä
-} TPressArrayData;
-
-typedef struct
-{
-	short count;
-	short pad1[3];
-	TPressArrayData buffer[4];
-	short exit;				// ¹æ»®Íê³ÉºóÊÇ·ñÇÐ»»µ½Î»ÖÃ±Õ»·Ä£Ê½
-	short pad2[3];
-} TPressArray;
-
-typedef struct
-{
-	double kp;
-	double ki;
-	double kd;
-	double kvff;
-	double kaff;
-	int32_t integralLimit;
-	int32_t derivativeLimit;
-	short limitMax;
-	short limitMin;
-	short pad[2];
-} TPressPid;
-
-typedef struct
-{
-	short limit1;
-	short limit2;
-	short time;
-	short triggerCondition;        // Ñ¹Á¦¼±Í£´¥·¢Ìõ¼þ£¬PRESS_GREATER_THAN_LIMIT,PRESS_LESS_THAN_LIMIT,
-	short loopMode;					// ´¥·¢ºóÇÐ»»µ½Ê²Ã´Ä£Ê½£¬Ê²Ã´¹æ»®¡£
-	short pressProfileMode;
-	short pad[2];
-} TPressAutoSwitchPrm;
-
-typedef struct
-{
-	int32_t distance;		// »ØÍË¾àÀë
-	short pad[2];
-	double vel;			// »ØËÙ¶È
-	double acc;			// »ØÍË¼ÓËÙ¶È
-} TStopOffset;
-
-GT_API GTN_SetLoopMode(short core,short axis,TLoopMode *pMode);
-GT_API GTN_GetLoopMode(short core,short axis,TLoopMode *pMode);
-GT_API GTN_SetPressPrm(short core,short pressAxis,TPressPrm *pPressPrm);
-GT_API GTN_GetPressPrm(short core,short pressAxis,TPressPrm *pPressPrm);
-GT_API GTN_SetPressTarget(short core,short pressProfile,double value,TPressTargetPrm *pPressTargetPrm);
-GT_API GTN_GetPressTarget(short core,short pressProfile,double *pValue,TPressTargetPrm *pPressTargetPrm);
-GT_API GTN_SetPressArray(short core,short pressProfile,TPressArray *pPressArray);
-GT_API GTN_GetPressArray(short core,short pressProfile,TPressArray *pPressArray);
-GT_API GTN_SetPressPid(short core,short pressControl,TPressPid *pPid);
-GT_API GTN_GetPressPid(short core,short pressControl,TPressPid *pPid);
-GT_API GTN_GetPrfPress(short core,short pressProfile,double *pValue,double *pValueFilter);
-GT_API GTN_GetAtlPress(short core,short pressAxis,double *pValue);
-GT_API GTN_GetPressStatus(short core,short pressAxis,int32_t *pStatus);
-GT_API GTN_SetPressAutoSwitchPrm(short core,short pressAxis,TPressAutoSwitchPrm *pPrm);
-GT_API GTN_GetPressAutoSwitchPrm(short core,short pressAxis,TPressAutoSwitchPrm *pPrm);
-GT_API GTN_PressAutoSwitchEnable(short core,short pressAxis,short enable);
-GT_API GTN_GetPressFeedbackType(short core,short pressAxis,short *pFbType,short *pFbIndex);
-GT_API GTN_SetPressFeedbackType(short core,short pressAxis,short fbType,short fbIndex);
-GT_API GTN_SetPrfPress(short core,short pressProfile,double prfPressValue);
-GT_API GTN_SetStopOffset(short core,short axis,TStopOffset *pStopOffset);
-GT_API GTN_GetStopOffset(short core,short axis,TStopOffset *pStopOffset);
-GT_API GTN_SetPressRange(short core,short pressAxis,short centerSynch,int32_t range);
-GT_API GTN_GetPressRange(short core,short pressAxis,int32_t *pCenterPos,int32_t *pRange);
-GT_API GTN_SetPressCross(short core,short pressAxis,short dir,int32_t pos);
-GT_API GTN_GetPressCross(short core,short pressAxis,short *pDir,int32_t *pPos);
-GT_API GTN_SetPressTrigger(short core,short pressAxis,short pressThread,short triggerCondition);
-GT_API GTN_GetPressTrigger(short core,short pressAxis,short *pPressThread,short *pTriggerCondition);
-GT_API GTN_PressTriggerOn(short core,short pressAxis);
-GT_API GTN_PressTriggerOff(short core,short pressAxis);
-GT_API GTN_GetPressTriggeredPos(short core,short pressAxis,short *pEnable,double *pCntPos,short *pTriggeredPress);
-
-/*-----------------------------------------------------------*/
-/* Command											                              */
-/*-----------------------------------------------------------*/
-GT_API GTN_GetCommandExecuteTime(short core,short mode,double *pTime);
-GT_API GTN_ClearCommandExecuteTime(short core,short mode);
-GT_API GTN_GetCmdCount(short core,short crd,short *pResult,short fifo);
-GT_API GTN_InitCmdExExtern(short core,short cmd);
-GT_API GTN_GetFloat64ExExtern(short core,double *pData);
-GT_API GTN_AddFloat64ExExtern(short core,double data);
-GT_API GTN_SendCommandExExtern(short core);
-
-
-typedef struct
-{
-	short master[2];
-	short masterValueSource[2];
-	int32_t gearRatioNumerator[2];
-	int32_t gearRatioDenominator[2];
-} TCombineAxes;
-
-typedef struct
-{
-	short enable;
-	double slavePos;
-	double slaveVel;
-} TCombineAxesStatus;
-
-GT_API GTN_SetCombineAxes(short core,short index,TCombineAxes *pCombineAxes);
-GT_API GTN_GetCombineAxes(short core,short index,TCombineAxes *pCombineAxes);
-GT_API GTN_CombineAxesOn(short core,short index);
-GT_API GTN_CombineAxesOff(short core,short index);
-GT_API GTN_GetCombineAxesStatus(short core,short index,TCombineAxesStatus *pCombineAxesStatus);
-
-typedef struct
-{
-	short type;
-	short index[2];
-} TAddition;
-GT_API GTN_SetAxisAddition(short core,short axis,short dataType,TAddition *pAddition);
-GT_API GTN_GetAxisAddition(short core,short axis,short dataType,TAddition *pAddition);
-
-typedef struct
-{
-	short profileType[3];
-	short profileIndex[3];
-	short profileId[3];
-	short encoderType[3];
-	short encoderIndex[3];
-	short encoderId[3];
-} TContourConfig;
-
-typedef struct
-{
-	double kp[3];
-	double ki[3];
-	short errorWindow[3];
-	short limit[3];
-} TContourControl;
-
-typedef struct
-{
-	short cornerStepIn;
-	short cornerStepOut;
-	short reserved1[2];
-	double cornerTheta;
-	short reserved2[4];
-	double window;
-	double para;
-} TContourMode;
-
-GT_API GTN_SetContourConfig(short core,short index,TContourConfig *pContourConfig);
-GT_API GTN_GetContourConfig(short core,short index,TContourConfig *pContourConfig);
-GT_API GTN_SetContourControl(short core,short index,TContourControl *pContourControl);
-GT_API GTN_GetContourControl(short core,short index,TContourControl *pContourControl);
-GT_API GTN_SetContourMode(short core,short index,TContourMode *pContourMode);
-GT_API GTN_GetContourMode(short core,short index,TContourMode *pContourMode);
-GT_API GTN_SetContourEnable(short core,short index,short enable);
-GT_API GTN_SetControlAddition(short core,short index,TAddition *pAddition);
-GT_API GTN_GetControlAddition(short core,short index,TAddition *pAddition);
-
-GT_API GTN_SetDisplayDip(short core,short mode);
-GT_API GTN_GetDisplayDip(short core,short *pMode);
-
-#define PROFILE_MAX                     (8)
-
-typedef struct McConfig
-{
-	TProfileConfig profile[PROFILE_MAX];
-	TAxisConfig    axis[AXIS_MAX];
-	TControlConfig control[CONTROL_MAX];
-	TDacConfig     dac[RES_DAC];
-	TStepConfig    step[RES_STEP];
-	TCountConfig   encoder[RES_ENCODER];
-	TCountConfig   pulse[RES_PULSE];
-	TDoConfig      enable[RES_ENABLE];
-	TDoConfig      clear[RES_CLEAR];
-	TDoConfig      gpo[RES_GPO];
-	TDiConfig      limitPositive[RES_LIMIT];
-	TDiConfig      limitNegative[RES_LIMIT];
-	TDiConfig      alarm[RES_ALARM];
-	TDiConfig      home[RES_HOME];
-	TDiConfig      gpi[RES_GPI];
-	TDiConfig      arrive[RES_ARRIVE];
-	TDiConfig      mpg[RES_MPG];
-} TMcConfig;
-
-GT_API GTN_SetMcConfig(short core,TMcConfig *pMc);
-GT_API GTN_GetMcConfig(short core,TMcConfig *pMc);
-GT_API GTN_SetMcConfigToFile(short core,TMcConfig *pMc,char *pFile);
-GT_API GTN_GetMcConfigFromFile(short core,TMcConfig *pMc,char *pFile);
-GT_API GTN_SetMcOverride(short core,short axis,short mode,double override,double smoothTime);
-GT_API GTN_GetMcOverride(short core,short axis,short mode,double *pOverrideTarget,double *pSmoothTime,double *pOverride);
-
-/*-----------------------------------------------------------*/
-/* ¹¤¾ßº¯Êý£¬Âß¼­ºÍÎïÀí×ª»»									 */
-/*-----------------------------------------------------------*/
-typedef struct
-{
-	short index;
-	short id;
-	short reverse1[2];
-	double reverse2[4];
-}TResPhyInfo;
-GT_API GTN_GetResPhyInfo(short core,short type,short index,TResPhyInfo *pStationPhyInfo);
-
-// Âß¼­ÐÅÏ¢½á¹¹Ìå
-typedef struct
-{
-	short core;                                  // Âß¼­ºËºÅ,´Ó1¿ªÊ¼
-	short dataType;                              // ÐèÒª×ª»»µÄ×ÊÔ´ÀàÐÍ
-	short index;                                 // Âß¼­Ë÷ÒýºÅ,´Ó1¿ªÊ¼
-	short reserve[5];                            // ±£Áô¿Õ¼ä
-} TLogicInfo;
-
-// ÎïÀíÐÅÏ¢½á¹¹Ìå
-typedef struct
-{
-	short cardIndex;                             // ÎïÀí¿¨ºÅ,´Ó1¿ªÊ¼
-	short stationPhyId;                          // ÎïÀíÕ¾ºÅ
-	short modulePhyId;                           // À©Õ¹Ä£¿éÕ¾ºÅ
-	short dataType;                              // ÐèÒª×ª»»µÄ×ÊÔ´ÀàÐÍ
-	short index;                                 // ÎïÀíË÷ÒýºÅ
-	short reserve[3];                            // ±£Áô¿Õ¼ä
-} TPhysicInfo;
-
-GT_API GTN_ReadPhysicalMap(void);
-GT_API ConvertPhysical(short core,short dataType,short terminal,short index);
-GT_API ConvertLogical(TLogicInfo *pLogicInfo,TPhysicInfo *pPhysicInfo);
-
-/*---------------------------------------------------------------------------------------------*/
-/* ´®ÐÐÍ¨Ñ¶Ö¸Áî£¨Í¨ÓÃ485/232Í¨ÐÅÖ¸Áî£©£¨gts.libÖÐµ¼³ö£¬ÍÆ¼öÊ¹ÓÃ£©							   */
-/*---------------------------------------------------------------------------------------------*/
-GT_API GTN_RN_ComSerialOpen(short cardIndex, short stationPhyId, short comIndex);
-GT_API GTN_RN_ComSerialClose(short cardIndex, short stationPhyId, short comIndex);
-GT_API GTN_RN_ComSerialRead(short cardIndex, short stationPhyId, short comIndex, uint32_t  readLen, uint32_t *pResLen, unsigned char *pData);
-GT_API GTN_RN_ComSerialReadFast(short cardIndex, short stationPhyId, short comIndex, uint32_t readLen, uint32_t *pResLen, unsigned char *pData);
-GT_API GTN_RN_ComSerialWrite(short cardIndex, short stationPhyId, short comIndex,uint32_t writeLen, uint32_t *pResLen, unsigned char *pData);
-GT_API GTN_RN_ComSerialGetState(short cardIndex, short stationPhyId, short comIndex, unsigned char *pState);
-GT_API GTN_RN_ComSerialSetSettings(short cardIndex, short stationPhyId, short comIndex, uint32_t baudrate, unsigned char stopBits, unsigned char parity);
-GT_API GTN_RN_ComSerialClearErr(short cardIndex, short stationPhyId, short comIndex, unsigned char flag);
-GT_API GTN_RN_ComSerialSetMode(short cardIndex, short stationPhyId, short comIndex, unsigned short comMode);
-GT_API GTN_RN_ComSerialGetRecvFifoCnt(short cardIndex, short stationPhyId, short comIndex,short *pCount);
-
-/*---------------------------------------------------------------------------------------------*/
-/* CanÍ¨Ñ¶Ö¸Áî£¨Í¨ÓÃ485/232Í¨ÐÅÖ¸Áî£©                               						   */
-/*---------------------------------------------------------------------------------------------*/
-typedef struct _CAN_MSG {
-	uint32_t uiId;
-	unsigned char ubRtr;
-	unsigned char ubLen;
-	unsigned char ubExtend;
-	unsigned char ubData[8];
-}StCanMsg;
-GT_API GTN_RN_ComCanOpen(short cardIndex, short stationPhyId, short comIndex, int32_t baudrate);
-GT_API GTN_RN_ComCanClose(short cardIndex, short stationPhyId, short comIndex);
-GT_API GTN_RN_ComCanSend(short cardIndex, short stationPhyId, short comIndex, StCanMsg* pStCanMsg, uint32_t timeOutus);
-GT_API GTN_RN_ComCanRecv(short cardIndex, short stationPhyId, short comIndex, StCanMsg* pStCanMsg, short targetMsgCnt, short* pResMsgCnt, uint32_t timeOutus);
-GT_API GTN_RN_ComCanGetStatus(short cardIndex, short stationPhyId, short comIndex, short* pSts);
-GT_API GTN_RN_ComCanGetRecvBufMsgCnt(short cardIndex, short stationPhyId, short comIndex, short* pMsgCnt);
-
-
-GT_API GTN_RN_SetExtDiDoReversePhysical(short cardIndex, short stationPhyId, short moduleId, int32_t* pInputReverse, int32_t inputCount,int32_t *pOutputReverse,int32_t outputCount);
-GT_API GTN_RN_GetExtDiDoReversePhysical(short cardIndex, short stationPhyId, short moduleId, int32_t* pInputReverse, int32_t inputCount,int32_t *pOutputReverse,int32_t outputCount);
-GT_API GTN_RN_GetExtAoPhysical(short cardIndex, short stationPhyId, short moduleId, int32_t aoIndex,double* pValue, int32_t count);
-GT_API GTN_RN_GetExtAoValuePhysical(short cardIndex, short stationPhyId, short moduleId, int32_t aoIndex,int32_t* pValue, int32_t count);
-GT_API GTN_RN_GetExtAiPhysical(short cardIndex, short stationPhyId, short moduleId, int32_t aiIndex,double* pValue, int32_t count);
-GT_API GTN_RN_GetExtAiValuePhysical(short cardIndex, short stationPhyId, short moduleId, int32_t aiIndex,int32_t* pValue, int32_t count);
-GT_API GTN_RN_SetExtAoValuePhysical(short cardIndex, short stationPhyId, short moduleId, int32_t aoIndex,int32_t* pValue, int32_t count);
-GT_API GTN_RN_SetExtAoPhysical(short cardIndex, short stationPhyId, short moduleId, int32_t aoIndex,double* pValue, int32_t count);
-GT_API GTN_RN_GetExtDiBitPhysical(short cardIndex, short stationPhyId, short moduleId, int32_t diIndex, uint32_t* pValue, int32_t count);
-GT_API GTN_RN_GetExtDiPhysical(short cardIndex, short stationPhyId, short moduleId, uint32_t* pValue, int32_t count);
-GT_API GTN_RN_GetExtDoPhysical(short cardIndex, short stationPhyId, short moduleId,uint32_t* pValue, int32_t count);
-GT_API GTN_RN_SetExtDoBitPhysical(short cardIndex,short stationPhyId,short moduleId,int32_t doIndex,uint32_t* pValue,int32_t count);
-GT_API GTN_RN_SetExtDoPhysical(short cardIndex, short stationPhyId, short moduleId, uint32_t* pValue, int32_t count);
-GT_API GTN_RN_SetExtModuleMode(short cardIndex,short mode);
-GT_API GTN_RN_GetExtModuleMode(short cardIndex,short *pMode);
-
-GT_API GTN_RN_UpdateExtModuleFirmware(short cardIndex, short stationPhyId, short moduleId, const char* pFile);
-GT_API GTN_RN_SetExtModuleComLedSts(short cardIndex, short stationPhyId, short moduleId, int32_t value);
-GT_API GTN_RN_GetExtModuleInfo(short cardIndex, short stationPhyId, short moduleId, short infoType, int32_t *pValue);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*------------------------------------------------------------------------*/
-/*------------------------------------------------------------------------*/
-/*                        ¿ª·¢°æ±¾¹¦ÄÜº¯Êý		                          */
-/*------------------------------------------------------------------------*/
-/*------------------------------------------------------------------------*/
-// ÓÃ»§ÊÖ¶¯ÅäÖÃ(XML)³õÊ¼»¯ÍøÂçÖ¸Áî
-GT_API GTN_OpenCard(short channel,void *pPrm,char *pFileName);
-GT_API GTN_InitRingNet(short mode,char *pFileName);
-GT_API GTN_SetJtGshdCount(short core,short gshdCount,short lastStationAxisCount);
-GT_API GTN_GetCardType(uint32_t *pCardTypeArray,short cardTypeArraySize,short *pCardTypeCount);
-
-#define NO_NET							(0xf)
-#define RING_NET						(6)
-#define ETHERCAT_NET					(8)
-#define ETHERCAT_RING_MISC_NET			(9)	
-
-#define NET_SRC_NONE					(NO_NET)
-#define NET_SRC_FROM_RING_NET			(RING_NET)
-#define NET_SRC_FROM_ECAT_NET			(ETHERCAT_NET)
-typedef struct  
-{
-	short relateEnable;
-	short netSrc;			// Èí¼þ×ÊÔ´¶ÔÓ¦µÄÍâ²¿ÍøÂç¡£À´Ô´ÓÚRingNet»¹ÊÇEtherCAT,»òÕßÆäËûÍøÂç¡£
-	short netSrcIndex;		// Íâ²¿ÍøÂç¶ÔÓ¦µÄË÷Òý¡£
-	short reserve1[9];
-	double reserve2[3];
-}TSlaveRelateInfo;
-
-GT_API GTN_NetInit(short mode,char *pFileName,short overTime,int32_t *pStatus);
-GT_API GTN_SetMcSrcToSlaveRelateInfo(short core,short mcType,TSlaveRelateInfo *pSlaveInfo,short count);
-GT_API GTN_GetMcSrcToSlaveRelateInfo(short core,short mcIndex,short type,TSlaveRelateInfo *pSlaveInfo,short count);
-
-GT_API GTN_SetAxisCircularSafetyZone(short core,short safetyZoneIndex,short enable,TAxisCircularSafetyZone *pPrm);
-GT_API GTN_GetAxisCircularSafetyZone(short core,short safetyZoneIndex,short *pEnable,TAxisCircularSafetyZone *pPrm);
-
-GT_API GTN_GetAuEncVelFilter(short core,short type,short encoder,short *pFilterNum);
-GT_API GTN_SetAuEncVelFilter(short core,short type,short encoder,short filterNum);
-
-GT_API GTN_SetPosEx(short core,short profile,double pos);
-GT_API GTN_GetPosEx(short core,short profile,double *pPos);
-
-GT_API GTN_PrfTrapEx(short core,short profile);
-GT_API GTN_GetTrapRunTime(short core,short profile,TTrapPrm *pPrm,double currentPos,double targetPos,double targetVel,double runPos,double *pRunTime);
-GT_API GTN_GetTrapRunPos(short core,short profile,TTrapPrm *pPrm,double currentPos,double targetPos,double targetVel,double runTime,double *pRunPos);
-
-GT_API GTN_PvtTableUserData(short core,short tableId,short userDataType,double time,void *pData);
-
-typedef struct
-{
-	double distance;
-	double vM;				// ÉèÖÃµÄ×î´óËÙ¶È
-	double acc;				// ÉèÖÃµÄz×î´ó¼ÓËÙ¶È
-	double pa1;				// ¼ÓËÙ°Ù·Ö±È1
-	double pa2;             // ¼ÓËÙ°Ù·Ö±È2
-	double dec;				// ÉèÖÃµÄz×î´ó¼õËÙ¶È
-	double pd1;				// ¼õËÙ¶È°Ù·Ö±È1
-	double pd2;				// ¼õËÙ¶È°Ù·Ö±È2
-
-	double velM;			// Êµ¼ÊÄÜ´ïµ½µÄ×î´óËÙ¶È,·µ»Ø¶ÁÈ¡µÄ
-	double accM;			// Êµ¼ÊÄÜ´ïµ½µÄ×î´ó¼ÓËÙ¶È,·µ»Ø¶ÁÈ¡µÄ
-	double decM;			// Êµ¼ÊÄÜ´ïµ½µÄ×î´ó¼õËÙ¶È,·µ»Ø¶ÁÈ¡µÄ
-	double time;			// Êµ¼Ê¹æ»®Ê±¼ä£¬·µ»Ø¶ÁÈ¡µÄ
-}TPvtTableMoveAbsolutePrm;
-GT_API GTN_PvtTableMoveAbsoluteTwoSegment(short core,short profile,TPvtTableMoveAbsolutePrm *pTargetPos1,double *pDelay,TPvtTableMoveAbsolutePrm *pTargetPos2,short count);
-
-/*-----------------------------------------------------------*/
-/* Command Array			                                       */
-/*-----------------------------------------------------------*/
-GT_API GTN_SetTriggerArray(short core,short trigger,TTrigger *pTrigger,short count);
-
-GT_API GTN_GetFunIdPro(short core,char *pFunName,short *pFunId);
-GT_API GTN_GetVarIdPro(short core,char *pFunName,char *pVarName,TVarInfo *pVarInfo);
-
-GT_API GTN_SetVarValueEx(short core,short page,TVarInfo *pVarInfo,double *pValue,short count=1);
-GT_API GTN_GetVarValueEx(short core,short page,TVarInfo *pVarInfo,double *pValue,short count=1);
-
-#define SLAVE_MIDDLE_POS_DIMENSION_MAX		3
-typedef struct
-{
-	double targetPos;						// ÍÜÌøÄ¿±êÎ»ÖÃ
-	double safetyPos;						// °²È«¹¤ÒÕÎ»ÖÃ
-	double slaveMiddlePos[SLAVE_MIDDLE_POS_DIMENSION_MAX];				// ´ÓÖáÖÐ¼äµãÎ»ÖÃÐÅÏ¢
-} TBufLeapFrogInfo;
-GT_API GTN_BufLeapFrog(short core,short crd,short axis,TBufLeapFrogInfo *pLeapFrogInfo,short modal,short fifo);
-GT_API GTN_SetCrdBufCommandDelay(short core,short crd,short fifo,short enable);
-
-GT_API GTN_SetCrdStopMode(short core,short crd,short stopMode);
-GT_API GTN_GetCrdStopMode(short core,short crd,short *pStopMode);
-
-typedef struct
-{
-	double synDistance;		// µ±Ç°¶ÎºÏ³É¾àÀë
-	double movedsynDistance;	// µ±Ç°¶ÎÒÑÔË¶¯Íê³ÉµÄ¾àÀë
-	double reserve1[10];		// ±£Áô
-}TCrdMoveInfo;
-GT_API GTN_GetCrdMoveInfo(short core,short crd,TCrdMoveInfo *pCrdMoveInfo,short fifo=0);
-
-GT_API GTN_LaserFollowMode(short core,short laserChannel,short *pLaserFollowSource,double *pLaserFollowStartPower,short laserCount);
-GT_API GTN_LaserFollowRatio(short core,short laserChannel,double *pLaserFollowRatio,double *pLaserFollowMinPower,double *pLaserFollowMaxPower,short laserCount);
-
-GT_API GTN_BufMultiLaserFollowOn(short core,short crd,int32_t laserChannelMask,short fifo);
-GT_API GTN_BufMultiLaserFollowOff(short core,short crd,int32_t laserChannelMask,short fifo);
-GT_API GTN_BufMultiLaserOn(short core,short crd,int32_t laserChannelMask,short fifo);
-GT_API GTN_BufMultiLaserOff(short core,short crd,int32_t laserChannelMask,short fifo);
-
-GT_API GTN_BufMultiLaserFollowOnEx(short core,short crd,int32_t laserChannelMask,short fifo);
-GT_API GTN_BufMultiLaserFollowOffEx(short core,short crd,int32_t laserChannelMask,short fifo);
-GT_API GTN_BufMultiLaserOnEx(short core,short crd,int32_t laserChannelMask,short fifo);
-GT_API GTN_BufMultiLaserOffEx(short core,short crd,int32_t laserChannelMask,short fifo);
-
-GT_API GTN_SetCrdContourErrorControlPrm(short core,short crd,short crdAxis,short enable,double *pCoef,short coefCount);
-GT_API GTN_GetCrdContourErrorControlPrm(short core,short crd,short crdAxis,short *pEnable,double *pCoef,short *pCoefCount);
-
-GT_API GTN_SetAxisMotionSmoothParameter(short core,short mode,void *pPrm,int32_t axisMask,TListInfo *pListInfo);
-GT_API GTN_GetAxisMotionSmoothParameter(short core,short axis,short *pMode,void *pPrm,short count);
-
-GT_API GTN_SetStopSmoothTime(short core,short profile,short smoothTime);
-GT_API GTN_GetStopSmoothTime(short core,short profile,short *pSmoothTime);
-
-GT_API GTN_SetCrossCompMode(short core,short axis,short cycleMode,short revCompCycle);
-GT_API GTN_GetCrossCompMode(short core,short axis,short *pCycleMode,short *pRevCompCycle);
-
-GT_API GTN_WriteDigitalOutputPro(short core,TDigitalOutputPro *pDo,TListInfo *pListInfo);
-
-GT_API GTN_InitFPGAEncoder(short core);
-GT_API GTN_SetFPGAEncoder(short core,short enable,int32_t intervalTime,short reverseMask);
-GT_API GTN_GetFPGAEncoder(short core,int32_t *pDataChn1,int32_t *pDataChn2,int32_t *pDataChn3,int32_t *pDataChn4,int32_t *pCount,short *pOverFlowFlag);
-
-GT_API GTN_SetExtModuleAccessMode(short core,short mode);
-GT_API GTN_GetExtModuleAccessMode(short core,short *pMode);
-
-typedef struct
-{
-	short followMode;     //Î»ÖÃ±È½ÏÄÜÁ¿¸úËæÄ£Ê½,0£ºÂö¿í¸úËæ
-	short hsoOutputMode;  //hsoÊä³öÄ£Ê½£¬0£º²»Êä³ö£¬1£º°´ÕÕÎ»ÖÃ±È½ÏÖ¸ÁîÉèÖÃ²ÎÊýÊä³ö£¬2£º°´ÕÕ¸ÃÌõÖ¸ÁîÉèÖÃÖµÊä³ö¡£
-	short timeScale;      //Ê±¼ä¾«¶È£¬0£º1us£¬1£º0.1us
-	short pad;
-	double maxValue;
-	double minValue;
-	double k;
-	double b;
-}TPosCompareFollowCrd;
-GT_API GTN_SetCrdPosCompareFollowPulseWidthPrm(short core,short crd,short posCompareIndex,short hsoIndex,TPosCompareFollowCrd *pPosCompareFollowCrd,short count);
-GT_API GTN_CrdPosCompareFollowPulseWidthEnable(short core,short crd,short posCompareIndex,short enable);
-
-typedef struct
-{
-	short index;              //Î»ÖÃ±È½ÏË÷ÒýºÅ
-	short enable;
-	short reserve1[2];
-	int32_t  reserve2[2];
-}TPosCompareOnOffList;
-GT_API GTN_PosCompareOnOffList(short core,short group,TPosCompareOnOffList *pPosCompareOnOff,TListInfo *pListInfo);
-
-typedef struct
-{
-	short index;
-	short reserve[3];
-	uint32_t count;
-	int32_t syncPos;
-	int32_t time;
-} TPosComparePsoPrmList;
-GT_API GTN_PosComparePsoPrmList(short core,short group,TPosComparePsoPrmList *pPrm,TListInfo *pListInfo);
-
-GT_API GTN_SetScanAlarmAutoStopMode(short core,short mode,uint32_t errorcodeCheckMask,uint32_t errorcodeCheckRef,short crd);
-GT_API GTN_GetScanAlarmAutoStopMode(short core,short *pMode,uint32_t *pErrorcodeCheckMask,uint32_t *pErrorcodeCheckRef,short crd);
-GT_API GTN_GetScanErrorCode(short core,uint32_t *pErrorCode,short crd);
-GT_API GTN_LoadScanCorrectionTable(short core,short scan,char *pFile,short type);
-
-GT_API GTN_AddTaskPro(short core,short taskType,void *pTaskData,short *pTaskIndex);
-
-typedef struct
-{
-	unsigned short resType;         // watch±äÁ¿µÄÀàÐÍ
-	unsigned short resIndex;        // watch±äÁ¿µÄË÷Òý
-	unsigned short resSubIndex;     // watch±äÁ¿µÄ×ÓË÷Òý
-	unsigned short resCount;        // Ò»´ÎÐÔÐèÒª¶ÁÈ¡watch±äÁ¿µÄÊýÁ¿
-	double resValue[256];           // ¶ÁÈ¡µ½µÄwatch±äÁ¿µÄÖµ
-} TMcVarResInfo;
-GT_API GTN_GetMcVarArray(short core,short resInfoCount,TMcVarResInfo *pResInfo);
-
-typedef struct
-{
-	TWatchVar var;
-	unsigned short condition;
-	double value;
-	double continueTime;
-} TWatchConditionVar;
-
-typedef struct
-{
-	short conditionDone;
-	short modal;
-	short reserve1[2];
-	int32_t segNum;
-	int32_t userTag;
-	int32_t reserve2[8];
-}TWaitForConditionInfo;
-
-GT_API GTN_WaitForConditionVar(short core,TWatchConditionVar *pWaitConditionVarList,short conditionCount,short operation,TWaitTimeout *pTimeout,TWatchVar *pWaitResultVar,TListInfo *pListInfo);
-GT_API GTN_GetWaitForConditionInfo(short core,short list,TWaitForConditionInfo *pWaitForConditionInfo);
-
-GT_API GTN_BufSetLongVar(short core,short crd,short index,int32_t value,short fifo);
-GT_API GTN_BufSetDoubleVar(short core,short crd,short index,double value,short fifo);
-
-GT_API GTN_SetAxisPrediction(short core,short axis,short mode,short enable,double *pCoef,short count1,short count2);
-GT_API GTN_GetAxisPrediction(short core,short axis,short *pMode,short *pEnable,double *pCoef,short *pCount1,short *pCount2);
-
-GT_API GTN_InitializeCommandListConfig(short core,TCommandListConfig *pConfig,short count=2);
-
-typedef struct
-{
-	short mode;				// ±£Áô£¬Ö»ÄÜÎª0
-	short clear;			// ÊÇ·ñÇå³ý³õÊ¼¼ÇÂ¼Öµ¡£0£¬²»Çå³ý³õÊ¼Öµ£¬1£ºÇå³ý³õÊ¼Öµ£¬ÖØÐÂ¼ÇÂ¼³õÊ¼Öµ
-	short reserve[2];
-}TStartTimerPrm;
-
-typedef struct
-{
-	short run;
-	short reserve[3];
-	double value;
-}TTimerInfo;
-
-GT_API GTN_StartTimer(short core,short index,TStartTimerPrm *pStartTimerPrm,short count,TListInfo *pListInfo);
-GT_API GTN_StopTimer(short core,short index,short count,TListInfo *pListInfo);
-GT_API GTN_GetTimerInfo(short core,short index,TTimerInfo *pInfo,short count);
-
-GT_API GTN_CheckTerminalLicenseRingNet(short core,short station,short fuctionType,int32_t *pInfo);
-
-GT_API GTN_RN_Recover(short cardIndex);
-
-GT_API GTN_SetTorqueLimit(short core,short axis,TTorqueLimit *pTorqueLimit);
-GT_API GTN_GetTorqueLimit(short core,short axis, TTorqueLimit *pTorqueLimit);
-
-GT_API GTN_SetServoPosLoopPid(short core,short axis,TServoPosLoopPid *pServoPosLoopPid);
-GT_API GTN_GetServoPosLoopPid(short core,short axis,TServoPosLoopPid *pServoPosLoopPid);
-
-typedef struct
-{
-	uint32_t objectIndex;   //Ò»¼¶Ö¸Áî×Ö
-	unsigned short subIndex;     //¶þ¼¶Ö¸Áî×Ö
-	unsigned short reserve;      //±£ÁôÎ»
-	short byteSize;              //×Ö½Ú³ß´ç
-	short memType;               //¶ÔÏó´æ´¢Î»ÖÃ 0-RAM  1-FLASH
-}TServoParamReader;
-GT_API GTN_ReadServoParamInfo(short core,short axis, TServoParamReader *pTServoParamReader, unsigned char* pData);
-
-GT_API GTN_RN_GetServoAlarmInfo(short core,short axis,uint32_t *pAlarmCode);
-
-GT_API GTN_WriteServo35thHomingFlag(short core, short axis, short flag);
-
-GT_API GTN_SetServoSpdLoopPid(short core,short axis,TServoSpdLoopPid *pServoSpdLoopPid);
-GT_API GTN_GetServoSpdLoopPid(short core,short axis,TServoSpdLoopPid *pServoSpdLoopPid);
-
-GT_API GTN_SetServoPid(short core,short axis,short loop,short mode,void *pServoPid);
-GT_API GTN_GetServoPid(short core,short axis,short loop,short mode,void *pServoPid);
-GT_API GTN_SetServoPidRatio(short core,short axis,double ratio);
-GT_API GTN_GetServoPidRatio(short core,short axis,double *pRatio);
-
-typedef struct
-{
-	double gain1;  // Ò»¶ÎÔöÒæ
-	double gain2;  // ¶þ¶ÎÔöÒæ
-	double smoothTime; // Æ½»¬Ê±¼ä£¬µ¥Î»ms
-	double spdLimitUpper; // ËÙ¶ÈÉÏÏÞ£¬µ¥Î»rpm
-	double spdLimitLower; // ËÙ¶ÈÏÂÏÞ£¬µ¥Î»rpm
-	double reserved[4]; //±£Áô
-}TServoNonlinearGlobalGain;
-GT_API GTN_RN_GetServoNonlinearGlobalGain(short core,short axis,short mode,short dataType,TServoNonlinearGlobalGain *pServoPid);
-GT_API GTN_RN_SetServoNonlinearGlobalGain(short core,short axis,short mode,short dataType,TServoNonlinearGlobalGain *pServoGlobalGain);
-
-GT_API GTN_RN_SetStationSafeModeControl(short cardIndex,short stationPhyId,short enable,short clearMode);
-GT_API GTN_RN_SetStationSafeModeOut(short cardIndex,short stationPhyId,short type,short index,short *pEnable,double *pValue,short count);
-
-GT_API GTN_SetVelLookAheadModeLa(short core,short crd,int VelMode);
-GT_API GTN_SetProfileModeLa(short core,short crd,short profileMode);
-
-GT_API GTN_BufLeapFrogEx(short core,short crd,short axis,TBufLeapFrogInfo *pLeapFrogInfo,short modal,short fifo=0);
-
-GT_API GTN_BufSetLongVarEx(short core,short crd,short index,int32_t value,short fifo);
-GT_API GTN_BufSetDoubleVarEx(short core,short crd,short index,double value,short fifo);
-
-
-typedef struct
-{
-	int32_t segmentNumber;
-	int32_t posX;
-	int32_t posY;
-	short gpo;					// 24V
-	short hso;					// 5V
-	short reserve[4];			// È·±£Ö¸Áî³¤¶ÈÎª16Word
-} TPosCompareCommandPos;
-
-typedef struct
-{
-	int32_t segmentNumber;
-	int32_t time;
-	short pad[2];
-	short gpo;
-	short hso;
-}TPosCompareCommandTime;
-
-typedef union
-{
-	TPosCompareCommandPos pos;
-	TPosCompareCommandTime time;
-	short data16[12];
-}TPosComparePredictiondataUnion;
-
-typedef struct
-{
-	short type;
-	short pad[3];
-	TPosComparePredictiondataUnion data;
-}TPosComparePredictionData;
-
-GT_API GTN_SetPosComparePredictionDataToDsp(short core,short posCompareIndex,short count,TPosComparePredictionData *pData,short *pWriteCount);
-
-/*-----------------------------------------------------------*/
-/* ¾ø¶ÔÖµ¸¨Öú±àÂëÆ÷Ïà¹Ø                                      */
-/*-----------------------------------------------------------*/
-GT_API GTN_SetAuAbsEncMultiTurnRange(short core,short encoder,double range);
-GT_API GTN_ReadAuAbsEncPos(short core,short encoder,double *pPos);
-
-GT_API GTN_SetEncryptConfigRingNet(short core,short station,TEncryptConfigPrm *pConfigPrm, short *pSts);
-GT_API GTN_GetEncryptDataRingNet(short core,short station,TEncryptData *pReadPrm);
-GT_API GTN_SetEncryptDataRingNet(short core,short station,TEncryptData *pWritePrm);
-
-GT_API GTN_ClearPressStatus(short core,short pressAxis);
-
-/*-----------------------------------------------------------*/
-/* ÍÖÔ²²å²¹Ö¸Áî                                              */
-/*-----------------------------------------------------------*/
-#define ELLIPSE_AUX_POINT_COUNT                 (5)
-
-#define ELLIPSE_MODE_AUX_POINT                  (0)
-#define ELLIPSE_MODE_STANDARD                   (1)
-
-#define ELLIPSE_MODE_AUX_POINT_2D               (0)
-#define ELLIPSE_MODE_STANDARD_2D                (1)
-
-typedef struct
-{
-	double pos[ELLIPSE_AUX_POINT_COUNT][INTERPOLATION_AXIS_MAX];    // ÍÖÔ²ÉÏ¸¨Öúµã×ø±ê
-}TEllipseAuxPoint;
-
-typedef struct
-{
-	double centerPoint[INTERPOLATION_AXIS_MAX];// ÍÖÔ²Ô²ÐÄ×ø±ê
-	double theta;                              // ÍÖÔ²Ðý×ª½Ç¶È
-	double a;                                  // ÍÖÔ²³¤Öá
-	double b;                                  // ÍÖÔ²¶ÌÖá
-}TEllipseStandard;
-
-typedef union
-{
-	TEllipseAuxPoint auxPoint;                 // ¸¨ÖúµãÄ£Ê½²ÎÊý
-	TEllipseStandard standard;                 // ±ê×¼Ä£Ê½²ÎÊý
-
-	double reserve[60];
-} TEllipseParameterUnion;
-
-typedef struct
-{
-	double endPoint[INTERPOLATION_AXIS_MAX];   // ÖÕµã×ø±ê
-	short plane;                               // ÍÖÔ²Æ½ÃæÑ¡Ôñ£¬0£ºXY£»1£ºYZ£»2£ºZX
-	short dir;                                 // ÍÖÔ²·½Ïò£¬0£ºË³Ê±Õë£»1£ºÄæÊ±Õë
-	short overrideSelect;                      // ËÙ¶È±¶ÂÊÑ¡Ôñ£¬0£ºµÚ1×é±¶ÂÊ£»1£ºµÚ2×é±¶ÂÊ
-	short mode;                                // ÍÖÔ²Ä£Ê½£¬Ä¿Ç°Ö»Ö§³Ö²ÎÊý0(¸¨ÖúµãÄ£Ê½)
-
-	TEllipseParameterUnion data;               // ±£Áô²ÎÊý
-} TEllipseParameter;
-
-//-------------------------------------------------------
-//¹¦ÄÜËµÃ÷£ºÍÖÔ²²å²¹ÃèÊö²ÎÊý,Ä£Ê½£ºELLIPSE_MODE_AU_POINT_2D
-//plane--------------ÍÖÔ²Æ½ÃæÑ¡Ôñ£¬INTERPOLATION_CIRCLE_PLAT_XY(0)£ºXY£»INTERPOLATION_CIRCLE_PLAT_YZ(1)£ºYZ£»INTERPOLATION_CIRCLE_PLAT_ZX(2)£ºZX
-//dir----------------ÍÖÔ²·½Ïò£¬0£ºË³Ê±Õë£»1£ºÄæÊ±Õë
-//overrideSelect-----ËÙ¶È±¶ÂÊÑ¡Ôñ£¬0£ºµÚ1×é±¶ÂÊ£»1£ºµÚ2×é±¶ÂÊ
-//pad----------------Õ¼Î»±äÁ¿£¬²»ÐèÒª´«Èë
-//endPoint1----------ÖÕµã×ø±ê1,ÒâÒå¸ù¾ÝplaneÀ´¶¨£¬Èç¹ûpalneÎªXYÆ½Ãæ£¬ÔòendPoint1¡¢pos1ÎªX×ø±ê£¬endPoint2¡¢pos2ÎªY×ø±ê
-//endPoint2----------ÖÕµã×ø±ê2
-//pos1---------------ÍÖÔ²ÉÏ¸¨Öúµã×ø±ê1
-//pos2---------------ÍÖÔ²ÉÏ¸¨Öúµã×ø±ê2
-//-------------------------------------------------------
-typedef struct
-{
-	short plane;
-	short dir;
-	short overrideSelect;
-	short pad;
-
-	double endPoint1;
-	double endPoint2;
-
-	double pos1[ELLIPSE_AUX_POINT_COUNT];
-	double pos2[ELLIPSE_AUX_POINT_COUNT];
-} TEllipseAuxPoint2D;
-
-//-------------------------------------------------------
-//¹¦ÄÜËµÃ÷£ºÍÖÔ²²å²¹ÃèÊö²ÎÊý,Ä£Ê½£ºELLIPSE_MODE_STANDARD_2D
-//plane--------------ÍÖÔ²Æ½ÃæÑ¡Ôñ£¬INTERPOLATION_CIRCLE_PLAT_XY(0)£ºXY£»INTERPOLATION_CIRCLE_PLAT_YZ(1)£ºYZ£»INTERPOLATION_CIRCLE_PLAT_ZX(2)£ºZX
-//dir----------------ÍÖÔ²·½Ïò£¬0£ºË³Ê±Õë£»1£ºÄæÊ±Õë
-//overrideSelect-----ËÙ¶È±¶ÂÊÑ¡Ôñ£¬0£ºµÚ1×é±¶ÂÊ£»1£ºµÚ2×é±¶ÂÊ
-//pad----------------Õ¼Î»±äÁ¿£¬²»ÐèÒª´«Èë
-//endPoint1----------ÖÕµã×ø±ê1,ÒâÒå¸ù¾ÝplaneÀ´¶¨£¬Èç¹ûpalneÎªXYÆ½Ãæ£¬ÔòendPoint1ÎªX×ø±ê£¬endPoint2ÎªY×ø±ê
-//endPoint2----------ÖÕµã×ø±ê2
-//centerPoint1-------ÍÖÔ²Ô²ÐÄ×ø±ê1£¬ÒâÒå¸ù¾ÝplaneÀ´¶¨£¬Èç¹ûpalneÎªXYÆ½Ãæ£¬ÔòcenterPoint1ÎªX×ø±ê£¬centerPoint2ÎªY×ø±ê
-//centerPoint2-------ÍÖÔ²Ô²ÐÄ×ø±ê2
-//theta--------------ÍÖÔ²Ðý×ª½Ç¶È£¬µ¥Î»£º¶È
-//a------------------ÍÖÔ²³¤Öá
-//b------------------ÍÖÔ²¶ÌÖá£¬¶ÌÖá±ØÐë±È³¤Öá¶Ì
-//-------------------------------------------------------
-typedef struct
-{
-	short plane;
-	short dir;
-	short overrideSelect;
-	short pad;
-
-	double endPoint1;
-	double endPoint2;
-
-	double centerPoint1;
-	double centerPoint2;
-
-	double theta;
-	double a;
-	double b;
-}TEllipseStandard2D;
-
-GT_API GTN_Ellipse(short core,short crd,TEllipseParameter *pEllipse,double synVel,double synAcc,double velEnd,int32_t segNum,short fifo=0);
-GT_API GTN_EllipseEx(short core,short crd,TEllipseParameter *pEllipse,double synVel,double synAcc,double velEnd,int32_t segNum,short fifo=0);
-
-GT_API GTN_EllipsePro(short core,short crd,short mode,void *pData,double synVel,double synAcc,double velEnd,int32_t segNum,short fifo=0);
-GT_API GTN_EllipseProEx(short core,short crd,short mode,void *pData,double synVel,double synAcc,double velEnd,int32_t segNum,short fifo=0);
-
-
-/*-----------------------------------------------------------*/
-/* Åú´¦ÀíÖ¸Áî¹¦ÄÜ        	                                   */
-/*-----------------------------------------------------------*/
-#define BATCH_COMMAND_END_MODE_DEFAULT                     (0)
-#define BATCH_COMMAND_END_MODE_GET_MC_VAR_EX               (1)
-
-typedef struct
-{
-	short commandCount;                // µ±Ç°Åú´¦ÀíÖ¸Áî×ÜÊý
-	short errorCommandNumber;          // Ö´ÐÐ³ö´íµÄÖ¸ÁîÐòºÅ
-	short errorCode;                   // Ö´ÐÐ³ö´íµÄÖ¸Áî´íÎóÏêÏ¸ÐÅÏ¢£¨²¿·ÖÖ¸ÁîÓÐÏêÏ¸ÐÅÏ¢£©
-	short reserve[5];
-}TBatchCommandResult;
-
-GT_API GTN_BatchCommandBegin(short core);
-GT_API GTN_BatchCommandEnd(short core,TBatchCommandResult *pResult,short mode,void *pPrm,void *pValue,short count);
-
-/*-----------------------------------------------------------*/
-/* µ÷¸ßÆ÷Ö¸Áî           	                                   */
-/*-----------------------------------------------------------*/
-// µ÷¸ßÆ÷Ïà¹Øº¯Êý
-#define MC_HEIGHT_FEEDBACK				(450)
-// ÉèÖÃ¡¢¶ÁÈ¡µ÷¸ßÆ÷¿ØÖÆ²ÎÊý
-typedef struct
-{
-	short active;				// Ê¹ÓÃÏÂÁÐ²ÎÊý´¦Àíµ÷¸ßÆ÷ÆµÂÊ¡£
-	short ctlMode;				// ¸ß¶È±Õ»·¿ØÖÆ»¹ÊÇ¿ª»·²¹³¥
-	short linkTableId;			// Ê¹ÓÃÄÇÕÅ±í²îÖµ
-	short controlEncoder;		// ²îÖµÀ´Ô´ÓÚµÚ¼¸Â·¸ß¶È´«¸ÐÆ÷
-	short interval;				// ²ÉÑù¼ä¸ôÊ±¼ä£¬ÖÐ¶ÏÖÜÆÚÎªµ¥Î»¡£
-	int32_t errorLimit;			// ¸úËæÎó²î,¿ª»·²¹³¥Ä£Ê½²ÅÓÐÐ§
-}THeightControlPrm;
-
-GT_API GTN_SetAxisHeightControlPrm(short core,short axis,THeightControlPrm *pPrm);
-GT_API GTN_GetAxisHeightControlPrm(short core,short axis,THeightControlPrm *pPrm);
-
-// ÉèÖÃ¡¢¶ÁÈ¡µ÷¸ßÆ÷²îÖµ±í
-GT_API GTN_SetHeightInterpolationTable(short core,short tableId,int32_t n,double *pPosEnc,double *pPosHeight);
-GT_API GTN_GetHeightInterpolationTable(short core,short tableId,int32_t n,double *pPosEnc,double *pPosHeight,int32_t *pRealCount);
-
-GT_API GTN_SetAxisHeightControlPid(short core,short axis,TPid *pPid);
-GT_API GTN_ZerophaseFilter(short core,int32_t dataLen,double inputdata[],double smoothArray[]);
-
-GT_API GTN_GetAxisErrorStatusLink(short core,short axis,short *pLinkAxis,short *pLinkMode,short *pCcount);
-GT_API GTN_SetAxisErrorStatusLink(short core,short axis,short *pLinkAxis,short *pLinkMode,short count);
-
-typedef struct
-{
-	short type;					// ²Î¿¼ÀàÐÍÊÇ±àÂëÆ÷Î»ÖÃ»¹ÊÇ¹æ»®Î»ÖÃ»¹ÊÇµçÈÝ¸ß¶È
-	short index;				// ±àÂëÆ÷»òÕß¹æ»®µÄË÷Òý
-	int32_t  crossPos;				// Æô¶¯»òÕß¹Ø±Õ¸úËæ¹¦ÄÜµÄ´©Ô½¸ß¶È
-	short dir;					// Æô¶¯»òÕß¹Ø±ÕµÄ´©Ô½·½Ïò
-	short pad1[3];
-}THeightCrossPrm;
-
-typedef struct
-{
-	short keepEnable;				// 0:ÔË¶¯µ½Ö¸¶¨¸ß¶È,1:ÔË¶¯µ½Ö¸¶¨¸ß¶Èºó£¬±£³Ö¸ß¶È¸úËæ
-	short pad1[3];
-	THeightCrossPrm enableData;		// ×Ô¶¯Æô¶¯¸ß¶È¸úËæ²ÎÊý
-	THeightCrossPrm disableData;	// ×Ô¶¯¹Ø±Õ¸ß¶È¸úËæ²ÎÊý
-}THeightFollowPrm;
-
-#define HEIGHT_DIR_CROSS_POSITIVE            (1)
-#define HEIGHT_DIR_CROSS_NEGATIVE            (2)
-#define HEIGHT_DIR_CROSS_EQUAL               (3)
-
-#define HEIGHT_FOLLOW_ENABLE_MODE_MANUAL						(0)
-#define HEIGHT_FOLLOW_ENABLE_MODE_AUTO							(1)
-// ×Ô¶¯Æô¶¯/¹Ø±Õ¸úËæ¹¦ÄÜ»¹ÊÇÓ¦ÓÃ³ÌÐòÆô¶¯»òÕß¹Ø±Õ¸ß¶È¸úËæ¹¦ÄÜ
-GT_API GTN_SetAxisHeightFollowMode(short core,short axis,short mode,THeightFollowPrm *pPrm);
-
-
-// µ÷¸ßÆ÷Î»ÖÃ¸úËæ¹¦ÄÜ´ò¿ª¡¢¹Ø±Õ
-GT_API GTN_AxisHeightControlEnable(short core,short axis,short enable,int32_t pos=10);
-// ¶ÁÈ¡µ÷¸ßÆ÷Î»ÖÃ
-GT_API GTN_GetHeightInterpolationPos(short core,short heigtFbIndex,double *pHeightFrq,double *pHeightPosRaw,double *pInterpolationPos);
-// ¶ÁÈ¡µ÷¸ßÆ÷×´Ì¬ÐÅÏ¢
-
-typedef struct
-{
-	short ctlMode;			// µ±Ç°Öá±Õ»·Ä£Ê½£¬µç»ú±àÂëÆ÷±Õ»·£¬»¹ÊÇµ÷¸ßÆ÷ÆµÂÊ±Õ»·¡£
-	short errorSts;			// ´íÎó×´Ì¬£¬
-	double cmpValue;		// ²¹³¥Öµ
-}THeightInf;
-GT_API GTN_GetAxisHeightInf(short core,short axis,THeightInf *pHeightInf);
-// Çå³ýµ÷¸ßÆ÷×´Ì¬
-GT_API GTN_ClearAxisHeightSts(short core,short axis);
-
-//FIRÂË²¨Æ÷
-#define HEIGHT_FILTER_TYPE_FREQUENCY			(1)
-#define HEIGHT_FILTER_TYPE_CMP_VALUE			(2)
-GT_API GTN_GetAxisHeightFrqFilter(short core,short axis,short type,short *pFilterNum);
-GT_API GTN_SetAxisHeightFrqFilter(short core,short axis,short type,short filterNum);
-
-
-// ±ê¶¨¹¦ÄÜ
-
-#define CALIBRATION_MODE_DIFFERENT_STEP		(1)
-// ±ê¶¨stage
-#define DIFFERENT_STEP_CALIBRATION_STAGE_NONE						(-1)//¿ÕÏÐ
-#define DIFFERENT_STEP_CALIBRATION_STAGE_HOME_SEARCH				(1)//Åö°å¹ý³Ì
-#define DIFFERENT_STEP_CALIBRATION_STAGE_GO_OFFSET					(2)//ÔË¶¯Æ«ÖÃ
-#define DIFFERENT_STEP_CALIBRATION_STAGE_CALIBRATION_INIT			(3)//¿ªÊ¼±ê¶¨Ç°µÄ³õÊ¼»¯
-#define DIFFERENT_STEP_CALIBRATION_STAGE_CALIBRATION				(4)//±ê¶¨¹ý³Ì
-#define DIFFERENT_STEP_CALIBRATION_STAGE_CALIBRATION_DONE			(5)//±ê¶¨Íê³É
-#define DIFFERENT_STEP_CALIBRATION_STAGE_CALIBRATION_STOP			(6)//±ê¶¨Í£Ö¹
-
-#define DIFFERENT_STEP_CALIBRATION_STAGE_HOME_START_ERROR			(100)
-#define DIFFERENT_STEP_CALIBRATION_STAGE_HOME_SEARCH_ERROR			(101)
-#define DIFFERENT_STEP_CALIBRATION_STAGE_GO_OFFSET_ERROR			(102)
-#define DIFFERENT_STEP_CALIBRATION_STAGE_CALIBRATION_ERROR			(103)
-#define DIFFERENT_STEP_CALIBRATION_STAGE_NOT_AXIS_ON				(104)
-#define DIFFERENT_STEP_CALIBRATION_STAGE_SET_TABLE_ERROR			(105)
-
-// ×î¶à±ê¶¨µãÊý¡£
-#define DIFFERENT_STEP_CALIBRATION_STEP_MAX							(4000)
-
-#define CALIBRATION_MODE_DIFFERENT_STEP		(1)
-#define CALIBRATION_STEP_MAX			(50)
-
-typedef struct
-{
-	short heightFbIndex;					// µÚ¼¸Â·ÆµÂÊÊäÈë
-	short motorEncoder;						// µÚ¼¸Â·±àÂëÆ÷
-	short pad[2];
-
-	double homeVel;							// Åö°åµÄËÙ¶È £¨Âö³å/ºÁÃë£©
-	double homeDir;							// Åö°åµÄÔË¶¯·½Ïò
-	int32_t frqMutationStopValue;				// Åö°åÊ±ÆµÂÊÍ»±äÍ£Ö¹ãÐÖµ
-	int32_t offset;							// Åö°åºó·´ÏòÍ£¿¿Æ«ÖÃ¡£´ÓÍ£¿¿Î»ÖÃ¿ªÊ¼±ê¶¨¡£
-
-	double distance;						// ±ê¶¨¾àÀë (Âö³åµ¥Î»£©
-	double calibrationVel;					// ±ê¶¨ËÙ¶È
-	double calibrationStepCount;			// ±ê¶¨¶ÎÊý
-	double calibrationCountPerStep[CALIBRATION_STEP_MAX];	// Ã¿¶Î±ê¶¨µãÊý
-	short tableId;						// ±ê¶¨ºóÊý¾Ý±íÏÂÔØË÷Òý
-}TDifferentStepCalibration;
-
-typedef union
-{
-	TDifferentStepCalibration differentStep;
-}THeightCalibration;
-
-typedef struct
-{
-	short mode;							// Ä¿Ç°Ö»ÄÜÊÇ±ä²½¾àÏßÐÔ±ê¶¨£¬CALIBRATION_MODE_DIFFERENT_STEP
-	THeightCalibration prm;
-}THeightCalibrationPrm;
-
-GT_API GTN_ClearAxisHeightCalibrationSts(short core,short axis);
-GT_API GTN_StopAxisHeightCalibration(short core,short axis);
-GT_API GTN_RunAxisHeightCalibration(short core,short axis,short *pStage);
-GT_API GTN_SetAxisHeightCalibration(short core,short axis,THeightCalibrationPrm *pPrm);
-
-typedef struct
-{
-	int32_t positiveMutationValue;		// ½Ó½üµ²°åÊ±£¬µ÷¸ßÆ÷ÆµÂÊÍ»±äÁ¿ãÐÖµ£¬ÕýÕûÊý¡£
-	short positiveMutationStopLinkLimitType;// ½Ó½üµ²°åÊ±,ÆµÂÊÍ»±äÍ£Ö¹´¥·¢ºó¹ØÁªµÄÏÞÎ»ÀàÐÍ¡£
-	int32_t negativeMutationValue;		//Ô¶Àëµ²°åÊ±£¬µ÷¸ßÆ÷ÆµÂÊÍ»±äÁ¿ãÐÖµ£¬ÕýÕûÊý¡£
-	short negativeMutationStopLinkLimitType;// Ô¶Àëµ²°åÊ±,ÆµÂÊÍ»±äÍ£Ö¹´¥·¢ºó¹ØÁªµÄÏÞÎ»ÀàÐÍ¡£
-}TFrqMutationStopPrm;
-GT_API GTN_HeightFrqMutationStopEnable(short core,short axis,short enable,TFrqMutationStopPrm mutationStopPrm);
-GT_API GTN_GetHeightFrqMutationStopEnable(short core,short axis,short *pEnable,TFrqMutationStopPrm *pMutationStopPrm);
-
-GT_API GTN_GoToAxisFollowHeight(short core,short axis,int32_t followCmd,THeightFollowPrm followPrm,double trapVel,TTrapPrm trapPrm);
-
-GT_API GTN_GetAxisHeightBand(short core,short axis,int32_t *pBand,int32_t *pTime);
-GT_API GTN_SetAxisHeightBand(short core,short axis,int32_t band,int32_t time);
-
-#define HEIGHT_FINDEDGE_LATCH_MAX   4
-
-typedef struct
-{
-	short type;
-	short moveAxis;
-	short latchNum;
-	short reserve1;
-	short latchType[HEIGHT_FINDEDGE_LATCH_MAX];
-	short latchIndex[HEIGHT_FINDEDGE_LATCH_MAX];
-	int32_t  heightDiff;
-	int32_t reserve2;
-	double findTime;
-}THeightFindEdgePrm;
-
-typedef struct
-{
-	short findEdgeSts;
-	short error;
-	double latchValue[HEIGHT_FINDEDGE_LATCH_MAX];
-}THeightFindEdgeResult;
-
-GT_API GTN_SetHeightFindEdgePrm(short core,short heightFbIndex,THeightFindEdgePrm pFindEdgePrm);
-GT_API GTN_GetHeightFindEdgeResult(short core,short heightFbIndex,THeightFindEdgeResult *pFindEdgeResult);
-GT_API GTN_GetHeightFindEdgeCoef(short core,short heightFbIndex,double* alpha,double* beta);
-GT_API GTN_CloseHeightFindEdge(short core,short heightFbIndex);
-GT_API GTN_SetHeightFindEdgeStopMask(short core,short heightFbIndex,int32_t mask,int32_t option);
-GT_API GTN_GetHeightFindEdgeStopMask(short core,short heightFbIndex,int32_t* mask,int32_t* option);
-
-typedef struct
-{
-	double vel;			// ÍÜÌøËÙ¶È
-	double acc;			// ÍÜÌø¼ÓËÙ¶È
-	double dec;			// ÍÜÌø¼õËÙ¶È
-	double smoothTime;  // Æ½»¬Ê±¼ä
-
-	double safetyVel;	// ÔË¶¯µ½°²È«¹¤ÒÕ¸ß¶ÈÊ±µÄËÙ¶È
-
-	short slaveType;					// ´ÓÖáµÄÀàÐÍ¡£
-	short slaveIndex;					// ´ÓÖá¶ÔÓ¦µÄË÷Òý¡£
-	int32_t followCmd;		// ¸úËæ¸ß¶È
-	short followEnable;	// ÔË¶¯µ½¸úËæ¸ß¶ÈÊÇ·ñ±£³Ö¡£
-	short enable;		// ÍÜÌøÊ¹ÄÜ
-	short reserve1[2];
-	double reserve2[4];
-}TSetAxisLeapFrogPrm;
-GT_API GTN_SetAxisLeapFrogPrm(short core,short axis,TSetAxisLeapFrogPrm* pAxisLeapFrogPrm);
-
-GT_API GTN_SetLightPowerCtrlPara(short core,unsigned short ctrlMode,unsigned short *pDutyCycle,unsigned short *pPulseWidth);
-GT_API GTN_GetLightPowerCtrlPara(short core,unsigned short *pCtrlMode,unsigned short *pDutyCycle,unsigned short *pPulseWidth);
-
-GT_API GTN_UTL_ConvertPhysicToLogic(TPhysicInfo *pPhysicInfo,TLogicInfo *pLogicInfo);
-
-/*-----------------------------------------------------------*/
-/* Old Watch                                                */
-/*-----------------------------------------------------------*/
-#define WATCH_LIST_MAX                                  (8)
-#define WATCH_LENGTH_MAX                                (32)
-#define WATCH_FIFO_SIZE                                 (0x1E0)       // 480 word
-
-#define WATCH_ADDRESS_TYPE_PRF_POS						(0)
-#define WATCH_ADDRESS_TYPE_PRF_VEL						(1)
-#define WATCH_ADDRESS_TYPE_ENC_POS						(2)
-#define WATCH_ADDRESS_TYPE_ENC_VEL						(3)
-#define WATCH_ADDRESS_TYPE_AXIS_PRF_POS					(4)
-#define WATCH_ADDRESS_TYPE_AXIS_PRF_VEL					(5)
-#define WATCH_ADDRESS_TYPE_AXIS_ENC_POS					(6)
-#define WATCH_ADDRESS_TYPE_AXIS_ENC_VEL					(7)
-#define WATCH_ADDRESS_TYPE_DAC							(8)
-#define WATCH_ADDRESS_TYPE_LMT_POS						(9)
-#define WATCH_ADDRESS_TYPE_LMT_NEG						(10)
-#define WATCH_ADDRESS_TYPE_ALARM						(11)
-#define WATCH_ADDRESS_TYPE_HOME							(12)
-#define WATCH_ADDRESS_TYPE_GPI							(13)
-#define WATCH_ADDRESS_TYPE_ENABLE						(14)
-#define WATCH_ADDRESS_TYPE_CLEAR						(15)
-#define WATCH_ADDRESS_TYPE_GPO							(16)
-#define WATCH_ADDRESS_TYPE_CLOCK						(17)
-#define WATCH_ADDRESS_TYPE_FLASH_BUFFER					(18)
-#define WATCH_ADDRESS_TYPE_CRD_VEL						(19)
-#define WATCH_ADDRESS_TYPE_ARRIVE						(20)
-#define WATCH_ADDRESS_TYPE_POS_LOOP_ERROR				(21)
-#define WATCH_ADDRESS_TYPE_POS_LOOP_OUTPUT				(22)
-#define WATCH_ADDRESS_TYPE_POS_LOOP_INTERGRAL			(23)
-#define WATCH_ADDRESS_TYPE_VEL_LOOP_ERROR				(24)
-#define WATCH_ADDRESS_TYPE_VEL_LOOP_INTERGRAL			(25)
-#define WATCH_ADDRESS_TYPE_SPRING_OFFSET				(26)
-#define WATCH_ADDRESS_TYPE_BEFORE_SPRING				(27)
-#define WATCH_ADDRESS_TYPE_AFTER_SPRING					(28)
-#define WATCH_ADDRESS_TYPE_OBSERVER_LOWPASS_OUTPUT		(29)
-#define WATCH_ADDRESS_TYPE_OBSERVER_OUTPUT_PRE			(30)
-#define WATCH_ADDRESS_TYPE_OBSERVER_TORQUE_CMD_PRE		(31)
-#define WATCH_ADDRESS_TYPE_OBSERVER_VEL_FEEDBACK_INTERGRAL		(32)
-#define WATCH_ADDRESS_TYPE_OBSERVER_VEL_ERR_FEEDBACK_INTERGRAL	(33)
-
-#define WATCH_ADDRESS_TYPE_ADC							(40)
-
-#define WATCH_ADDRESS_TYPE_SCAN_SEGMENT_NUMBER			(200)
-
-#define WATCH_ADDRESS_TYPE_SCAN_PRF_VEL					(210)
-
-#define WATCH_ADDRESS_TYPE_SCAN_CRD_POS_X				(220)
-#define WATCH_ADDRESS_TYPE_SCAN_CRD_POS_Y				(221)
-
-#define WATCH_ADDRESS_TYPE_LASER_HSIO					(230)
-
-#define WATCH_ADDRESS_TYPE_LASER_POWER					(240)
-
-typedef struct Watch
-{
-	short count;
-	short interval;
-	uint32_t address[WATCH_LIST_MAX];
-	short length[WATCH_LIST_MAX];
-	uint32_t threshold;
-} TWatch;
-
-GT_API GTN_SetWatch(short core,TWatch *pWatch);
-GT_API GTN_StartWatch(short core);
-GT_API GTN_StartWatchStatic(short core);
-GT_API GTN_StopWatch(short core);
-GT_API GTN_StopWatchStatic(short core);
-GT_API GTN_LoadWatchFifo(short core,short fifo,short *pBuf);
-GT_API GTN_GetWatchFifo(short core,short *pFifo);
-GT_API GTN_GetWatchAddress(short core,short type,short index,uint32_t *pAddress,short count);
-GT_API GTN_GetWatchSts(short core,short *pRun,uint32_t *pCount);
-GT_API GTN_GetWatchData(short core,uint32_t offset,short *pData,short count=1);
-
-/*-----------------------------------------------------------*/
-/* New Watch                                                  */
-/*-----------------------------------------------------------*/
-#define MC_WATCH_VAR                    (200)
-#define MC_WATCH_EVENT                  (201)
-
-
-#define WATCH_VAR_CLOCK						(1200)
-#define WATCH_VAR_PRF_LOOP					(1201)
-
-#define WATCH_VAR_SKIP_MODULE				(1211)
-#define WATCH_VAR_TEST_MODE					(1212)
-
-#define WATCH_VAR_COMMAND_CODE				(1220)
-#define WATCH_VAR_COMMAND_DATA				(1221)
-#define WATCH_VAR_COMMAND_COUNT				(1222)
-#define WATCH_VAR_COMMAND_READ_FLAG 		(1223)
-
-#define WATCH_VAR_LINK_PORT_TX_USE			(1660)
-#define WATCH_VAR_LINK_PORT_TX_REQUIRE		(1661)
-
-#define WATCH_VAR_PRF_POS					(6000)
-#define WATCH_VAR_PRF_VEL					(6001)
-#define WATCH_VAR_PRF_ACC					(6002)
-#define WATCH_VAR_PRF_POS_RAW				(6003)
-#define WATCH_VAR_PRF_VEL_RAW				(6004)
-
-#define WATCH_VAR_PRF_VEL_MS				(6031)
-#define WATCH_VAR_PRF_ACC_MS				(6032)
-
-#define WATCH_VAR_PRF_RUN					(6200)
-
-#define WATCH_VAR_PT_PRF_POS_F64			(6650)
-#define WATCH_VAR_PT_SPACE					(6660)
-#define WATCH_VAR_PT_RECEIVE				(6662)
-#define WATCH_VAR_PT_EXECUTE				(6663)
-
-#define WATCH_VAR_TRAP_TOTAL_TIME           (6670)
-#define WATCH_VAR_TRAP_REMAIN_TIME          (6671)
-// 7000 MoveAbsolute
-#define WATCH_VAR_MOVE_ABSOLUTE_DONE		(7008)
-
-// 7050 MoveVelocity
-#define WATCH_VAR_MOVE_VELOCITY_IN_VELOCITY	(7058)
-
-#define WATCH_VAR_PROFILE_MOVE_DONE			(7108)
-
-// 7500 ProfileMove
-#define WATCH_VAR_PROFILE_MOVE_VEL_ORG      (7500)    // Æ½»¬Ä£Ê½Ê±µÄÔ¤¹æ»®ËÙ¶È
-#define WATCH_VAR_PROFILE_MOVE_VEL          (7501)    // ×îÖÕ¹æ»®ËÙ¶È
-
-#define WATCH_VAR_PROFILE_MOVE_VIRTUAL_VEL_ORG (7510) // ÐéÄâÖáÔ¤¹æ»®ËÙ¶È
-#define WATCH_VAR_PROFILE_MOVE_VIRTUAL_VEL     (7511) // ÐéÄâÖá×îÖÕ¹æ»®ËÙ¶È  
-
-#define WATCH_VAR_PROFILE_MOVE_GROUP_VEL_ORG (7520)   // group·ÖÖ§µ¥ÖáÔ¤¹æ»®ËÙ¶È    
-#define WATCH_VAR_PROFILE_MOVE_GROUP_VEL     (7521)   // group·ÖÖ§µ¥Öá×îÖÕ¹æ»®ËÙ¶È    
-
-#define WATCH_VAR_CRD_PRF_POS				(8000)
-#define WATCH_VAR_CRD_PRF_VEL				(8001)
-#define WATCH_VAR_CRD_PRF_ACC				(8002)
-
-#define WATCH_VAR_CRD_PRF_VEL_MS			(8031)
-#define WATCH_VAR_CRD_PRF_ACC_MS			(8032)
-
-#define WATCH_VAR_CRD_RUN					(8200)
-
-#define WATCH_VAR_CRD_SEGMENT_NUMBER		(8202)
-#define WATCH_VAR_CRD_SEGMENT_NUMBER_USER	(8203)
-#define WATCH_VAR_CRD_COMMAND_RECEIVE		(8204)
-#define WATCH_VAR_CRD_COMMAND_EXECUTE		(8205)
-
-#define WATCH_VAR_CRD_FOLLOW_SLAVE_POS		(8600)
-#define WATCH_VAR_CRD_FOLLOW_SLAVE_VEL		(8601)
-
-#define WATCH_VAR_CRD_FOLLOW_STAGE			(8610)
-
-#define WATCH_VAR_CRD_MPG_STATUS            (8620)
-#define WATCH_VAR_CRD_MPG_DIR            	(8621)
-#define WATCH_VAR_CRD_MPG_REF_VEL			(8622)
-#define WATCH_VAR_CRD_MPG_RESERVE_HEAD		(8623)
-#define WATCH_VAR_CRD_MPG_RESERVE_COUNT		(8624)
-#define WATCH_VAR_CRD_MPG_SEG_USE_COUNT		(8625)
-#define WATCH_VAR_CRD_MPG_DIR_SUM			(8626)
-#define WATCH_VAR_CRD_MPG_ENC_VEL			(8627)
-
-#define WATCH_VAR_CONTOUR_PEDAL_POS			(8800)
-#define WATCH_VAR_CONTOUR_PRF_POS			(8801)
-#define WATCH_VAR_CONTOUR_PRF_POS_SHAPING	(8802)
-#define WATCH_VAR_CONTOUR_ENC_POS			(8803)
-#define WATCH_VAR_CONTOUR_DAC               (8804)
-#define WATCH_VAR_CONTOUR_SYN_ERROR         (8805)
-
-#define WATCH_VAR_CONTOUR_FIFO_POINT_COUNT	(8808)
-#define WATCH_VAR_CONTOUR_FIFO_POINT_MAX	(8809)
-#define WATCH_VAR_CONTOUR_ERROR             (8810)
-#define WATCH_VAR_CONTOUR_DELETE_COUNT      (8811)
-
-#define WATCH_VAR_CBT_EXECUTE               (8900)
-#define WATCH_VAR_CBT_STATE                 (8901)
-#define WATCH_VAR_CBT_PIECE_TAG             (8902)
-#define WATCH_VAR_CBT_CATCH_UP_START_POS    (8903)
-#define WATCH_VAR_CBT_CATCH_UP_PROFILE_POS  (8904)
-#define WATCH_VAR_CBT_VIRTUAL_PIECE_POS     (8905)
-#define WATCH_VAR_CBT_ACTUAL_PIECE_POS      (8906)
-#define WATCH_VAR_CBT_PIECE_POS_PCS         (8907)
-#define WATCH_VAR_CBT_STOP_INFO             (8910)
-
-#define WATCH_VAR_GROUP_PRF_VEL_MS			(9031)
-#define WATCH_VAR_GROUP_PCS_SYN_VEL_MS  	(9032)
-#define WATCH_VAR_GROUP_MCS_SYN_VEL_MS		(9033)
-#define WATCH_VAR_GROUP_ACS_SYN_VEL_MS		(9034)
-
-#define WATCH_VAR_GROUP_SMOOTH_WORK_PRF_VEL_MS (9041)
-
-#define WATCH_VAR_GROUP_DYNAMIC_PCS_TRANSLATE  (9050)
-
-#define WATCH_VAR_GROUP_PROJECTION_POS         (9070)
-#define WATCH_VAR_GROUP_PROJECTION_POS_BEGIN   (9071)
-#define WATCH_VAR_GROUP_PROJECTION_POS_END     (9072)
-#define WATCH_VAR_GROUP_SEGMENT_LENGTH_PROFILE (9073)
-#define WATCH_VAR_GROUP_SEGMENT_LENGTH_BEGIN   (9074)
-#define WATCH_VAR_GROUP_SEGMENT_LENGTH_END     (9075)
-#define WATCH_VAR_GROUP_SEGMENT_LENGTH_TOTAL   (9076)
-#define WATCH_VAR_GROUP_SEGMENT_LENGTH_TOTAL_PROFILE (9077)
-
-#define WATCH_VAR_PCS_PRF_POS               (9100)
-#define WATCH_VAR_PCS_PRF_VEL               (9101)
-#define WATCH_VAR_PCS_PRF_ACC               (9102)
-
-#define WATCH_VAR_PCS_PRF_POS_FILTER        (9103)
-#define WATCH_VAR_PCS_PRF_VEL_FILTER        (9104)
-#define WATCH_VAR_PCS_PRF_ACC_FILTER        (9105)
-
-#define WATCH_VAR_PCS_ENC_POS               (9106)
-#define WATCH_VAR_PCS_ENC_VEL               (9107)
-#define WATCH_VAR_PCS_ENC_ACC               (9108)
-
-#define WATCH_VAR_MCS_PRF_POS               (9110)
-#define WATCH_VAR_MCS_PRF_VEL               (9111)
-#define WATCH_VAR_MCS_PRF_ACC               (9112)
-
-#define WATCH_VAR_MCS_PRF_POS_FILTER        (9113)
-#define WATCH_VAR_MCS_PRF_VEL_FILTER        (9114)
-#define WATCH_VAR_MCS_PRF_ACC_FILTER        (9115)
-
-#define WATCH_VAR_MCS_ENC_POS               (9116)
-#define WATCH_VAR_MCS_ENC_VEL               (9117)
-#define WATCH_VAR_MCS_ENC_ACC               (9118)
-
-#define WATCH_VAR_ACS_PRF_POS               (9120)
-#define WATCH_VAR_ACS_PRF_VEL               (9121)
-#define WATCH_VAR_ACS_PRF_ACC               (9122)
-
-#define WATCH_VAR_ACS_PRF_POS_FILTER        (9123)
-#define WATCH_VAR_ACS_PRF_VEL_FILTER        (9124)
-#define WATCH_VAR_ACS_PRF_ACC_FILTER        (9125)
-
-#define WATCH_VAR_ACS_ENC_POS               (9126)
-#define WATCH_VAR_ACS_ENC_VEL               (9127)
-#define WATCH_VAR_ACS_ENC_ACC               (9128)
-
-#define WATCH_VAR_GROUP_AXIS_TORQUE         (9130)
-#define WATCH_VAR_TCS_PRF_POS               (9140)
-
-#define WATCH_VAR_USER_TCS_PRF_POS          (9143)
-
-#define WATCH_VAR_PCS_PRF_POS_POST          (9150)
-#define WATCH_VAR_PCS_PRF_VEL_POST          (9151)
-#define WATCH_VAR_PCS_PRF_ACC_POST          (9152)
-
-#define WATCH_VAR_MCS_PRF_POS_POST          (9153)
-#define WATCH_VAR_MCS_PRF_VEL_POST          (9154)
-#define WATCH_VAR_MCS_PRF_ACC_POST          (9155)
-
-#define WATCH_VAR_ACS_PRF_POS_POST          (9156)
-#define WATCH_VAR_ACS_PRF_VEL_POST          (9157)
-#define WATCH_VAR_ACS_PRF_ACC_POST          (9158)
-
-#define WATCH_VAR_GROUP_MVCS_SUPERPOSITION_VALUE (9160)
-
-#define WATCH_VAR_GROUP_RUN                 (9200)
-#define WATCH_VAR_GROUOP_DYNAMIC_TRANSFORM_ENABLE (9201)
-#define WATCH_VAR_GROUP_STOPINFO            (9202)
-
-#define WATCH_VAR_LIST_EXECUTE				(9240)
-#define WATCH_VAR_LIST_SEG_NUM              (9250)
-
-#define WATCH_VAR_CATCH_UP_STATE                           (12000)
-#define WATCH_VAR_CATCH_UP_COMMAND                         (12001)
-#define WATCH_VAR_CATCH_UP_MASTER_POS                      (12002)
-#define WATCH_VAR_CATCH_UP_MASTER_VEL                      (12003)
-#define WATCH_VAR_CATCH_UP_SLAVE_POS                       (12004)
-#define WATCH_VAR_CATCH_UP_SLAVE_VEL                       (12005)
-#define WATCH_VAR_CATCH_UP_PIECE_POS                       (12006)
-#define WATCH_VAR_CATCH_UP_PIECE_ID                        (12007)
-#define WATCH_VAR_CATCH_UP_PIECE_COUNT                     (12008)
-#define WATCH_VAR_CATCH_UP_PIECE_FIFO_COMMAND_RECEIVE      (12009)
-#define WATCH_VAR_CATCH_UP_PIECE_FIFO_COMMAND_SEND         (12010)
-#define WATCH_VAR_CATCH_UP_SYNCH_DISTANCE                  (12011)
-#define WATCH_VAR_CATCH_UP_SYNCN_TIME                      (12012)
-#define WATCH_VAR_CATCH_UP_PIECE_START_POS                 (12013)
-#define WATCH_VAR_CATCH_UP_PIECE_SYNCH_POS                 (12014)
-#define WATCH_VAR_CATCH_UP_SLAVE_START_POS                 (12015)
-#define WATCH_VAR_CATCH_UP_SLAVE_SYNCH_POS                 (12016)
-
-#define WATCH_VAR_POS_COMPARE_COMMAND_RECEIVE              (17422)
-#define WATCH_VAR_POS_COMPARE_COMMAND_SEND                 (17423)
-#define WATCH_VAR_POS_COMPARE_COMMAND_LEFT                 (17424)
-#define WATCH_VAR_POS_COMPARE_COMMAND_TX                   (17425)
-#define WATCH_VAR_POS_COMPARE_PULSE_COUNT                  (17426)
-#define WATCH_VAR_POS_COMPARE_PSO_ON_OFF                   (17427)
-#define WATCH_VAR_POS_COMPARE_PSO_ON_OFF_POS_X             (17428)
-#define WATCH_VAR_POS_COMPARE_PSO_ON_OFF_POS_Y             (17429)
-#define WATCH_VAR_POS_COMPARE_PSO_REG                      (17430)
-#define	WATCH_VAR_POS_COMPARE_PSO_REG_EXT                  (17431)
-#define	WATCH_VAR_POS_COMPARE_ENC_PSO_ON_OFF               (17432)
-#define	WATCH_VAR_POS_COMPARE_MODULE_OVERFLOW              (17433)
-#define	WATCH_VAR_POS_COMPARE_MODULE_SPACE                 (17434)
-
-#define WATCH_VAR_SCAN_PRF_POS				(18000)
-#define WATCH_VAR_SCAN_PRF_VEL				(18001)
-#define WATCH_VAR_SCAN_PRF_ACC				(18002)
-
-#define WATCH_VAR_SCAN_PRF_POS_X			(18010)
-#define WATCH_VAR_SCAN_PRF_POS_Y			(18020)
-#define WATCH_VAR_SCAN_PRF_POS_Z			(18030)
-
-#define WATCH_VAR_SCAN_RUN					(18200)
-
-#define WATCH_VAR_SCAN_SEGMENT_NUMBER		(18202)
-
-#define WATCH_VAR_SCAN_COMMAND_RECEIVE		(18422)
-#define WATCH_VAR_SCAN_COMMAND_SEND			(18423)
-#define WATCH_VAR_SCAN_COMMAND_LEFT			(18424)
-#define WATCH_VAR_SCAN_COMMAND_TX			(18425)
-
-#define WATCH_VAR_LASER_HSIO				(18600)
-#define WATCH_VAR_LASER_POWER				(18601)
-#define WATCH_VAR_LASER_WORK_RATIO			(18602)
-#define WATCH_VAR_LASER_POWER_FPGA          (18603)
-
-#define WATCH_VAR_AXIS_PRF_POS				(20000)
-#define WATCH_VAR_AXIS_PRF_VEL				(20001)
-#define WATCH_VAR_AXIS_PRF_ACC				(20002)
-
-#define WATCH_VAR_AXIS_PRF_POS_OTHER		(20004)
-#define WATCH_VAR_AXIS_PRF_VEL_OTHER		(20005)
-
-#define WATCH_VAR_AXIS_PRF_VEL_FILTER		(20011)
-
-#define WATCH_VAR_AXIS_PRF_VEL_MS			(20031)
-#define WATCH_VAR_AXIS_PRF_ACC_MS			(20032)
-
-#define WATCH_VAR_AXIS_STATUS		        (20100)
-#define WATCH_VAR_AXIS_STATUS_EX			(20101)
-
-#define WATCH_VAR_AXIS_RUN		            (20200)
-
-#define WATCH_VAR_AXIS_ENC_POS_FILTER		(20310)
-#define WATCH_VAR_AXIS_ENC_VEL_FILTER		(20311)
-
-#define WATCH_VAR_AXIS_ENC_VEL_64_FILTER	(20321)
-
-#define WATCH_VAR_AXIS_PREDICTION_POS_IN    (20350)
-#define WATCH_VAR_AXIS_PREDICTION_POS_IN_2  (20351)
-#define WATCH_VAR_AXIS_PREDICTION_POS_OUT   (20352)
-
-#define WATCH_VAR_AXIS_PREDICTION_VEL_IN    (20355)
-#define WATCH_VAR_AXIS_PREDICTION_VEL_IN_2  (20356)
-#define WATCH_VAR_AXIS_PREDICTION_VEL_OUT   (20357)
-
-#define WATCH_VAR_AXIS_PREDICTION_OUT       (20360)
-#define WATCH_VAR_AXIS_PREDICTION_FILTER_POS                    (20361)
-#define WATCH_VAR_AXIS_PREDICTION_FILTER_VEL                    (20362)
-
-#define WATCH_VAR_POSCOMPARE_PREDICTION_ENABLE                  (20370)
-#define WATCH_VAR_POSCOMPARE_PREDICTION_WORK                    (20371)
-#define WATCH_VAR_POSCOMPARE_PREDICTION_OUTPUT_COUNT_TOTAL      (20372)
-#define WATCH_VAR_DRIVER_ACT_VEL			(20400)
-#define WATCH_VAR_STIMULATE_DATA			(20401)
-#define WATCH_VAR_DRIVER_CURRENT_KVFF		(20402)
-#define WATCH_VAR_AXIS_TORQUE               (20410)
-#define WATCH_VAR_CONTROL_ERROR				(20500)
-
-#define WATCH_VAR_BACKLASH_VALUE			(21000)
-#define WATCH_VAR_LEADSCREW_VALUE			(21001)
-#define WATCH_VAR_FRICTION_VALUE			(21003)
-
-#define WATCH_VAR_PRESS_COMPENSATE_VALUE    (21004)
-#define WATCH_VAR_PRESS_COMPENSATE_VALUE_FLOAT (21005)
-#define WATCH_VAR_PRESS_COMPENSATE_VALUE_FLOAT_RAW (21006)
-
-
-#define WATCH_VAR_ENC_POS					(30000)
-#define WATCH_VAR_ENC_VEL					(30001)
-
-#define WATCH_VAR_ENC_VEL_64				(30021)
-
-#define WATCH_VAR_GPI						(31000)
-#define WATCH_VAR_LIMIT_POSITIVE			(31010)
-#define WATCH_VAR_LIMIT_NEGATIVE			(31020)
-#define WATCH_VAR_ALARM   		        	(31030)
-#define WATCH_VAR_HOME             			(31040)
-#define WATCH_VAR_ARRIVE           			(31050)
-
-#define WATCH_VAR_GPO						(32000)
-#define WATCH_VAR_ENABLE					(32010)
-#define WATCH_VAR_CLEAR 					(32020)
-
-#define WATCH_VAR_AI     					(33000)
-#define WATCH_VAR_AU_AI						(33100)
-
-#define WATCH_VAR_AO     					(34000)
-
-#define WATCH_VAR_TRIGGER_EXECUTE			(38000)
-#define WATCH_VAR_TRIGGER_STATUS			(38001)
-#define WATCH_VAR_TRIGGER_POSITION			(38002)
-
-#define WATCH_VAR_TRIGGER_COUNT				(38010)
-
-#define WATCH_VAR_TRIGGER_NOTIFY_ENABLE			(38020)
-#define WATCH_VAR_TRIGGER_NOTIFY_STATUS_ECHO	(38021)
-#define WATCH_VAR_TRIGGER_NOTIFY_CLEAR_WAIT		(38022)
-
-#define WATCH_VAR_TRIGGER_DELTA_CROSS_COUNT		(38110)
-
-#define WATCH_VAR_POS_LOOP_ERROR			(40000)
-
-#define WATCH_VAR_WATCH_TIME				(52001)
-
-#define WATCH_VAR_INT32						(52020)
-#define WATCH_VAR_INT64						(52021)
-#define WATCH_VAR_FLOAT						(52022)
-#define WATCH_VAR_DOUBLE					(52023)
-#define WATCH_VAR_BOOL						(52024)
-
-#define WATCH_VAR_TERMINAL_LIMIT_POSITIVE	(53000)
-#define WATCH_VAR_TERMINAL_LIMIT_NEGATIVE	(53001)
-#define WATCH_VAR_TERMINAL_ALARM			(53002)
-#define WATCH_VAR_TERMINAL_HOME				(53003)
-#define WATCH_VAR_TERMINAL_GPI				(53004)
-#define WATCH_VAR_TERMINAL_ARRIVE			(53005)
-
-#define WATCH_VAR_TERMINAL_MPG				(53009)
-#define WATCH_VAR_TERMINAL_ENABLE			(53010)
-#define WATCH_VAR_TERMINAL_CLEAR			(53011)
-#define WATCH_VAR_TERMINAL_GPO				(53012)
-
-#define WATCH_VAR_TERMINAL_DAC				(53020)
-
-#define WATCH_VAR_TERMINAL_PULSE			(53022)
-#define WATCH_VAR_TERMINAL_ENCODER			(53023)
-#define WATCH_VAR_TERMINAL_ADC				(53024)
-
-#define WATCH_VAR_TERMINAL_AU_ENCODER		(53026)
-
-#define WATCH_VAR_TERMINAL_PRF_POS			(53030)
-
-#define WATCH_VAR_TERMINAL_TRIGGER_POSITION	(53040)
-#define WATCH_VAR_TERMINAL_TRIGGER_STATUS	(53041)
-
-#define WATCH_VAR_TERMINAL_COMMAND			(53100)
-#define WATCH_VAR_TERMINAL_STATUS			(53101)
-
-#define WATCH_VAR_DRIVER_COMMAND				(53110)
-#define WATCH_VAR_DRIVER_STATUS				    (53111)
-#define WATCH_VAR_DRIVER_FOLLOW_ERROR			(53112)
-
-#define WATCH_VAR_HEIGHT_FRQ_RAW				(53200)
-#define WATCH_VAR_HEIGHT_FRQ_FILTER_IIR			(53201)
-#define WATCH_VAR_HEIGHT_FRQ_FILTER				(53202)
-#define WATCH_VAR_HEIGHT_FRQ_INTERPOLATION		(53203)
-#define WATCH_VAR_AXIS_HEIGHT_CMP_VALUE			(53204)
-#define WATCH_VAR_AXIS_HEIGHT_CMP_VALUE_FILTER	(53205)
-#define WATCH_VAR_AXIS_HEIGHT_CROSS_ENABLE_DONE	(53206)
-#define WATCH_VAR_AXIS_HEIGHT_TARGETPOS			(53207)
-#define WATCH_VAR_AXIS_HEIGHT_REF_POS			(53208)
-#define WATCH_VAR_AXIS_HEIGHT_CNT_POS			(53209)
-#define WATCH_VAR_AXIS_HEIGHT_CROSS_DISABLE_DONE (53210)
-#define WATCH_VAR_AXIS_HEIGHT_FOLLOW_ENABLE 	(53211)
-#define WATCH_VAR_AXIS_HEIGHT_STOP_STS 			(53212)
-#define WATCH_VAR_EVENT_HIT						(60000)
-#define WATCH_VAR_TASK_START					(61000)
-#define WATCH_VAR_TASK_WORK						(61001)
-
-#define WATCH_VAR_PRF_TORQUE					(61200)
-#define WATCH_VAR_ATL_TORQUE					(61201)
-#define WATCH_VAR_ATL_TORQUE_FILTER				(61202)
-
 typedef struct
 {
-	short enable;						// ²É¼¯Ê¹ÄÜ
-	short run;							// ²É¼¯×´Ì¬
-	uint32_t time;					// ²É¼¯´ÎÊý
-	uint32_t head;					// Í·Ö¸Õë
-	uint32_t threshold;			// ×î¶àÈÝÄÉ²É¼¯´ÎÊý
+	short enable;						// ï¿½É¼ï¿½Ê¹ï¿½ï¿½
+	short run;							// ï¿½É¼ï¿½×´Ì¬
+	uint32_t time;					// ï¿½É¼ï¿½ï¿½ï¿½ï¿½ï¿½
+	uint32_t head;					// Í·Ö¸ï¿½ï¿½
+	uint32_t threshold;			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É²É¼ï¿½ï¿½ï¿½ï¿½ï¿½
 
-	short interval;						// ²É¼¯¼ä¸ô
-	short mode;							// ²É¼¯Ä£Ê½
-	unsigned short countBeforeEvent;	// ÊÂ¼þ´¥·¢Ö®Ç°µÄ²É¼¯ÊýÁ¿
-	unsigned short countAfterEvent;		// ÊÂ¼þ´¥·¢ÒÔºóµÄ²É¼¯ÊýÁ¿
-	unsigned short varCount;			// ²É¼¯±äÁ¿ÊýÁ¿
-	unsigned short eventCount;			// ²É¼¯ÊÂ¼þÊýÁ¿
+	short interval;						// ï¿½É¼ï¿½ï¿½ï¿½ï¿½
+	short mode;							// ï¿½É¼ï¿½Ä£Ê½
+	unsigned short countBeforeEvent;	// ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½Ö®Ç°ï¿½Ä²É¼ï¿½ï¿½ï¿½ï¿½ï¿½
+	unsigned short countAfterEvent;		// ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôºï¿½Ä²É¼ï¿½ï¿½ï¿½ï¿½ï¿½
+	unsigned short varCount;			// ï¿½É¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	unsigned short eventCount;			// ï¿½É¼ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½
 } TWatchInfo;
 
 typedef struct
@@ -7121,7 +6297,6 @@ GT_API GTN_GetWatchInfoEx(short core,short group,TWatchInfo *pInfo);
 
 #define WATCH_CONDITION_NEAREST				(31)
 #define WATCH_CONDITION_DELTA				(32)
-
 //typedef struct
 //{
 //	unsigned short type;
@@ -7170,96 +6345,2845 @@ GT_API GTN_GetWatchVar(short core,short index,TWatchVar *pVar,TWatchVarInfo *pVa
 GT_API GTN_SetWatchModeEx(short core,short group,short mode);
 GT_API GTN_SetWatchIntervalEx(short core,short group,short interval);
 
-//-------------------------------------------------------------------------------------------------
-// Â·¾¶²¹³¥¹¦ÄÜ
-//-------------------------------------------------------------------------------------------------
-// Â·¾¶²¹³¥µã½á¹¹Ìå
+#define VAR_FORMAT_INT						(1)
+#define VAR_FORMAT_FLOAT					(2)
+#define VAR_FORMAT_DOUBLE					(3)
+
+#define WATCH_LOAD_MODE_NONE				(0)
+#define WATCH_LOAD_MODE_BOOT				(2)
+#define WATCH_LOAD_MODE_RUN					(3)
+
+
+
+#define VAR_CALCULATE_MAX					(32)
+
+#define VAR_CALCULATE_NONE					(0)
+#define VAR_CALCULATE_OR					(1)
+#define VAR_CALCULATE_AND					(3)
+#define VAR_CALCULATE_NOT					(5)
+
+#define VAR_CALCULATE_ADD					(11)
+#define VAR_CALCULATE_SUB					(12)
+#define VAR_CALCULATE_MUL					(13)
+#define VAR_CALCULATE_DIV					(14)
+
+// ï¿½Ã»ï¿½ï¿½Ó¿Ú¸ï¿½ï¿½Ù¶ï¿½Ôªï¿½Ø½á¹¹ï¿½ï¿½
 typedef struct
 {
-	double pos[2];                               // xÖá¡¢yÖáÎ»ÖÃ
-	double compensateValue;	                     // zÖá²¹³¥Î»ÖÃ
+    int32_t code;                                      // ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½Ä¸ï¿½ï¿½Ù¶ï¿½Ôªï¿½Ø±ï¿½ï¿½ï¿½,ï¿½Î¼ï¿½WATCHï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short index;                                    // ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½Ä¸ï¿½ï¿½Ù¶ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½1ï¿½ï¿½Ê¼
+    short subIndex;                                 // ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½Ä¸ï¿½ï¿½Ù¶ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½1ï¿½ï¿½Ê¼
+    short pad1[2];                                  // Ô¤ï¿½ï¿½
+}TReadHsCommand;
+GT_API GTN_AddReadHs(short core,TReadHsCommand *pCommand);
+GT_API GTN_LoadReadHsConfig(short core,char *pFile);
+GT_API GTN_ReadHsOn(short core,short enable,short mode,double interval);
+GT_API GTN_ClearReadHs(short core);
+GT_API GTN_SetReadHs(short core,short enable,short mode,short interval);
+GT_API GTN_ReadHsReadBuffer(short core,short *pData,int32_t count);
+GT_API GTN_FlushReadHs(short core,short wait);
+
+
+typedef struct
+{
+    short mode;
+    short pad0;
+    int32_t band;		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶Ïµï¿½Î»ï¿½ï¿½ï¿½ï¿½
+    int32_t time;		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶Ïµï¿½Î»Ê±ï¿½ï¿½
+    int32_t pad1[2];
+}TAxisArrivePrm;
+GT_API GTN_SetAxisArriveMode(short core,short axis,TAxisArrivePrm *pPrm);
+GT_API GTN_GetAxisArriveMode(short core,short axis,TAxisArrivePrm *pPrm);
+
+
+#define MAX_CRDMPG_FIXEDMPGVEL 8
+typedef struct
+{
+    short enable;                                                        //Ê¹ï¿½Ü±ï¿½Ö¾
+    short master;                                                        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short filterTime;                                                    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½Ê±ï¿½ï¿½
+    short mode;                                                          //ï¿½ï¿½ï¿½Öµï¿½Ä£Ê½
+    short fixedMpgVelCount;                                              //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½Î»ï¿½ï¿½ï¿½ï¿½
+    short pad1[3];
+    int32_t masterEven;                                                     //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int32_t slaveEven;                                                      //ï¿½ï¿½ï¿½Ö´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int32_t pad2[2];
+    double fixedMpgVel[MAX_CRDMPG_FIXEDMPGVEL];                          //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½Î»RatioÖµ
+    double ratioUpdateTime;                                              //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¢ï¿½ï¿½Ê±ï¿½ï¿½
+    double pad3[3];
+}TCrdMpgPrm;
+GT_API GTN_SetCrdMPGMode(short core,short crd,short enable,short master,int32_t masterEven,int32_t slaveEven,short filterTime,short mode);
+GT_API GTN_GetCrdMPGMode(short core,short crd,short *pEnable,short *pMaster,int32_t *pMasterEven,int32_t *pSlaveEven,short *pFilterTime,short *pMode,short *pFifoEnd);
+GT_API GTN_SetCrdMPGModeEx(short core,short crd,TCrdMpgPrm *pMpgPrm);
+GT_API GTN_GetCrdMPGModeEx(short core,short crd,short *pFifoEnd,TCrdMpgPrm *pCrdMpgPrm);
+
+
+typedef struct
+{
+    short mode;     //ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½,0-ï¿½ï¿½Î»ï¿½ï¿½6-PVTï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ö§ï¿½ï¿½
+    short enable;   //ï¿½Ç·ï¿½Ê¹ï¿½Ü£ï¿½0-ï¿½ï¿½Ê¹ï¿½Ü£ï¿½1-Ê¹ï¿½ï¿½
+    short trigger;  //triggerï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½1ï¿½ï¿½Ê¼
+    short pad1;     //ï¿½ï¿½ï¿½ï¿½
+    int32_t distance;  //ï¿½ï¿½ï¿½ï¿½Ê±Æ«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É¸ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int32_t posLimit;  //ï¿½ï¿½ï¿½Â¹æ»®ï¿½ó£¬´ï¿½ï¿½ï¿½Î»ï¿½ï¿½+Æ«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü³ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+    double vel;     //Ä¿ï¿½ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½ï¿½Â¹æ»®ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/ms
+    double acc;     //ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½Ê±ï¿½Ä¼ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/ms
+    double dec;     //ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/ms
+    double percent; //ï¿½ï¿½ï¿½Ù¶ï¿½Sï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ù·Ö±È£ï¿½ï¿½ï¿½ï¿½ï¿½60ï¿½ï¿½Ê¾60%
+    double reserve[4];
+}TTriggerProfilePrm;
+
+typedef struct
+{
+    short mode;
+    short enable;
+    short execute;          //ï¿½Ç·ï¿½Ö´ï¿½ï¿½ï¿½ï¿½,0-Î´Ö´ï¿½Ð£ï¿½1-Ö´ï¿½ï¿½
+    short status;           //Ö´ï¿½Ð¹ï¿½ï¿½ï¿½ï¿½Ðµï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½ï¿½ì³£ï¿½ò·µ»Ø´ï¿½ï¿½ï¿½ï¿½ï¿½
+    int32_t endPos;         //ï¿½Õµï¿½Î»ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ï¿½+Æ«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int32_t reserve[7];
+}TTriggerProfileStatus;
+
+#define TRIGGER_PROFILE_STATUS_NONE              (0)                 // ×´Ì¬ï¿½ï¿½ï¿½ï¿½
+#define TRIGGER_PROFILE_STATUS_ERROR_END_POS     (1)                 // ï¿½ï¿½ï¿½ñµ½µï¿½Î»ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½Î»ï¿½ï¿½ï¿½ì³£
+#define TRIGGER_PROFILE_STATUS_VEL               (2)                 // ï¿½ï¿½ï¿½Ãµï¿½Ä¿ï¿½ï¿½ï¿½Ù¶ï¿½Ð¡ï¿½Úµï¿½Ç°ï¿½Ë¶ï¿½ï¿½Ù¶ï¿½
+
+GT_API GTN_SetTriggerProfilePrm(short core,short profile,TTriggerProfilePrm *pPrm);
+GT_API GTN_GetTriggerProfileStatus(short core,short profile,TTriggerProfileStatus *pSts);
+
+
+/*-----------------------------------------------------------*/
+/* DEBUG INFO                                                */
+/*-----------------------------------------------------------*/
+GT_API GTN_PrintLogInfo(short core, const char* pFileName, int32_t start = 0, int32_t count = 0);
+GT_API GTN_PrintLogInfoDebug(short core, const char* pFileName, int32_t start = 0, int32_t count = 0);
+GT_API GTN_PrintMcStsInfo(short core,const char *pFileName,short type,short index,short count);
+GT_API GTN_PrintCommandInfo(short core,const char *pFileName,int32_t start,int32_t count);
+
+#define COMMANDINFO_DATA_MAX       (225)
+typedef struct
+{
+    uint32_t   commandCode;                        //ï¿½ï¿½Ö¾ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½
+    short   commandRtn;                            //2wordï¿½ï¿½ï¿½ï¿½
+    short   errorCode;
+    uint32_t  clockTime;                           //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+    int32_t    segmentNum;                         //ï¿½Îºï¿½
+    int32_t    userTag;                            //ï¿½Ã»ï¿½ï¿½ï¿½Ç©
+    short   dataLength;
+    unsigned short  data16[COMMANDINFO_DATA_MAX];  //
+} TCommandInfoData;
+//ï¿½ï¿½È¡Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+GT_API GTN_GetLastCommandError(short core, TCommandInfoData* getCommandInfoData, int32_t start = -1, int32_t count = 1);
+
+/*-----------------------------------------------------------*/
+/* ILC                                                       */
+/*-----------------------------------------------------------*/
+struct TIlcResult
+{
+    double ErrorMax;
+    double ErrorAvg;
+    double ErrorRms;
+    double pad1[9];
+    short  pad2[10];
+};
+
+GT_API GTN_InitIlc(short core);
+GT_API GTN_StartIlc(short core,short crd);
+GT_API GTN_StopIlc(short core,short crd,TIlcResult *pPrm);
+GT_API GTN_SaveIlcFile(short core,char *pIlcFile);
+GT_API GTN_LoadIlcFile(short core,short crd,char *filePath);
+
+GT_API GTN_SetIterationLearnData(short core,short axis,double *pData,uint32_t count);
+GT_API GTN_EnableIterationLearn(short core,short axis,short mode,double k);
+
+GT_API GTN_SetIteraionData(short core,int32_t count,double xPrf,double yPrf,double xEnc,double yEnc,short pso);
+GT_API GTN_GetIteraionData(short core,int32_t count,double *xPrf,double *yPrf,double *xEnc,double *yEnc,double *xRef,double *yRef,double *error,double *xErr,double *yErr, short *pso,int32_t *index);
+
+/*----------------*/
+/*ï¿½ñ¾µ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½*/
+/*----------------*/
+#define    SCAN_LASER_MODE_DUTY_RATIO          (0)
+#define    SCAN_LASER_MODE_FREQUENCY           (1)
+#define    SCAN_LASER_MODE_ANALOG              (2)
+#define    SCAN_LASER_MODE_PARALLEL            (4)
+#define    SCAN_LASER_MODE_NONE               (10)
+
+/*Õ¼ï¿½Õ±ï¿½Ä£Ê½ï¿½Ì¶ï¿½ï¿½ï¿½ï¿½ï¿½*/
+typedef struct
+{
+    double minDutyRatio;
+    double maxDutyRatio;
+    double frequency;
+}TLaserDutyRatioModeParameterPro;
+/*Æµï¿½ï¿½Ä£Ê½ï¿½Ì¶ï¿½ï¿½ï¿½ï¿½ï¿½*/
+typedef struct
+{
+    double minFrequency;
+    double maxFrequency;
+    double pulseWidth;
+}TLaserFrequencyModeParameterPro;
+/*ï¿½ï¿½ï¿½ï¿½Ê½ï¿½Ì¶ï¿½ï¿½ï¿½ï¿½ï¿½*/
+typedef struct
+{
+    double minParallel;                                    // ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½Ä£Ê½ï¿½ÂµÄ²ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½Öµ
+    double maxParallel;                                    // ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½Ä£Ê½ï¿½ÂµÄ²ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+}TlasetParallelModeParameterPro;
+/*Ä£ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½Ì¶ï¿½ï¿½ï¿½ï¿½ï¿½*/
+typedef struct
+{
+    double minVoltage;
+    double maxVoltage;
+}TlaserAnalogModeParameterPro;
+/*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½Ì¶ï¿½ï¿½ï¿½ï¿½ï¿½*/
+typedef union
+{
+    TLaserDutyRatioModeParameterPro dutyRatioModePrm;
+    TLaserFrequencyModeParameterPro frequencyModePrm;
+    TlaserAnalogModeParameterPro analogModePrm;
+    TlasetParallelModeParameterPro parallelModePrm;
+    double data[8];
+}TLaserParameterUnionPro;
+/*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½*/
+typedef struct
+{
+    unsigned short laserOn;   //ï¿½ï¿½ï¿½â¿ªï¿½ï¿½×´Ì¬
+    unsigned short laserMode; //PWMï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ê¶¨ï¿½ï¿½
+    short pad[2];             //ï¿½ï¿½ï¿½ï¿½
+    double power;             //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    TLaserParameterUnionPro laserPrm;
+}TLaserInfoPro;
+
+typedef struct
+{
+    unsigned short laserMode; //PWMï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short pad[3];             //ï¿½ï¿½ï¿½ï¿½
+    TLaserParameterUnionPro laserPrm;
+}TLaserParameterPro;
+
+GT_API GTN_GetScanLaserLinkPro(short core,short scanCrd,short *pLaserChannel);
+GT_API GTN_SetScanLaserLinkPro(short core,short scanCrd,short laserChannel,TListInfo *pListInfo=NULL);//ï¿½ñ¾µ¼ï¿½ï¿½ï¿½ï¿½,laserChannelÎª0ï¿½ï¿½ï¿½Ç½ï¿½ï¿½
+GT_API GTN_GetScanLaserInfoPro(short core,short scanCrd,TLaserInfoPro *pPrm);
+GT_API GTN_SetScanLaserEnablePro(short core,short scanCrd,short laserEnable,TListInfo *pListInfo=NULL);//ï¿½ï¿½ï¿½â¿ªï¿½Ø¹ï¿½
+GT_API GTN_SetScanLaserPrmPro(short core,short scanCrd,TLaserParameterPro *pLaserPrm,TListInfo *pListInfo=NULL);//ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½Í¹Ì¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+GT_API GTN_SetScanLaserPowerPro(short core,short scanCrd,double power,TListInfo *pListInfo=NULL);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+GT_API GTN_SetScanLaserDelayPro(short core,short scanCrd,double laserOnDelay,double laserOffDelay,TListInfo *pListInfo);
+
+/*----------------*/
+/*ï¿½Â°ï¿½ï¿½ñ¾µ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½î£¬PWMï¿½ï¿½ï¿½ï¿½ï¿½Ú¡ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬Ê±ï¿½Ú»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½Ð¿ï¿½ï¿½ï¿½*/
+/*----------------*/
+typedef struct
+{
+    double minDuty;                              // Õ¼ï¿½Õ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,100]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½%
+    double maxDuty;                              // Õ¼ï¿½Õ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,100]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½%
+    double minFrequency;                         // Æµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1562.5]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½kHz
+    double maxFrequency;                         // Æµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1562.5]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½kHz
+    double minPulseWidth;                        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,65535]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½us
+    double maxPulseWidth;                        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,65535]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½us
+}TLaserPwmPrmPro;
+GT_API GTN_SetScanLaserPwmPrmPro(short core,short scanCrd,TLaserPwmPrmPro *pPrm,TListInfo *pListInfo);
+GT_API GTN_GetScanLaserPwmPrmPro(short core,short scanCrd,TLaserPwmPrmPro *pPrm);
+
+GT_API GTN_SetScanLaserPwmDutyPro(short core,short scanCrd,double duty,TListInfo *pListInfo);
+GT_API GTN_SetScanLaserPwmFrequencyPro(short core,short scanCrd,double frequency,TListInfo *pListInfo);
+GT_API GTN_SetScanLaserPwmPulseWidthPro(short core,short scanCrd,double pulseWidth,TListInfo *pListInfo);
+
+GT_API GTN_SetScanLaserVoltagePrmPro(short core,short scanCrd,double minVoltage,double maxVoltage,TListInfo *pListInfo);
+GT_API GTN_GetScanLaserVoltagePrmPro(short core,short scanCrd,double *pMinVoltage,double *pMaxVoltage);
+GT_API GTN_SetScanLaserVoltagePro(short core,short scanCrd,double voltage,TListInfo *pListInfo);
+
+GT_API GTN_SetScanLaserParallelPrmPro(short core,short scanCrd,double minParallel,double maxParallel,TListInfo *pListInfo);
+GT_API GTN_GetScanLaserParallelPrmPro(short core,short scanCrd,double *pMinParallel,double *pMaxParallel);
+GT_API GTN_SetScanLaserParallelPro(short core,short scanCrd,double parallel,TListInfo *pListInfo);
+
+/*----------------*/
+/*ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½    */
+/*----------------*/
+#define    SCAN_MOTION_MODE_NONE                (0)
+#define    SCAN_MOTION_MODE_JUMP                (1)
+#define    SCAN_MOTION_MODE_JUMP_POINT          (2)
+#define    SCAN_MOTION_MODE_JUMP_TIME           (3)
+#define    SCAN_MOTION_MODE_JUMP_TIME_POINT     (4)
+#define    SCAN_MOTION_MODE_MARK                (5)
+#define    SCAN_MOTION_MODE_MARK_TIME           (6)
+
+#define    SCAN_MOTION_CIRCLE_DIR_CW            (0)
+#define    SCAN_MOTION_CIRCLE_DIR_CCW           (1)
+/*ï¿½ï¿½Ç°Õ°ï¿½ï¿½ï¿½ï¿½*/
+typedef struct
+{
+    short lookAheadNum;   //Ç°Õ°ï¿½ï¿½ï¿½ï¿½
+    short highSpeedMode;
+    short pad[2];         //ï¿½ï¿½ï¿½ï¿½
+    double time;          //Ê±ï¿½ä³£ï¿½ï¿½
+    double radiusRatio;   //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½Ú²ï¿½ï¿½ï¿½
+    double reserve[2];    //ï¿½ï¿½ï¿½ï¿½
+}TScanLookAheadParameterPro;
+
+/*ï¿½ï¿½×´Ì¬*/
+typedef struct
+{
+    short run;                    //ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½Ö¾
+    short space;
+    unsigned short fifoEmpty;     //ï¿½Ü¿Õ±ï¿½Ö¾
+    short pad1;                   //ï¿½ï¿½ï¿½ï¿½
+    uint32_t segmentNumber;       //Ö´ï¿½Ð¶Îºï¿½
+    uint32_t commandReceive;      //ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½
+    uint32_t commandSend;         //ï¿½Ñ·ï¿½ï¿½Íµï¿½Ö¸ï¿½ï¿½ï¿½ï¿½
+    int32_t pad2;                 //ï¿½ï¿½ï¿½ï¿½
+    double prfVel;                //ï¿½Ï³É¹æ»®ï¿½Ù¶ï¿½
+}TScanStatusPro;
+
+//Jumpï¿½Ë¶ï¿½ï¿½ï¿½Markï¿½Ë¶ï¿½
+typedef struct
+{
+    double acc;
+    double dec;
+    double vel;
+}TVelModePro;
+
+typedef struct
+{
+    double acc;
+    double dec;
+    uint32_t time;
+    int32_t pad;//ï¿½ï¿½ï¿½ï¿½
+}TTimeModePro;
+
+typedef struct
+{
+    double acc;
+    double dec;
+    double vel;
+    uint32_t motionDelayTime;
+    uint32_t laserDelayTime;
+}TVelPointModePro;
+
+typedef struct
+{
+    double acc;
+    double dec;
+    uint32_t time;
+    uint32_t motionDelayTime;
+    uint32_t laserDelayTime;
+    int32_t pad;//ï¿½ï¿½ï¿½ï¿½
+}TTimePointModePro;
+
+typedef union
+{
+    TVelModePro velMode;
+    TTimeModePro timeMode;
+    TVelPointModePro velPointMode;
+    TTimePointModePro timePointMode;
+    double data[8];
+}TScanMotionPrmUnionPro;
+
+typedef struct
+{
+    double pos[3];
+    double reserve;
+    TScanMotionPrmUnionPro motionPrm;
+}TScanLinearMotionPro;
+
+typedef struct
+{
+    double endPos[3];
+    double radius;//ï¿½ë¾¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å»ï¿½ï¿½Ó»ï¿½
+    short dir;
+    short pad[3];//ï¿½ï¿½ï¿½ï¿½
+    TScanMotionPrmUnionPro motionPrm;
+}TScanCircularMotionPro;
+
+typedef struct
+{
+    short multiMarkDelayMode;
+    unsigned short jumpDelayLengthLimit;
+    short pad[2];//ï¿½ï¿½ï¿½ï¿½
+    double multiMarkLaserOffDelay;
+    double multiMarkDelayConst;
+    double markDelay;
+    double minJumpDelay;
+    double maxJumpDelay;
+}TScanDelayParameterPro;
+
+typedef struct  
+{
+	double endPos[3];               // ï¿½Õµï¿½Î»ï¿½ï¿½
+	double centerPos[3];            // Ô²ï¿½ï¿½Î»ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ãµï¿½Æ«ï¿½ï¿½ï¿½ï¿½
+	short circleDir;                // ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½
+	short pad[3];//ï¿½ï¿½ï¿½ï¿½
+	TScanMotionPrmUnionPro motionPrm;
+}TScanArcMotionPro;
+
+GT_API GTN_ScanInitPro(short core,short scanCrd,TScanLookAheadParameterPro *pPrm,TListInfo *pListInfo);
+GT_API GTN_GetScanCrdPosPro(short core,short scanCrd,double *pPos);
+GT_API GTN_GetScanStatusPro(short core,short scanCrd,TScanStatusPro *pPrm);
+GT_API GTN_ScanLinearPro(short core,short scanCrd,short motionMode,TScanLinearMotionPro *pPrm,TListInfo *pListInfo);
+GT_API GTN_ScanCircularPro(short core,short scanCrd,short motionMode,TScanCircularMotionPro *pPrm,TListInfo *pListInfo);
+GT_API GTN_ScanArcMotionPro(short core,short scanCrd,short motionMode,TScanArcMotionPro *pPrm,TListInfo *pListInfo);
+
+#define SCAN_MARK_DELAY_MODE_CONST              (0) // ï¿½Ì¶ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Ê±Ä£Ê½
+#define SCAN_MARK_DELAY_MODE_CHANGE             (1) // ï¿½ï¿½ï¿½ï¿½Ê±Ä£Ê½
+
+GT_API GTN_SetScanDelayPrmPro(short core,short scanCrd,TScanDelayParameterPro *pPrm,TListInfo *pListInfo=NULL);
+GT_API GTN_SetScanMotionDelayPro(short core,short scanCrd,double delayTime,TListInfo *pListInfo);
+GT_API GTN_GetScanExecuteTimePro(short core,short scanCrd,double *pExecuteTime);
+GT_API GTN_ClearScanExecuteTimePro(short core,short scanCrd);
+
+#define LASER_ENABLE_DO	                       (76) //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½Åºï¿½
+#define LASER_RED_LED_DO                       (77) //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸Ê¾ï¿½Åºï¿½
+#define LASER_POWER_LATCH_DO                   (78) //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½
+GT_API GTN_SetScanLaserIOPro(short core, short scanCrd, short doType, int32_t doValue, TListInfo* pListInfo = NULL);
+
+//20200713Í¬ï¿½ï¿½GTSï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¼ï¿½ï¿½
+GT_API GTN_SetEncResponseCheck(short core,short control,short dacThreshold,double minEncVel,int32_t time);
+GT_API GTN_GetEncResponseCheck(short core,short control,short *pDacThreshold,double *pMinEncVel,int32_t *pTime);
+GT_API GTN_EnableEncResponseCheck(short core,short control);
+GT_API GTN_DisableEncResponseCheck(short core,short control);
+
+/************************************************************************/
+/* ï¿½ï¿½×ªï¿½á¹¦ï¿½ï¿½                                                           */
+/************************************************************************/
+#define ROTARY_DIRECTION_SELECT_MODE_DEFAULT                  (0)
+#define ROTARY_DIRECTION_SELECT_MODE_SMART                    (1)
+
+typedef enum 
+{
+	MC_POSITIVE_DIRECTION,
+	MC_NEGATIVE_DIRECTION,
+	MC_CURRENT_DIRECTION,
+	MC_SHORTEST_WAY,
+	MC_BY_POS,
+} EMcDirection;
+
+typedef struct
+{
+    short rotary;
+    short pad[3];
+    double start;
+    double length;
+    double reserve;
+    double pulse;
+} TRotaryConfig;
+
+typedef struct
+{
+    short fifo;
+    short overrideNum;
+    short g0Mode;
+    short reserve1[5];
+    int32_t segNum;
+    int32_t reserve2[3];
+    double vel;
+    double acc;
+    double velEnd;
+    double velLimit;
+    double reserve3[8];
+} TLineAbsolutePrm;
+
+GT_API GTN_GetAxisPrfPosRotary(short core,short axis,double *pTheta,double *pRound,short count=1);
+GT_API GTN_GetProfileRotaryConfig(short core,short profile,TRotaryConfig *pConfig);
+GT_API GTN_GetPrfPosRotary(short core,short profile,double *pTheta,double *pRound,short count=1);
+GT_API GTN_SetCrdScale(short core,short crd,short dimension,double alpha,double beta);
+GT_API GTN_GetCrdScale(short core,short crd,short dimension,double *pAlpha,double *pBeta);
+GT_API GTN_GetCrdRotaryConfig(short core,short crd,short dimension,TRotaryConfig *pConfig);
+GT_API GTN_GetCrdPosRotary(short core,short crd,short dimension,double *pTheta,double *pRound,short count=1);
+GT_API GTN_GetEncoderRotaryConfig(short core,short encoder,TRotaryConfig *pConfig);
+GT_API GTN_GetEncPosRotary(short core,short encoder,double *pTheta,double *pRound,short count=1);
+GT_API GTN_SetAxisRotaryConfig(short core,short axis,TRotaryConfig *pConfig);
+GT_API GTN_GetAxisRotaryConfig(short core,short axis,TRotaryConfig *pConfig);
+GT_API GTN_ZeroAxisRotaryRound(short core,short axis,short count=1);
+GT_API GTN_LineAbsoluteEx(short core,short crd,double *pPos,short *pDir,TLineAbsolutePrm *pPrm);
+GT_API GTN_SetAxisRotaryDirectionSelectMode(short core,short axis,short mode);
+GT_API GTN_GetAxisRotaryDirectionSelectMode(short core,short axis,short *pMode);
+
+typedef struct
+{
+	double pos;
+	double vel;
+	double acc;
+	double dec;
+	short percent;
+	short pad1[3];
+	double velStart;
+	double velEnd;
+	short accStartPercent;
+	short decEndPercent;
+	short dir;
+	short pad2;
+	short reserve[10];
+} TMoveAbsoluteProPrm;
+GT_API GTN_MoveAbsolutePro(short core,short profile,TMoveAbsoluteProPrm *pPrm);
+
+/*-----------------------------------------------------------*/
+//Ô­config.hï¿½ï¿½ï¿½ï¿½ï¿½Ã¹ï¿½ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½                       */
+/*-----------------------------------------------------------*/
+/*-----------------------------------------------------------*/
+/* conifg of controller                                      */
+/*-----------------------------------------------------------*/
+#define RES_LIMIT                       (8)
+#define RES_ALARM                       (8)
+#define RES_HOME                        (8)
+#define RES_GPI                         (16)
+#define RES_ARRIVE                      (8)
+#define RES_MPG                         (7)
+#define RES_ENABLE                      (8)
+#define RES_CLEAR                       (8)
+#define RES_GPO                         (16)
+#define RES_DAC                         (12)
+#define RES_STEP                        (8)
+#define RES_PULSE                       (8)
+#define RES_ENCODER                     (11)
+#define RES_LASER                       (2)
+#define AXIS_MAX                        (8)
+#define PROFILE_MAX                     (8)
+#define CONTROL_MAX                     (8)
+#define PRF_MAP_MAX                     (2)
+#define ENC_MAP_MAX                     (2)
+
+typedef struct DiConfig
+{
+    short active;
+    short reverse;
+    short filterTime;
+} TDiConfig;
+
+typedef struct CountConfig
+{
+    short active;
+    short reverse;
+    short filterType;
+
+    short captureSource;
+    short captureHomeSense;
+    short captureIndexSense;
+} TCountConfig;
+
+typedef struct DoConfig
+{
+    short active;
+    short axis;
+    short axisItem;
+    short reverse;
+} TDoConfig;
+
+typedef struct StepConfig
+{
+    short active;
+    short axis;
+    short mode;
+    short parameter;
+    short reverse;
+} TStepConfig;
+
+typedef struct DacConfig
+{
+    short active;
+    short control;
+    short reverse;
+    short bias;
+    short limit;
+} TDacConfig;
+
+typedef struct AdcConfig
+{
+    short active;
+    short reverse;
+    double a;
+    double b;
+    short filterMode;
+} TAdcConfig;
+
+typedef struct ControlConfig
+{
+    short active;
+    short axis;
+    short encoder1;
+    short encoder2;
+    int32_t  errorLimit;
+    short filterType[3];
+    short encoderSmooth;
+    short controlSmooth;
+} TControlConfig;
+
+typedef struct ControlConfigEx
+{
+    short refType;
+    short refIndex;
+
+    short feedbackType;
+    short feedbackIndex;
+
+    int32_t  errorLimit;
+    short feedbackSmooth;
+    short controlSmooth;
+} TControlConfigEx;
+
+typedef struct ProfileConfig
+{
+    short  active;
+    double decSmoothStop;
+    double decAbruptStop;
+} TProfileConfig;
+
+typedef struct AxisConfig
+{
+    short active;
+    short alarmType;
+    short alarmIndex;
+    short limitPositiveType;
+    short limitPositiveIndex;
+    short limitNegativeType;
+    short limitNegativeIndex;
+    short smoothStopType;
+    short smoothStopIndex;
+    short abruptStopType;
+    short abruptStopIndex;
+    int32_t  prfMap;
+    int32_t  encMap;
+    short prfMapAlpha[PRF_MAP_MAX];
+    short prfMapBeta[PRF_MAP_MAX];
+    short encMapAlpha[ENC_MAP_MAX];
+    short encMapBeta[ENC_MAP_MAX];
+} TAxisConfig;
+
+#define PROFILE_MAX                     (8)
+
+typedef struct McConfig
+{
+    TProfileConfig profile[PROFILE_MAX];
+    TAxisConfig    axis[AXIS_MAX];
+    TControlConfig control[CONTROL_MAX];
+    TDacConfig     dac[RES_DAC];
+    TStepConfig    step[RES_STEP];
+    TCountConfig   encoder[RES_ENCODER];
+    TCountConfig   pulse[RES_PULSE];
+    TDoConfig      enable[RES_ENABLE];
+    TDoConfig      clear[RES_CLEAR];
+    TDoConfig      gpo[RES_GPO];
+    TDiConfig      limitPositive[RES_LIMIT];
+    TDiConfig      limitNegative[RES_LIMIT];
+    TDiConfig      alarm[RES_ALARM];
+    TDiConfig      home[RES_HOME];
+    TDiConfig      gpi[RES_GPI];
+    TDiConfig      arrive[RES_ARRIVE];
+    TDiConfig      mpg[RES_MPG];
+} TMcConfig;
+
+GT_API GTN_SetMcConfig(short core,TMcConfig *pMc);
+GT_API GTN_GetMcConfig(short core,TMcConfig *pMc);
+GT_API GTN_SetMcConfigToFile(short core,TMcConfig *pMc,char *pFile);
+GT_API GTN_GetMcConfigFromFile(short core,TMcConfig *pMc,char *pFile);
+
+
+GT_API GTN_SaveConfig(short core,char *pFile);
+GT_API GTN_SetDiConfig(short core,short diType,short diIndex,TDiConfig *pDi);
+GT_API GTN_GetDiConfig(short core,short diType,short diIndex,TDiConfig *pDi);
+GT_API GTN_SetDoConfig(short core,short doType,short doIndex,TDoConfig *pDo);
+GT_API GTN_GetDoConfig(short core,short doType,short doIndex,TDoConfig *pDo);
+GT_API GTN_SetStepConfig(short core,short step,TStepConfig *pStep);
+GT_API GTN_GetStepConfig(short core,short step,TStepConfig *pStep);
+GT_API GTN_SetDacConfig(short core,short dac,TDacConfig *pDac);
+GT_API GTN_GetDacConfig(short core,short dac,TDacConfig *pDac);
+GT_API GTN_SetAdcConfig(short core,short adc,TAdcConfig *pAdc);
+GT_API GTN_GetAdcConfig(short core,short adc,TAdcConfig *pAdc);
+GT_API GTN_SetCountConfig(short core,short countType,short countIndex,TCountConfig *pCount);
+GT_API GTN_GetCountConfig(short core,short countType,short countIndex,TCountConfig *pCount);
+GT_API GTN_SetControlConfig(short core,short control,TControlConfig *pControl);
+GT_API GTN_GetControlConfig(short core,short control,TControlConfig *pControl);
+GT_API GTN_SetControlConfigEx(short core,short control,TControlConfigEx *pControl);
+GT_API GTN_GetControlConfigEx(short core,short control,TControlConfigEx *pControl);
+GT_API GTN_SetProfileConfig(short core,short profile,TProfileConfig *pProfile);
+GT_API GTN_GetProfileConfig(short core,short profile,TProfileConfig *pProfile);
+GT_API GTN_SetAxisConfig(short core,short axis,TAxisConfig *pAxis);
+GT_API GTN_GetAxisConfig(short core,short axis,TAxisConfig *pAxis);
+GT_API GTN_ProfileScale(short core,short axis,short alpha,short beta);
+GT_API GTN_EncScale(short core,short axis,short alpha,short beta);
+
+/*-----------------------------------------------------------*/
+/* Config of Laser and Scan                                  */
+/*-----------------------------------------------------------*/
+struct TScanCommandMotion
+{
+    int32_t segmentNumber;
+    short x;
+    short y;
+    int32_t deltaX;
+    int32_t deltaY;
+    int32_t vel;
+    int32_t acc;
+};
+
+struct TScanCommandMotionDelay
+{
+    int32_t delay;
+};
+
+struct TScanCommandDo
+{
+    short doType;
+    short doMask;
+    short doValue;
+};
+
+struct TScanCommandDoDelay
+{
+    int32_t delay;
+};
+
+struct TScanCommandLaser
+{
+    short mask;
+    short value;
+} ;
+
+struct TScanCommandLaserDelay
+{
+    int32_t laserOnDelay;
+    int32_t laserOffDelay;
+} ;
+
+struct TScanCommandLaserPower
+{
+    int32_t power;
+} ;
+
+struct TScanCommandLaserFrequency
+{
+    int32_t frequency;
+} ;
+
+struct TScanCommandLaserPulseWidth
+{
+    int32_t pulseWidth;
+} ;
+
+struct TScanCommandDa
+{
+    short daIndex;
+    short daValue;
+} ;
+
+typedef struct
+{
+    short module;
+    short fifo;
+} TScanMap;
+
+GT_API GTN_SetScanMap(short core,short scan,TScanMap *pMap);
+GT_API GTN_GetScanMap(short core,short scan,TScanMap *pMap);
+GT_API GTN_ClearScanMap(short core);
+GT_API GTN_UpdateScanMap(short core);
+
+/*-----------------------------------------------------------*/
+//Ô­ringnet.hï¿½ï¿½ï¿½ÍµÈ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø¹ï¿½ï¿½Üµï¿½Ö¸ï¿½ï¿½                    */
+/*-----------------------------------------------------------*/
+/*-----------------------------------------------------------*/
+/* Ringnet                                                  */
+/*-----------------------------------------------------------*/
+#define RTN_SUCCESS                                        (0)
+#define RTN_MALLOC_FAIL                                    (-100) /* malloc memory fail */
+#define RTN_FREE_FAIL                                      (-101) /* free memory or delete the object fail */
+#define RTN_NULL_POINT                                     (-102) /* the param point input is null */
+#define RTN_ERR_ORDER                                      (-103) /* call the function order is wrong, some msg isn't validable */
+#define RTN_PCI_NULL                                       (-104) /* the pci address is empty, can't access the pci device*/
+#define RTN_PARAM_OVERFLOW                                 (-105) /* the param input is too larget*/
+#define RTN_LINK_FAIL                                      (-106) /* the two ports both link fail*/
+#define RTN_IMPOSSIBLE_ERR                                 (-107) /* it means the system or same function work wrong*/
+#define RTN_TOPOLOGY_CONFLICT                              (-108) /* the id conflict*/
+#define RTN_TOPOLOGY_ABNORMAL                              (-109) /* scan the net abnormal*/
+#define RTN_STATION_ALONE                                  (-110) /* the device no id, it means the device id is 0xF0 */
+#define RTN_WAIT_OBJECT_OVERTIME                           (-111) /* multi thread wait for object overtime */
+#define RTN_ACCESS_OVERFLOW                                (-112) /* data[i];  i is larger than the define */
+#define RTN_NO_STATION                                     (-113) /* the station accessed not existent */
+#define RTN_OBJECT_UNCREATED                               (-114) /* the object not created yet*/
+#define RTN_PARAM_ERR                                      (-115) /* the param input is wrong*/
+#define RTN_PDU_CFG_ERR                                    (-116) /*Pdu DMA Cfg Err*/
+#define RTN_PCI_FPGA_ERR                                   (-117) /*PCI op err or FPGA op err*/
+#define RTN_CHECK_RW_ERR                                   (-118) /*data write to reg, then rd out, and check err */
+#define RTN_REMOTE_UNEABLE                                 (-119) /*the device which will be ctrl by net can't be ctrl by net function*/
+
+#define RTN_NET_REQ_DATA_NUM_ZERO                          (-120) /*mail op or pdu op req data num can't be 0*/
+#define RTN_WAIT_NET_OBJECT_OVERTIME                       (-121) /* net op multi thread wait for object overtime */
+#define RTN_WAIT_NET_RESP_OVERTIME                         (-122) /* Can't wait for resp */
+#define RTN_WAIT_NET_RESP_ERR                              (-123) /*wait mailbox op err*/
+#define RTN_INITIAL_ERR                                    (-124) /*initial the device err*/
+#define RTN_PC_NO_READY                                    (-125) /*find the station'pc isn't work*/
+#define RTN_STATION_NO_EXIST                               (-126)
+#define RTN_MASTER_FUNCTION                                (-127) /* this funciton only used by master */
+
+#define RTN_NOT_ALL_RETURN                                 (-128) /* the GT_RN_PtProcessData funciton fail return */
+#define RTN_NUM_NOT_EQUAL                                  (-129) /* the station number of RingNet do not equal  the station number of CFG */
+
+#define RTN_CHECK_STATION_ONLINE_NUM_ERR                   (-130) /*Check no slave*/
+#define RTN_FILE_ERR_OPEN                                  (-131) /*open file error*/
+#define RTN_FILE_ERR_FORMAT                                (-132) /*parse file error*/
+#define RTN_FILE_ERR_MISSMATCH                             (-133) /*file info is not match with the actual ones*/
+#define RTN_DMALIST_ERR_MISSMATCH                          (-134) /*can't find the slave*/
+
+#define RTN_REQUSET_MAIL_BUS_OVERTIME                      (-150) /*Requset Mail Bus Err*/
+#define RTN_INSTRCTION_ERR                                 (-151) /*instrctions err*/
+#define RTN_MAIL_RESP_REQ_ERR                              (-152) /*RN_MailRespReq  err*/
+#define RTN_CTRL_SRC_ERR                                   (-153) /* the controlled source  is error */
+#define RTN_PACKET_ERR                                     (-154) /*packet is error*/
+#define RTN_STATION_ID_ERR                                 (-155) /*the device id is not in the right rang*/
+#define RTN_WAIT_NET_PDU_RESP_OVERTIME                     (-156) /*net pdu op wait overtime*/
+#define RTN_ETHCAT_ENC_POS_ERR                             (-157) /**/
+
+#define RTN_IDLINK_PACKET_ERR                              (-200) /*ilink master  decode err! packet_length is not match*/
+#define RTN_IDLINK_PACKET_END_ERR                          (-201) /* the ending of ilink packet is not 0xFF*/
+#define RTN_IDLINK_TYPER_ERR                               (-202) /* the type of ilink module is error*/
+#define RTN_IDLINK_LOST_CNT                                (-203) /* the ilink module has lost connection*/
+#define RTN_IDLINK_CTRL_SRC_ERR                            (-204) /* the controlled source of ilink module is error */
+#define RTN_IDLINK_UPDATA_ERR                              (-205) /* the ilink module updata error*/
+#define RTN_IDLINK_NUM_ERR                                 (-206) /* the ilink num larger the IDLINK_MAX_NUM(30) */
+#define RTN_IDLINK_NUM_ZERO                                (-207) /* the ilink num is zero */
+
+#define RTN_NO_PACKET                                      (301)  /* no valid packet */
+#define RTN_RX_ERR_PDU_PACKET                              (-302) /* ERR PDU PACKET */
+#define RTN_STATE_MECHINE_ERR                              (-303)
+#define RTN_PCI_DSP_UN_FINISH                              (304)
+#define RTN_SEND_ALL_FAIL                                  (-305)
+#define RTN_STATION_CLOSE                                  (310)
+#define RTN_STATION_RESP_FAIL                              (311)
+
+#define RTN_UPDATA_MODAL_ERR                               (-330) /* update the modal in normal way fail*/
+
+#define RTN_NO_MAIL_DATA                                   (340) /*There is no mail data*/
+#define RTN_NO_PDU_DATA                                    (341) /*There is no pdu data*/
+
+#define RTN_FILE_PARAM_NUM_ERR                             (-500)
+#define RTN_FILE_PARAM_LEN_ERR                             (-501)
+#define RTN_FILE_MALLOC_FAIL                               (-502)
+#define RTN_FILE_FREE_FAIL                                 (-503)
+#define RTN_FILE_PARAM_ERR                                 (-504)
+#define RTN_FILE_NOT_EXSITS                                (505)
+#define RTN_FILE_CREATE_FAIL                               (510)
+#define RTN_FILE_DELETE_FAIL                               (511)
+#define RTN_FIFE_CRC_CHECK_ERR                             (-512)
+#define RTN_FIFE_FUNCTION_ID_RETURN_ERR                    (-600)
+#define RTN_DLL_WINCE                                      (-800)
+#define RTN_DLL_WIN32                                      (-801)
+#define RTN_XML_STATION_ERR                                (-900)//dma config file confilit with slave type
+
+
+GT_API GTN_LoadRingNetConfig(short core,char*pFile);
+GT_API GTN_SaveRingNetConfig(short core,char *pFile);
+GT_API GTN_CheckRingNetStructure(short core,char *pFile,unsigned short *pStatus);
+
+
+/*-----------------------------------------------------------*/
+/* ï¿½ï¿½È¡SPORTï¿½ï¿½ï¿½ï¿½ï¿½ï¿½                                           */
+/*-----------------------------------------------------------*/
+#define SPORT_COUNT                     (256)
+
+typedef struct
+{
+    uint32_t terminalTxBuf[SPORT_COUNT];
+    uint32_t terminalRxBuf[SPORT_COUNT];
+}TTerminalData;
+
+GT_API GTN_ReadTerminalData(short core,TTerminalData *pTerminalData);
+
+/*-----------------------------------------------------------*/
+/* Config of module                                          */
+/*-----------------------------------------------------------*/
+#define TERMINAL_OPERATION_NONE             (0)
+#define TERMINAL_OPERATION_SKIP             (1)
+#define TERMINAL_OPERATION_CLEAR            (2)
+#define TERMINAL_OPERATION_RESET_MODULE     (3)
+
+#define TERMINAL_OPERATION_PROGRAM          (11)
+
+typedef struct
+{
+    uint32_t portACrcOkCnt;
+    unsigned short portACrcErrorCnt;
+    uint32_t portBCrcOkCnt;
+    unsigned short portBCrcErrorCnt;
+    uint32_t reserve;//Ä¿Ç°ï¿½ï¿½ï¿½Ú¶ï¿½È¡FLASHï¿½ï¿½ï¿½ï¿½ï¿½Ý³ï¿½ï¿½ï¿½
+} TRingNetCrcStatus;
+
+typedef struct
+{
+    unsigned short errorCountReceive;
+    unsigned short errorCountPackageDown;
+    unsigned short errorCountPackageUp;
+    unsigned short reserve[13];
+} TTerminalError;
+
+typedef struct
+{
+    short moduleDataType;
+    short moduleDataIndex;
+    short dataIndex;
+    short dataCount;
+} TTerminalMap;
+
+GT_API GTN_LoadTerminalConfig(short core,char *pFile);
+GT_API GTN_SaveTerminalConfig(short core,char *pFile);
+GT_API GTN_TerminalOn(short core,short index);
+GT_API GTN_TerminalSynch(short core,short index);
+GT_API GTN_TerminalSynchEx(short core,short index,short synchEnable,short synchSource);
+GT_API GTN_GetRingNetCrcStatus(short core,short index,TRingNetCrcStatus *pRingNetCrcStatus);
+GT_API GTN_GetTerminalError(short core,short index,TTerminalError *pTerminalError);
+
+GT_API GTN_GetTerminalPhyId(short core,short count,short *pPhyId);
+GT_API GTN_GetTerminalLinkStatus(short core,short count,short *ringNetType,short *pLinkStatus);
+GT_API GTN_SetTerminalMap(short core,short dataType,short moduleIndex,TTerminalMap *pMap);
+GT_API GTN_GetTerminalMap(short core,short dataType,short moduleIndex,TTerminalMap *pMap);
+GT_API GTN_ClearTerminalMap(short core,short dataType);
+GT_API GTN_SetTerminalMode(short core,short station,unsigned short mode);
+GT_API GTN_GetTerminalMode(short core,short station,unsigned short *pMode);
+GT_API GTN_SetTerminalTest(short core,short station,short index,unsigned short value);
+GT_API GTN_GetTerminalTest(short core,short station,short index,unsigned short *pValue);
+GT_API GTN_SetTerminalOperation(short core,short operation);
+GT_API GTN_GetTerminalOperation(short core,short *pOperation);
+
+
+
+#define TERMINAL_LOAD_MODE_NONE             (0)
+#define TERMINAL_LOAD_MODE_BOOT             (2)
+
+typedef struct
+{
+    unsigned short type;
+    short id;
+    int32_t status;
+    uint32_t synchCount;
+    uint32_t ringNetType;
+    uint32_t portStatus;
+    uint32_t sportDropCount;
+    uint32_t reserve[7];
+} TTerminalStatus;
+
+GT_API GTN_TerminalInit(short core,short detect=1);
+GT_API GTN_GetTerminalVersion(short core,short index,TVersion *pTerminalVersion);
+GT_API GTN_SetTerminalPermit(short core,short index,short dataType,unsigned short permit);
+GT_API GTN_GetTerminalPermit(short core,short index,short dataType,unsigned short *pPermit);
+GT_API GTN_SetTerminalPermitEx(short core,short station,short dataType,short *permit,short index,short count);
+GT_API GTN_GetTerminalPermitEx(short core,short station,short dataType,short *pPermit,short index,short count);
+
+GT_API GTN_SetTerminalSafeMode(short core,short index,short safeMode);
+GT_API GTN_GetTerminalSafeMode(short core,short index,short *pSafeMode);
+GT_API GTN_ClearTerminalSafeMode(short core,short index);
+GT_API GTN_GetTerminalStatus(short core,short index,TTerminalStatus *pTerminalStatus);
+GT_API GTN_GetTerminalType(short core,short count,unsigned short *pType,short *pTypeConnect=NULL);
+GT_API GTN_SetTerminalType(short core,short count,short *pType);
+GT_API GTN_GetTerminalMapCount(short core,short dataType,short moduleIndex,short *pMapCount);
+GT_API GTN_GetTerminalMapData(short core,short dataType,short moduleIndex,short mapIndex,TTerminalMap *pMap);
+
+GT_API GTN_FindStation(short core,short station,uint32_t time);
+
+GT_API GTN_ProgramTerminalConfig(short core,short loadMode);
+GT_API GTN_GetTerminalConfigLoadMode(short core,short *pLoadMode);
+
+
+
+
+GT_API GTN_SetMailbox(short core,short station,unsigned short byteAddress,unsigned short *pData,unsigned short wordCount,unsigned short dataMode,unsigned short desId,unsigned short type);
+GT_API GTN_GetMailbox(short core,short station,unsigned short byteAddress,unsigned short *pData,unsigned short wordCount,unsigned short dataMode,unsigned short desId,unsigned short type);
+
+/*-----------------------------------------------------------*/
+/* UUID                                                      */
+/*-----------------------------------------------------------*/
+GT_API GTN_SetUuid(short core,char *pUuid,short count);
+GT_API GTN_GetUuid(short core,char *pCode,short count);
+
+/*-----------------------------------------------------------*/
+/* FLASH                                                     */
+/*-----------------------------------------------------------*/
+GT_API GTN_SetFlashValue(short core,uint32_t address,short count,short *pData);
+GT_API GTN_GetFlashValue(short core,uint32_t address,short count,short *pData);
+
+/*-----------------------------------------------------------*/
+/* ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½Ö¸ï¿½ï¿½                                              */
+/*-----------------------------------------------------------*/
+GT_API GTN_RN_RingNetRecover(short core,short station);
+/*-----------------------------------------------------------*/
+/* GSHDï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½                                      */
+/*-----------------------------------------------------------*/
+typedef struct
+{
+    unsigned short torqueMax;
+    unsigned short torquePostive;
+    unsigned short torqueNegitive;
+    short reserve1;
+    double reserve2[4];
+}TTorqueLimit;
+GT_API GTN_RN_SetMaxTorqueLimit(short core,unsigned short station, short axis, unsigned short torqueMax, unsigned short torquePostive,unsigned short torqueNegitive);
+GT_API GTN_RN_GetMaxTorqueLimit(short core,unsigned short station,short axis, unsigned short* torqueMax, unsigned short* torquePostive,  unsigned short* torqueNegitive);
+GT_API GTN_RN_SetTorqueLimit(short core,short axis,TTorqueLimit *pTorqueLimit);
+GT_API GTN_RN_GetTorqueLimit(short core,short axis, TTorqueLimit *pTorqueLimit);
+
+GT_API GTN_SetPrfTorque(short core,short axis,short prfTorque);
+GT_API GTN_GetAtlTorque(short core,short axis,short *atlTorque);
+GT_API GTN_SetPrfTorqueArray(short core,short axis,short *prfTorque,short count);
+GT_API GTN_GetAtlTorqueArray(short core,short axis,short *pAtlTorque,short count);
+GT_API GTN_GetSafeTorqueOffStatus(short core,int32_t *pSts);
+
+typedef struct TorqueTriggerPrm
+{
+    short enable;
+    short latchType;
+    short latchIndex;
+    short probeType;
+    short probeIndex;
+    short windowOnly;
+    int32_t firstPosition;
+    int32_t lastPosition;
+    int32_t continueTime;
+    double currentValue;
+    double pad2[3];
+}TTorqueTriggerPrm;
+GT_API GTN_SetTorqueTriggerPrm(short core,short index,TTorqueTriggerPrm *pPrm);
+GT_API GTN_GetTorqueTriggerPrm(short core,short index,TTorqueTriggerPrm *pPrm);
+
+
+
+
+
+/*-----------------------------------------------------------*/
+/* GSHDï¿½Õ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½                                          */
+/*-----------------------------------------------------------*/
+typedef struct
+{
+    double value;
+    double reverse[4];
+}TServoPosLoopPidMode0;
+
+typedef union
+{
+    TServoPosLoopPidMode0 servoPosLoopPidMode0;
+}TServoPosLoopPidUnion;
+
+typedef struct
+{
+    short mode;
+    TServoPosLoopPidUnion servoPosLoopPidPrm;
+}TServoPosLoopPid;
+
+GT_API GTN_RN_SetServoPosLoopPid(short core,short axis,TServoPosLoopPid *pServoPosLoopPid);
+GT_API GTN_RN_GetServoPosLoopPid(short core,short axis,TServoPosLoopPid *pServoPosLoopPid);
+
+typedef struct
+{
+    double value;
+    double reverse[4];
+}TServoSpdLoopPidMode0;
+
+typedef union
+{
+    TServoSpdLoopPidMode0 servoSpdLoopPidMode0;
+}TServoSpdLoopPidUnion;
+
+typedef struct
+{
+    short mode;
+    short reverse[3];
+    TServoSpdLoopPidUnion servoSpdLoopPidPrm;
+}TServoSpdLoopPid;
+
+GT_API GTN_RN_SetServoSpdLoopPid(short core,short axis,TServoSpdLoopPid *pServoSpdLoopPid);
+GT_API GTN_RN_GetServoSpdLoopPid(short core,short axis,TServoSpdLoopPid *pServoSpdLoopPid);
+
+#define SERBVO_POS_LOOP                   (0)   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã»ï¿½
+#define SERBVO_SPD_LOOP                   (1)   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È»ï¿½
+
+GT_API GTN_RN_GetServoPid(short core,short axis,short loop,short mode,void *pServoPid);
+GT_API GTN_RN_SetServoPid(short core,short axis,short loop,short mode,void *pServoPid);
+GT_API GTN_RN_SetServoPidRatio(short core,short axis,double ratio);
+GT_API GTN_RN_GetServoPidRatio(short core,short axis,double *pRatio);
+
+
+/*-----------------------------------------------------------*/
+/* ï¿½ï¿½È«Ä£Ê½ï¿½ï¿½ï¿½ï¿½                                              */
+/*-----------------------------------------------------------*/
+GT_API GTN_RN_ClearStationSafeModeStatus(short cardIndex,short stationPhyId);
+GT_API GTN_RN_IlinkSetSafeModeControl(short cardIndex,short stationPhyId,short modulePhyId,short enable,short clearMode);
+GT_API GTN_RN_IlinkClearSafeModeStatus(short cardIndex,short stationPhyId,short modulePhyId);
+GT_API GTN_RN_IlinkSetSafeModeOut(short cardIndex,short stationPhyId,short modulePhyId,short type,short index,short *pEnable,double *pValue,short count);
+GT_API GTN_RN_GetStationOfflineCount(short cardIndex,int32_t *pStationPhyId,short count,short *pStationOfflineCount);
+
+/*-----------------------------------------------------------*/
+//Ô­LookAheadEx.hï¿½ï¿½ï¿½ï¿½Ç°Õ°ï¿½ï¿½Ø¹ï¿½ï¿½Üµï¿½Ö¸ï¿½ï¿½                      */
+/*-----------------------------------------------------------*/
+#define LA_AXIS_NUM           (8)
+#define LA_WORK_AXIS_NUM      (6)
+#define LA_MACHINE_AXIS_NUM   (5)
+
+//ï¿½ï¿½Ä²ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È±ä»¯ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½Ä£Ê½
+#define AXIS_LIMIT_NONE       (0)       //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define AXIS_LIMIT_MAX_VEL    (1)       //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½ï¿½
+#define AXIS_LIMIT_MAX_ACC    (2)       //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½ï¿½
+#define AXIS_LIMIT_MAX_DV     (4)       //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+#define KIN_MSG_BUFFER_SIZE   32
+
+//ï¿½Ù¶È¹æ»®Ä£Ê½
+enum EVelMode
+{
+    T_CURVE=0,
+    S_CURVE,
+    S_CURVE_NEW,                  //ï¿½ï¿½ï¿½Ý¼Ó¼ï¿½ï¿½Ù¶È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È½ï¿½ï¿½ï¿½Sï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½Ç°Õ°ï¿½ï¿½2015.11.16
+    S_CURVE_SMOOTH,
+
+    VEL_MODE_MAX=0x10000,         //È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª4Byte
+};
+
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½Â¹ì¼£ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½Ä£Ê½
+enum EWorkLimitMode
+{
+    WORK_LIMIT_INVALID=0,       //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    WORK_LIMIT_VALID,           //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
+
+    WORK_LIMIT_MODE_MAX=0x10000,//È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª4Byte
+};
+
+//ï¿½ï¿½ï¿½Ãµï¿½ï¿½Ù¶È¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+enum EVelSettingDef
+{
+    NORMAL_DEF_VEL=0,             //ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÄºÏ³ï¿½ï¿½Ù¶ï¿½
+    NUM_DEF_VEL,                  //ï¿½ï¿½NUMÏµÍ³ï¿½Ä¹ï¿½ï¿½ï¿½ï¿½ï¿½
+    CUT_DEF_VEL,                  //ï¿½Ù¶ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+
+    VEL_SETTING_DEF_MAX=0x10000,  //È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª4Byte
+};
+
+//ï¿½ï¿½ï¿½ÃµÄ¼ï¿½ï¿½Ù¶È¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+enum EAccSettingDef
+{
+    NORMAL_DEF_ACC=0,             //ï¿½ï¿½ï¿½ë¼´ï¿½ï¿½ï¿½
+    LONG_AXIS_ACC,                //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+
+    ACC_SETTING_DEF_MAX=0x10000,  //È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª4Byte
+};
+
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+enum EMachineMode
+{
+    NORMAL_THREE_AXIS=0,      //ï¿½ï¿½×¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+    MULTI_AXES,               //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+    FIVE_AXIS,                //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµÎªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµÎªï¿½ï¿½
+    FIVE_AXIS_WORK,           //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµÎªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµÎªï¿½ï¿½
+    ROBOT,                    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµÎªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµÎªï¿½ï¿½ï¿½ï¿½2014.12.3
+    ROBOT_WORK,
+
+    MACHINE_MODE_MAX=0x10000, //È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª4Byte
+};
+
+//Ç°Õ°ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½
+struct TLookAheadParameter
+{
+    int lookAheadNum;					//Ç°Õ°ï¿½ï¿½ï¿½ï¿½
+    double time;						//Ê±ï¿½ä³£ï¿½ï¿½
+    double radiusRatio;					//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½Ú²ï¿½ï¿½ï¿½
+    double vMax[LA_AXIS_NUM];			//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double aMax[LA_AXIS_NUM];			//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double DVMax[LA_AXIS_NUM];			//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È±ä»¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ä³£ï¿½ï¿½ï¿½Ú£ï¿½
+    double scale[LA_AXIS_NUM];			//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½åµ±ï¿½ï¿½
+    short axisRelation[LA_AXIS_NUM];	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½Ä¶ï¿½Ó¦ï¿½ï¿½Ïµ
+    char machineCfgFileName[128];		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
+};
+
+//////////////////////////////////////
+typedef struct
+{
+    short RobotType;
+    short reserved1;
+
+    short KinParUse[18];
+    double KinPar[18];
+    short KinLimitUse[12];
+    double KinLimitMin[12];
+    double KinLimitMax[12];
+    double KinLimitMinShift[12];
+    double KinLimitMaxShift[12];
+
+    short AxisUse[8];
+    char AxisPosSignSwitch[8];
+    double AxisPosOffset[8];
+
+    short CartUnitUse[6];
+    char CartPosKCSSignSwitch[6];
+    short reserved2[3];
+    double CartPosKCSOffset[6];
+}RC_KIN_CONFIG;
+
+typedef struct
+{
+    char Error;
+    short ErrorID;
+    char Message[129];
+}RC_ERROR_INTERFACE;
+
+typedef struct
+{
+    short ErrorID;
+    char Message[129];
+    char LogTime[32];
+    int32_t InternalID;
+}RC_MSG_BUFFER_ELEMENT;
+
+typedef struct
+{
+    short LastMsgIndex;
+    RC_MSG_BUFFER_ELEMENT MsgElement[KIN_MSG_BUFFER_SIZE];
+    int32_t LastMsgID;
+}RC_MSG_BUFFER;
+
+//ï¿½ï¿½ï¿½ï¿½â·½ï¿½ï¿½
+enum ETransDir
+{
+    FORWARD_TRANS=0,            //ï¿½ï¿½ï¿½ï¿½
+    INVERSE_TRANS,              //ï¿½ï¿½ï¿½
+
+    TRANS_DIR_MAX = 0x10000,	// È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª4Byte
+};
+
+//ï¿½ï¿½×ªï¿½á·¶Î§ï¿½ï¿½ï¿½ï¿½
+struct TRotationAxisRange
+{
+    int primaryAxisRangeOn;              //ï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½ï¿½ï¿½Þ¶ï¿½ï¿½ï¿½Î§ï¿½Ç·ï¿½ï¿½ï¿½Ð§ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½Ð§
+    int slaveAxisRangeOn;                //ï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½Þ¶ï¿½ï¿½ï¿½Î§ï¿½Ç·ï¿½ï¿½ï¿½Ð§ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½Ð§
+    double maxPrimaryAngle;              //ï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+    double minPrimaryAngle;              //ï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½Ð¡Öµ
+    double maxSlaveAngle;                //ï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+    double minSlaveAgnle;                //ï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½Ð¡Öµ
+};
+
+//Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½
+enum EGroupSelect
+{
+    Continuous=0,
+    Group_1,
+    Group_2,
+};
+
+enum OptimizeState
+{
+    OPT_OFF=0,
+    OPT_ON,
+};
+
+enum OptimizeMethod
+{
+    NO_OPT=0,
+    OPT_BLENDING,
+    OPT_CIRCLEFITTING,
+    OPT_CUBICSPLINE,
+    OPT_BSPLINE,
+};
+
+enum ErrorID
+{
+    INIT_ERROR=1,                           //Ã»ï¿½Ð½ï¿½ï¿½Ð²ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
+    PASSWORD_ERROR,                         //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¹Ì¸ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½Æ½Ì¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    INDATA_ERROR,                           //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý´ï¿½ï¿½ó£¨¼ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½È·ï¿½ï¿½
+    PRE_PROCESS_ERROR,
+    TOOL_RADIUS_COMPENSATE_ERROR_INOUT,     //ï¿½ï¿½ï¿½ß°ë¾¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ó£º½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô²ï¿½ï¿½
+    TOOL_RADIUS_COMPENSATE_ERROR_NOCROSS,   //ï¿½ï¿½ï¿½ß°ë¾¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ·ï¿½ï¿½ï¿½ï¿½ã½»ï¿½ï¿½
+    USERDATA_ERROR,
+};
+
+//ï¿½ì¼£ï¿½Å»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½
+typedef struct OptimizeParamUser
+{
+    OptimizeState usePathOptimize;  //ï¿½Ç·ï¿½Ê¹ï¿½ï¿½Â·ï¿½ï¿½ï¿½Å»ï¿½ï¿½ï¿½OPT_OFF:ï¿½ï¿½Ê¹ï¿½ï¿½	OPT_ON:Ê¹ï¿½ï¿½
+
+    float tolerance;                //ï¿½ï¿½ï¿½ï¿½(suggest: rough:0.1, pre-finish:0.05, finish:0.01)
+
+    OptimizeMethod optimizeMethod;  //Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å»ï¿½ï¿½ï¿½Ê½
+
+    OptimizeState keepLargeArc;     //ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½OPT_OFFï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ OPT_ONï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    float blendingMinError;         //blendingï¿½ï¿½ï¿½ï¿½Ð¡ï¿½è¶¨ï¿½ï¿½ï¿½
+
+    float blendingMaxAngle;         //blendingï¿½ï¿½ï¿½ï¿½ï¿½Ç¶ï¿½ï¿½ï¿½ï¿½Æ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¶È´ï¿½ï¿½Ú¸Ã½Ç¶ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½blendingï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½È£ï¿½
+
+}TOptimizeParamUser;
+
+struct TErrorInfo
+{
+    ErrorID errorID;                //ï¿½ï¿½ï¿½ï¿½ï¿½(INIT_ERROR:Î´ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½PRE_PROCESS_ERROR:Ô¤ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½
+    //TOOL_RADIUS_COMPENSATE_ERROR:ï¿½ï¿½ï¿½ß°ë¾¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+    int32_t errorRowNum;            //ï¿½ï¿½ï¿½ï¿½ï¿½Ðºï¿½
+};
+
+struct TPreStartPos
+{
+    double Pos[LA_AXIS_NUM];
+};
+
+enum EMachineType
+{
+    //W:ï¿½ï¿½ï¿½ï¿½ï¿½à£¬Tï¿½ï¿½ï¿½ï¿½ï¿½ß²à£¬Lï¿½ï¿½45ï¿½ï¿½
+    //Ë«×ªÌ¨
+    MT_RW_C_ON_B=0,//B Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬C Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+    MT_RW_B_ON_A,	//A Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬B Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+    MT_RW_A_ON_B,	//B Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬A Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+    MT_RW_C_ON_A,	//A Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬C Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+    //Ë«ï¿½ï¿½Í·
+    MT_DT_B_ON_A,	//A Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬B Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+    MT_DT_A_ON_B,	//B Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬A Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+    MT_DT_A_ON_C,	//C Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬A Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+    MT_DT_B_ON_C,	//C Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬B Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+    //×ªÌ¨ï¿½ï¿½Í·ï¿½ï¿½ï¿½ï¿½ï¿½ß²ï¿½Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+    MT_T_A_W_B,	//A Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬B Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+    MT_T_B_W_A,	//B Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬A Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+    MT_T_A_W_C,	//A Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬C Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+    MT_T_B_W_C,	//B Îªï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½á£¬C Îªï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½
+};
+struct TMachCfgInfo
+{
+    EMachineType machineType;            //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short reserve1[2];                   //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double primaryAxisPoint[3];          //ï¿½ï¿½Ò»ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½MCSï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double slaveAxisPoint[3];            //ï¿½Ú¶ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½MCSï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double toolLocationPoint[3];         //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½MCSï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short dirMode;                       //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+    short reserve2[2];                   //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short dir[5];                        //ï¿½ï¿½ï¿½á·½ï¿½ï¿½
+    double axisVector[5][3];             //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß·ï¿½ï¿½ï¿½
+};
+
+struct TPos
+{
+    double machinePos[LA_MACHINE_AXIS_NUM];
+    double workPos[LA_WORK_AXIS_NUM];
+};
+
+GT_API GTN_SetupLookAheadCrd(short core,short crd,EMachineMode machineMode);
+GT_API GTN_SetAxisFollowModeLa(short core,short crd,int *pFollowMode);
+GT_API GTN_SetMinEvenVelTimeLa(short core,short crd, double evenTime);
+GT_API GTN_SetMinDccAngle(short core,short crd,double dccAngle);
+GT_API GTN_SetMinDccAngleLa(short core,short crd,double dccAngle);
+GT_API GTN_SetVelDefineModeLa(short core,short crd,EVelSettingDef velDefMode);
+GT_API GTN_SetAccDefineModeLa(short core,short crd,EAccSettingDef accDefMode);
+GT_API GTN_SetMaxOverrideLa(short core,short crd,double maxSynVelRatio);
+GT_API GTN_SetAxisLimitModeLa(short core,short crd,int *pAxisLimitMode);
+GT_API GTN_SetWorkLimitModeLa(short core,short crd,EWorkLimitMode workLimitMode);
+GT_API GTN_SetAxisVelValidModeLa(short core,short crd,int velValidAxis);
+GT_API GTN_SetAngleCoefTableLa(short core,short crd,short count,double *pAngle,double *pCoef);
+GT_API GTN_SetVelModeLa(short core,short crd,EVelMode velMode);
+GT_API GTN_SetVelSmoothModeLa(short core,short crd,short smoothMode);
+GT_API GTN_SetVelLimitAngleThresholdLa(short core,short crd,double angleThreshold);
+GT_API GTN_SetRadiusRatioTableLa(short core,short crd,short count,double *pRadius,double *pRatio);
+GT_API GTN_SetCurveVelLimitModeLa(short core,short crd,short mode);
+GT_API GTN_PrintLACmdLa(short core,short crd,int printFlag, int clearFile);
+GT_API GTN_UpdateMachineBuildingFileLa(short core,short crd, int update);
+GT_API GTN_InitialMachineBuilding(short core,short crd, char *pMachineCfgFileName,double *machineCoordCenter, double *workCoordCenter, double toolLength);
+GT_API GTN_InitialMachineBuildingEx(short core,short crd, char *pMachineCfgFileName,double *machineCoordCenter, double *workCoordCenter, double toolLength);
+GT_API GTN_InitialMachineBuildingPara(short core,short crd, TMachCfgInfo *pMachCfgInfo,double *machineCoordCenter, double *workCoordCenter, double toolLength);
+GT_API GTN_GetLookAheadParaEx(short core,short crd,short fifo,TLookAheadParameter *pLookAheadPrm,short *pMotionMode);
+
+// ï¿½ï¿½ï¿½ï¿½
+GT_API GTN_CrdRTCPOn(short core,short crd,short fifo=0);
+GT_API GTN_CrdRTCPOff(short core,short crd,short fifo=0);
+GT_API GTN_SetNonlinearErrorControl(short core,short crd, int enable, double nonlinearError);
+GT_API GTN_EnableDiscreateArc(short core,short crd,short enable,double arcError);
+GT_API GTN_MachineForwardTrans(short core,short crd, double *pMachinePos, double *pWorkPos);
+GT_API GTN_MachineRTCPTrans(short core,short crd, double *pInputPos, double *pMachinePos, double *pWorkPos);
+GT_API GTN_SetCompToolLength(short core,short crd, double compToolLength);
+GT_API GTN_SetCompWorkCoordOffset(short core,short crd, double *pCompWorkOffset);
+GT_API GTN_UpdateMachineBuildingFile(short core,short crd, int update);
+GT_API GTN_SetRotationAxisRange(short core,short crd, TRotationAxisRange *pRotationAxisRange);
+GT_API GTN_SetInverseSolutionSelectPara(short core,short crd, EGroupSelect groupSelect, int priorAxisSet);
+GT_API GTN_SetPowerOffDo(short core,short mode,short doIndex,short doValue);
+GT_API GTN_MachineTransformation(short core,short crd, int posType, double *pPrePos, double *pPos, int *pPosNum, TPos **pReturnPos);
+GT_API GTN_SetStartPointProcessMode(short core,short crd,short enable, double z,short fifo);
+GT_API GTN_SetWorkCrdLaserFollowMode(short core,short crd,short enbale,short fifo,short chn);
+
+GT_API GTN_SetAxisVelValidCompModeLa(short core,short crd, int enable, int *pCompAxis);
+GT_API GTN_SetFollowAxisProcessModeLa(short core,short crd,int AxisFollowMode);
+GT_API GTN_SetCmdVelLimitLa(short core,short crd, int enable, int n1, int n2, int mode);
+GT_API GTN_InitLookAheadEx(short core,short crd,TLookAheadParameter *pLookAheadParameter,short fifo, short motionMode=0,TPreStartPos *pPreStartPos=NULL);
+GT_API GTN_InitLookAheadPara(short core,short crd,int32_t lookAheadNum,double time,double radiusRatio,double scale,short fifo);
+GT_API GTN_SetFollowAxisParaLa(short core,short crd,int *pAxisLimitMode,double *pVmax,double *pAmax,double *pDVmax);
+GT_API GTN_SetFollowAxisParaLaPro(short core,short crd,int *pAxisLimitMode,double *pVmax,double *pAmax,double *pDVmax,short count);
+
+GT_API GTN_SetBlendingParaLa(short core,short crd, short paraType, double para, double minAngle, double maxAngle);
+
+
+GT_API GTN_GetLookAheadSegCountEx(short core,short crd,int32_t *pSegCount,short fifo=0);
+GT_API GTN_GetMotionTimeEx(short core,short crd,double *pTime,short fifo);
+GT_API GTN_SetUserSegNumEx(short core,short crd,int32_t segNum,short fifo);
+GT_API GTN_CrdDataEx(short core,short crd,TCrdData *pCrdData,short fifo=0);
+
+GT_API GTN_LnXYEx(short core,short crd,double x,double y,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_LnXYG0Ex(short core,short crd,double x,double y,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_LnXYZEx(short core,short crd,double x,double y,double z,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_LnXYZG0Ex(short core,short crd,double x,double y,double z,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_LnXYZAEx(short core,short crd,double x,double y,double z,double a,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_LnXYZAG0Ex(short core,short crd,double x,double y,double z,double a,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_LnXYZACEx(short core,short crd,double *pPos,short posMask,double synVel,double synAcc,int32_t segNum,short override2,short fifo);
+GT_API GTN_LnXYZACG0Ex(short core,short crd,double *pPos,short posMask,double synVel,double synAcc,int32_t segNum,short override2,short fifo);
+GT_API GTN_LnXYZACUVWEx(short core,short crd,double *pPos,short posMask,double synVel,double synAcc,int32_t segNum,short override2,short fifo);
+GT_API GTN_LnXYZACUVWG0Ex(short core,short crd,double *pPos,short posMask,double synVel,double synAcc,int32_t segNum,short override2,short fifo);
+GT_API GTN_ArcXYREx(short core,short crd,double x,double y,double radius,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_ArcYZREx(short core,short crd,double y,double z,double radius,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_ArcZXREx(short core,short crd,double z,double x,double radius,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_ArcXYCEx(short core,short crd,double x,double y,double xCenter,double yCenter,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_ArcYZCEx(short core,short crd,double y,double z,double yCenter,double zCenter,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_ArcZXCEx(short core,short crd,double z,double x,double zCenter,double xCenter,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_ArcXYZEx(short core,short crd,double x,double y,double z,double interX,double interY,double interZ,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_ArcXYRACEx(short core,short crd,double x,double y,double a,double c,double radius,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_ArcXYCACEx(short core,short crd,double x,double y,double a,double c,double xCenter,double yCenter,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_ArcXYZACEx(short core,short crd,double x,double y,double z,double a,double c,double interX,double interY,double interZ,double interA,double interC,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_HelixXYRZEx(short core,short crd,double x,double y,double z,double radius,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_HelixXYCZEx(short core,short crd,double x,double y,double z,double xCenter,double yCenter,short circleDir,double synVel,double synAcc,int32_t segNum,short override2,short fifo=0);
+GT_API GTN_BufDelayEx(short core,short crd,unsigned short delayTime,short fifo=0);
+GT_API GTN_BufGearEx(short core,short crd,short gearAxis,double deltaPos,short fifo=0);
+GT_API GTN_BufMoveEx(short core,short crd,short moveAxis,double pos,double vel,double acc,short modal,short fifo=0);
+GT_API GTN_BufMoveSpEx(short core,short crd,short moveAxis,double pos,double vel,short smoothTime,short modal,short enableRatio,short fifo);
+GT_API GTN_BufMoveSpSetPrmEx(short core,short crd,short moveAxis,double acc,double dec,double velMax,short fifo);
+GT_API GTN_BufIOEx(short core,short crd,unsigned short doType,unsigned short doMask,unsigned short doValue,short fifo=0);
+GT_API GTN_BufEnableDoBitPulseEx(short core,short crd,short doType,short doIndex,unsigned short highLevelTime,unsigned short lowLevelTime,int32_t pulseNum,short firstLevel,short fifo);
+GT_API GTN_BufDisableDoBitPulseEx(short core,short crd,short doType,short doIndex,short fifo);
+GT_API GTN_BufDAEx(short core,short crd,short chn,short daValue,short fifo=0);
+GT_API GTN_BufAuDAEx(short core,short crd,short chn,short daValue,short fifo=0);
+
+GT_API GTN_BufFollowMasterEx(short core,short crd,TBufFollowMaster *pBufFollowMaster,short fifo=0);
+GT_API GTN_BufFollowEventCrossEx(short core,short crd,TBufFollowEventCross *pEventCross,short fifo=0);
+GT_API GTN_BufFollowEventTriggerEx(short core,short crd,TBufFollowEventTrigger *pEventTrigger,short fifo=0);
+GT_API GTN_BufFollowStartEx(short core,short crd,int32_t masterSegment,int32_t slaveSegment,int32_t masterFrameWidth,short fifo=0);
+GT_API GTN_BufFollowNextEx(short core,short crd,int32_t width,short fifo=0);
+GT_API GTN_BufFollowReturnEx(short core,short crd,double vel,double acc,short smoothPercent,short fifo=0);
+
+
+// Smart Cutter
+typedef struct
+{
+    short x;						// Xï¿½ï¿½ï¿½Ó¦ï¿½Ä¹æ»®ï¿½ï¿½
+    short y;						// Yï¿½ï¿½ï¿½Ó¦ï¿½Ä¹æ»®ï¿½ï¿½
+    short c;						// Cï¿½ï¿½ï¿½Ó¦ï¿½Ä¹æ»®ï¿½ï¿½
+
+    short tableRadiusIndex;			// ï¿½ë¾¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short tableAngleIndex;			// Cï¿½á²¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    short directionReverse;			// Ä¬ï¿½Ï¹æ»®Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½Ç¶ï¿½Ò²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    int32_t offset;		            // Cï¿½ï¿½ï¿½ï¿½×ªï¿½Ç¶ï¿½Îª0Ê±ï¿½Ä¹æ»®Î»ï¿½ï¿½
+    int32_t resolution;				// Cï¿½ï¿½Ã¿×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    short adcIndex;					// ADCï¿½ï¿½ï¿½ï¿½
+    double adcThreshold;			// ADCï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+} TSmartCutterPrm;
+
+typedef struct
+{
+    short enable;
+    short execute;
+    double radiusValue;
+    double angleValue;
+} TSmartCutterInfo;
+
+GT_API GTN_SmartCutterOn(short core,short index);
+GT_API GTN_SmartCutterOff(short core,short index);
+GT_API GTN_SetSmartCutterPrm(short core,short index,TSmartCutterPrm *pPrm);
+GT_API GTN_GetSmartCutterPrm(short core,short index,TSmartCutterPrm *pPrm);
+GT_API GTN_BufSmartCutterOn(short core,short crd,short smartCutterIndex,short fifo);
+GT_API GTN_BufSmartCutterOff(short core,short crd,short smartCutterIndex,short fifo);
+GT_API GTN_BufSmartCutterOnEx(short core,short crd,short index,short fifo=0);
+GT_API GTN_BufSmartCutterOffEx(short core,short crd,short index,short fifo=0);
+GT_API GTN_GetSmartCutterInfo(short core,short index,TSmartCutterInfo *pInfo);
+GT_API GTN_SetSmartCutterValue(short core,short index,double radiusValue,double angleValue);
+GT_API GTN_SmartCutterStart(short core,short index);
+
+
+GT_API GTN_BufWaitDiEx(short core,short crd, short diType, unsigned short diIndex,unsigned short level, short continueTime, int32_t overTime, short flagMode,int32_t segNum, short fifo);
+GT_API GTN_BufWaitLongVarEx(short core,short crd, short index,int32_t value,int32_t overTime,short flagMode,int32_t segNum,short fifo);
+GT_API GTN_BufWaitWatchVarEx(short core,short crd,TWatchCondition *pWaitCondition,TWaitTimeout *pWaitTimeout,int32_t segNum,short fifo);
+GT_API GTN_BufSetWaitLongtVarEx(short core,short crd,short index,int32_t value,short fifo);
+
+GT_API GTN_BufDoBitEx(short core,short crd,unsigned short doType,unsigned short index,short value,short fifo);
+GT_API GTN_BufDoBitDelayEx(short core,short crd,unsigned short doType,unsigned short index,short value,int32_t delayTime,short fifo);
+GT_API GTN_BufSetOverrideEx(short core,short crd,double synVelRatio,short mode,short fifo);
+GT_API GTN_BufStopPosEx(short core,short crd,short profile,TStopPos *pStopPos,short modal,short fifo);
+GT_API GTN_BufSetSoftLimitEx(short core,short crd,short axis,double positive,double negative,short fifo);
+
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã±È½ï¿½
+GT_API GTN_BufPosComparePsoPrm(short core,short crd,short index,TPosComparePsoPrm *pPrm,short fifo);
+GT_API GTN_BufPosComparePsoPrmPro(short core,short crd,short index,TPosComparePsoPrmPro *pPrmPro,short fifo);
+GT_API GTN_BufPosCompareStart(short core,short crd,short fifo,short index);
+GT_API GTN_BufPosCompareStop(short core,short crd,short fifo,short index);
+
+GT_API GTN_BufPosComparePsoPrmEx(short core,short crd,short index,TPosComparePsoPrm *pPrm,short fifo);
+GT_API GTN_BufPosComparePsoPrmProEx(short core,short crd,short index,TPosComparePsoPrmPro *pPrmPro,short fifo);
+GT_API GTN_BufPosCompareStartEx(short core,short crd,short fifo,short index);
+GT_API GTN_BufPosCompareStopEx(short core,short crd,short fifo,short index);
+
+GT_API GTN_BufPosComparePulse(short core,short crd,short index,short outputMode,short level,unsigned short outputPulseWidth,short fifo);
+GT_API GTN_BufPosComparePulseEx(short core,short crd,short index,short outputMode,short level,unsigned short outputPulseWidth,short fifo);
+
+GT_API GTN_BufPosCompareMultiPulse(short core,short crd,short index,TPosCompareMultiPulse *pPosComparePulse,short fifo);
+GT_API GTN_BufPosCompareMultiPulseEx(short core,short crd,short index,TPosCompareMultiPulse *pPosComparePulse,short fifo);
+
+GT_API GTN_BufPsoStart(short core,short crd,short fifo,short index,int32_t x,int32_t y);
+GT_API GTN_BufPsoStop(short core,short crd,short fifo,short index,int32_t x,int32_t y);
+
+GT_API GTN_BufPsoStartEx(short core,short crd,short fifo,short index,double x,double y);
+GT_API GTN_BufPsoStopEx(short core,short crd,short fifo,short index,double x,double y);
+
+/*-----------------------------------------------------------*/
+/* Ñ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½                                            */
+/*-----------------------------------------------------------*/
+typedef struct
+{
+    double kp;
+    double ki;
+    double kd;
+    double integralLimit;	//ï¿½ï¿½ï¿½Ö¼ï¿½ï¿½ï¿½
+    double derivativeLimit;	//Î¢ï¿½Ö¼ï¿½ï¿½ï¿½
+    double limit;			//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½
+    double pad1[4];
+}TAxisPressPid;
+
+#define PRESS_COMPENSATE_MODE_LINEAR                       (0)                           // ï¿½ï¿½ï¿½Ô²ï¿½ï¿½ï¿½
+#define PRESS_COMPENSATE_MODE_TABLE	                       (1)                           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define PRESS_COMPENSATE_MODE_REGION_LEARN                 (2)                           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ§Ï°ï¿½ï¿½ï¿½ï¿½
+
+typedef struct
+{
+    short enable;		           //ï¿½Ç·ï¿½Ê¹ï¿½Ü£ï¿½0-ï¿½Ø±Õ£ï¿½1-Ê¹ï¿½ï¿½
+    short type;			           //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short dimension;	           //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¬ï¿½È£ï¿½ï¿½ï¿½ï¿½3Î¬
+    short index[3];		           //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,DACï¿½ï¿½1ï¿½ï¿½Ê¼ï¿½ï¿½ECAT IOÄ£ï¿½ï¿½Õ¾ï¿½Å´ï¿½0ï¿½ï¿½Ê¼
+    short subIndex[3];             //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,DACï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ECAT IOÄ£ï¿½ï¿½ï¿½IOMAPï¿½ï¿½0ï¿½ï¿½Ê¼
+    short mode;			           //Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½Ô»ï¿½ï¿½Ç²ï¿½ï¿½
+    short revolveAxis;             //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½Ç¶Èµï¿½ï¿½ï¿½ï¿½
+    short regionAxisIndex;         //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½Ä²Î¿ï¿½ï¿½ï¿½
+    short relatedMasterIndex;      //ï¿½æ¶¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short pad1[3];
+    double target;			       //Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹
+    double thredshold;		       //thredsholdï¿½ï¿½Ê²Ã´Ê±ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½
+    double deadZone;		       //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½
+    double factor;			       //ï¿½ï¿½ï¿½ï¿½Î»ï¿½Æµï¿½×ªï¿½ï¿½Ïµï¿½ï¿½
+    double revolveOffset;	       //ï¿½ï¿½Ê¼ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¬ï¿½ÏºÏ³É·ï¿½ï¿½ï¿½ï¿½ingdex[0]ï¿½Ä·ï¿½ï¿½ï¿½ï¿½Øºï¿½
+    double revolveScale;	       //ï¿½ï¿½×ªï¿½ï¿½ï¿½Ò»È¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    TAxisPressPid pid;
+    int32_t compPosMaxP;           //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[N,P]ï¿½Ä¶Ëµï¿½P
+    int32_t compPosMaxN;           //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[N,P]ï¿½Ä¶Ëµï¿½N
+    double k;	                   //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½Ïµï¿½ï¿½ 0-1 ï¿½ï¿½ÖµÔ½ï¿½ï¿½ï¿½Ë²ï¿½Ô½Ç¿
+    double pad2[4];
+    int32_t activeRegionP;          //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½Ä¹æ»®Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[N,P]ï¿½Ä¶Ëµï¿½P
+    int32_t activeRegionN;          //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½Ä¹æ»®Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[N,P]ï¿½Ä¶Ëµï¿½N
+    int32_t activeRegionInterval;   //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½Ä¹æ»®Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½Ñ§Ï°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½modeÎªï¿½ï¿½Ñ§Ï°PRESS_COMPENSATE_MODE_REGION_LEARNÊ±ï¿½ï¿½Ð§
+    int32_t relatedMasterEven;      //ï¿½æ¶¯ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½
+    int32_t relatedSlaveEven;       //ï¿½æ¶¯ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½
+    int32_t pad3[3];
+} TAxisPressCompensate;
+
+GT_API GTN_SetAxisPressCompensate(short core,short axis,TAxisPressCompensate *pPressComp);
+GT_API GTN_GetAxisPressCompensate(short core,short axis,TAxisPressCompensate *pPressComp);
+GT_API GTN_SetAxisPressCompensateTable(short core,short axis,short index,int32_t count,double *pPressData,double *pPosData);
+GT_API GTN_SelectAxisPressCompensateTable(short core,short axis,short index);
+
+typedef struct
+{
+    short type;			      //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short dimension;	      //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¬ï¿½È£ï¿½ï¿½ï¿½ï¿½3Î¬
+    short index[3];		      //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,DACï¿½ï¿½1ï¿½ï¿½Ê¼ï¿½ï¿½ECAT IOÄ£ï¿½ï¿½Õ¾ï¿½Å´ï¿½0ï¿½ï¿½Ê¼
+    short subIndex[3];        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,DACï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ECAT IOÄ£ï¿½ï¿½ï¿½IOMAPï¿½ï¿½0ï¿½ï¿½Ê¼
+
+    double targetMax;	      //ï¿½ê¶¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ïµ½ï¿½ò³¬¹ï¿½ï¿½ï¿½ÖµÊ±ï¿½ê¶¨ï¿½ï¿½ï¿½ï¿½
+    double targetMin;	      //ï¿½ê¶¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡Öµï¿½ï¿½ï¿½ïµ½ï¿½ï¿½Ð¡ï¿½Ú¸ï¿½ÖµÊ±ï¿½ê¶¨ï¿½ï¿½ï¿½ï¿½
+    double factor;		      //ï¿½ï¿½ï¿½ï¿½Î»ï¿½Æµï¿½×ªï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½0,ï¿½ï¿½È¡×´Ì¬Ê±ï¿½Ãµï¿½ï¿½ê¶¨Öµï¿½ï¿½
+
+    int32_t fixRegionP;        //ï¿½ê¶¨ï¿½æ»®Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[N,P]ï¿½Ä¶Ëµï¿½Pï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ãµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+    int32_t fixRegionN;        //ï¿½ê¶¨ï¿½æ»®Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[N,P]ï¿½Ä¶Ëµï¿½Nï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ãµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+    int32_t fixRegionInterval; //ï¿½ê¶¨ï¿½æ»®Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÚµÄ±ê¶¨ï¿½ï¿½ï¿½
+
+    int32_t tmp[16];
+} TAxisPressCompensateFixFactor;
+
+GT_API GTN_StartAxisPressCompensateFixFactor(short core,short axis,TAxisPressCompensateFixFactor *pPressComp);
+GT_API GTN_GetAxisPressCompensateFixFactorStatus(short core,short axis,short *pFixFactorSts,TAxisPressCompensateFixFactor *pPressComp);
+
+typedef struct
+{
+    short type;			 //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short dimension;     //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¬ï¿½È£ï¿½ï¿½ï¿½ï¿½3Î¬
+    short index[3];		 //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,DACï¿½ï¿½1ï¿½ï¿½Ê¼ï¿½ï¿½ECAT IOÄ£ï¿½ï¿½Õ¾ï¿½Å´ï¿½0ï¿½ï¿½Ê¼
+    short subIndex[3];   //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,DACï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ECAT IOÄ£ï¿½ï¿½ï¿½IOMAPï¿½ï¿½0ï¿½ï¿½Ê¼
+
+    double target;		 //Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹
+    double factor;		 //ï¿½ï¿½ï¿½ï¿½Î»ï¿½Æµï¿½×ªï¿½ï¿½Ïµï¿½ï¿½
+    TAxisPressPid pid;
+
+    int32_t fixPosLimitP;  //ï¿½ê¶¨Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[N,P]ï¿½Ä¶Ëµï¿½P
+    int32_t fixPosLimitN;  //ï¿½ê¶¨ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[N,P]ï¿½Ä¶Ëµï¿½N
+    double thredshold;   //thredsholdï¿½ï¿½Ê²Ã´Ê±ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½
+    double deadZone;	 //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½Ó¿ï¿½Ã»ï¿½Ð¸Ã²ï¿½ï¿½ï¿½
+    double Knp;			 //Ñ¹ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double K1;			 //È«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½1
+    double K2;			 //È«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½2
+    double K3;			 //È«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½3
+    double Krise;		 //ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½
+    double Kpeak;		 //ï¿½ï¿½ÖµÏµï¿½ï¿½
+    double Tset;		 //Ä¿ï¿½ï¿½ï¿½ï¿½Ó¦Ê±ï¿½ï¿½
+    double Td;			 //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦Ê±ï¿½ï¿½
+
+    double tmp[8];
+} TAxisPressCompensateFixPid;
+
+GT_API GTN_StartAxisPressCompensateFixPid(short core,short axis,TAxisPressCompensateFixPid *pPressComp);
+GT_API GTN_GetAxisPressCompensateFixPidStatus(short core,short axis,short *pFixPidSts,TAxisPressCompensateFixPid *pPressComp);
+
+GT_API GTN_AxisPressCompensateEnable(short core,short axis,short enable,double deadZone,double factor,TListInfo *pListInfo);
+GT_API GTN_SetAxisPressCompensateTarget(short core,short axis,double target,double thredshold,TListInfo *pListInfo);
+
+GT_API GTN_BufAxisPressCompensatePrmEx(short core,short crd,short axis,double target,double thredshold,short fifo=0);
+GT_API GTN_BufAxisPressCompensateEx(short core,short crd,short axis,short enable,double deadZone,double factor,short fifo=0);
+
+GT_API GTN_SetCrdUserDataEndVelLa(short core,short crd, short crdUserDataType,double endVel);
+
+/*-----------------------------------------------------------*/
+/* PVTÄ£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½                                      */
+/*-----------------------------------------------------------*/
+#define PVT_OPERATION_TYPE_LASER_ON					(2)
+#define PVT_OPERATION_TYPE_BUF_DA					(4)
+#define PVT_OPERATION_TYPE_LASER_CMD				(5)
+#define PVT_OPERATION_TYPE_LASER_FOLLOW_RATIO		(6)
+#define PVT_OPERATION_TYPE_LASER_FOLLOW_MODE		(25)
+#define PVT_OPERATION_TYPE_LASER_FOLLOW_OFF			(26)
+#define PVT_OPERATION_TYPE_BUF_DO_BIT				(94)
+#define CRD_OPERATION_TYPE_BUF_POS_COMPARE_START 	(90)
+#define CRD_OPERATION_TYPE_BUF_POS_COMPARE_STOP 	(91)
+
+typedef struct
+{
+    short doType;
+    short index;
+    short value;
+}TPVTDoBit;
+
+typedef struct
+{
+    short chn;
+    short daValue;
+}TPVTDA;
+
+typedef struct
+{
+    short chn;
+    short enable;
+}TPVTLaserSwitch;
+
+typedef struct
+{
+    short chn;
+    double power;
+}TPVTLaserPrfCmd;
+
+typedef struct
+{
+    short  chn;
+    double ratio;
+    double minPower;
+    double maxPower;
+}TPVTLaserFollowRatio;
+
+typedef struct
+{
+    short  chn;
+}TPVTLaserFollowOff;
+
+typedef struct
+{
+    short  chn;
+    short  source;
+    double startPower;
+}TPVTLaserFollowMode;
+
+
+/*-----------------------------------------------------------*/
+/* ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½	                                            */
+/*-----------------------------------------------------------*/
+GT_API GTN_RN_GetAbsEncPosEx(short core,short encoder, int64_t *pEncPos);
+GT_API GTN_RN_SetEncMultiLinesEx(short core, short encoder,uint64_t multiLines);
+
+GT_API GTN_RN_SetEncMultiLines(short core, short stationId, short axis,uint64_t multiLines);
+GT_API GTN_SetAbsEncMultiTurnRange(short cardIndex,short encoder,double range);
+GT_API GTN_ReadAbsEncPos(short core,short encoder,double *pPos);
+GT_API GTN_RN_GetAbsEncMultiAndSinglePos(short cardIndex,short stationPhyId,short encoder,uint32_t *pMultiPos,uint32_t *pSinglePos);
+/*-----------------------------------------------------------*/
+/* ï¿½ï¿½ï¿½Ü¹ï¿½ï¿½ï¿½	                                            		*/
+/*-----------------------------------------------------------*/
+typedef struct
+{
+    char uuid[32];   // Ô­Ê¼ï¿½ï¿½Ô¿
+    char mcInf[32];  //
+}TEncryptConfigPrm;
+
+typedef struct
+{
+    char keyValue[32];      // ï¿½ï¿½Ô¿
+    char data[32];          // ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½Ð´ï¿½ï¿½È¥ï¿½ï¿½ï¿½Âµï¿½ï¿½ï¿½ï¿½ï¿½
+}TEncryptData;
+
+typedef struct
+{
+    short type;                     // Ð¾Æ¬ï¿½ï¿½ï¿½ï¿½
+    short userKeySlotOffset;        // ï¿½ï¿½Ô¿ï¿½ï¿½Æ«ï¿½ï¿½
+    short userDataSlotOffset;       // ï¿½ï¿½ï¿½Ý²ï¿½Æ«ï¿½ï¿½
+    short cardType;                 // ï¿½ï¿½ï¿½Æ¿ï¿½ï¿½ï¿½ï¿½ï¿½
+    short reverse1[8];
+}TEncryptChipInf;
+
+typedef struct
+{
+    char sn[9];                     // Ð¾Æ¬ï¿½ï¿½ï¿½Ðºï¿½
+    char random[32];                // ï¿½ï¿½ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    TEncryptChipInf chipInf;        // Ð¾Æ¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+}TEncryptAuxInf;
+
+typedef struct
+{
+    char data[32];                  // ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    char hMac[32];                  //
+}TEncryptDataPro;
+
+GT_API GTN_SetEncryptConfig(short core,TEncryptConfigPrm *pConfigPrm, short *pSts);
+// ï¿½ï¿½ï¿½ï¿½ï¿½æ±¾ï¿½ï¿½ï¿½Ü¹ï¿½ï¿½ï¿½
+//  ï¿½ï¿½ï¿½Ü¶ï¿½Ð´ï¿½ï¿½ï¿½ï¿½
+GT_API GTN_GetEncryptData(short core,TEncryptData *pReadPrm);
+GT_API GTN_SetEncryptData(short core,TEncryptData *pWritePrm);
+// ï¿½ï¿½ï¿½ï¿½ï¿½æ±¾ï¿½ï¿½ï¿½ï¿½ï¿½Å½ï¿½ï¿½Üºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ý¶ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ä¡ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½Ô¿ï¿½ï¿½ï¿½ï¿½
+GT_API GTN_GetEncryptAuxInf(short core,TEncryptAuxInf *pAuxInf,short *pSts);
+GT_API GTN_SetEncryptDataPro(short core,short slotIndex,short block,TEncryptDataPro *pWritePrm,short *pSts);
+GT_API GTN_GetEncryptDataPro(short core,short slotIndex,short block,TEncryptDataPro *pReadPrm,short *pSts);
+
+// ï¿½ï¿½ï¿½ï¿½ï¿½æ±¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¿
+typedef struct
+{
+    char oldKey[32];         // Ô­Ê¼ï¿½ï¿½Ô¿
+    char newKey[32];         // ï¿½ï¿½ï¿½ï¿½Ô¿
+}TEncryptKey;
+
+GT_API GTN_UpdateEncryptKey(short core,TEncryptKey *pKeyInf,short *pSts);
+
+/*-----------------------------------------------------------*/
+/* press                                                     */
+/*-----------------------------------------------------------*/
+#define LOOP_MODE_POSITION               (0)
+#define LOOP_MODE_PRESS                  (1)
+#define LOOP_MODE_NONE                   (2)
+
+#define LIMIT_TYPE_PRESS                (7)
+#define LIMIT_TYPE_TORQUE               (8)
+
+#define MC_PRESS                        (600)
+#define MC_TORQUE                       (601)
+
+typedef struct
+{
+    short loopMode;
+    short pressProfileMode;
+    short pad[2];
+} TLoopMode;
+
+typedef struct
+{
+    short active;            // ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
+    short pad1;
+    int32_t scale;          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1Å£ï¿½ï¿½Nï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½
+    short linkAxis;         // Ñ¹ï¿½ï¿½ï¿½æ»®ï¿½ï¿½ï¿½ï¿½ï¿½Ç¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short pad2[3];
+} TPressPrm;
+
+typedef struct
+{
+    double acc;             // ï¿½ï¿½ï¿½Ø¼ï¿½ï¿½Ù¶ï¿½
+    double dec;             // ï¿½ï¿½ï¿½Ø¼ï¿½ï¿½Ù¶ï¿½
+    double pressStart;      // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short  smoothTime;      // Æ½ï¿½ï¿½Ê±ï¿½ï¿½
+    short pad[3];
+} TPressTargetPrm;
+
+typedef struct
+{
+    double pressTarget;     // Ä¿ï¿½ï¿½Ñ¹ï¿½ï¿½
+    int32_t pressTime;      // ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ msï¿½ï¿½Î»
+    int32_t holdTime;       // ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+} TPressArrayData;
+
+typedef struct
+{
+    short count;
+    short pad1[3];
+    TPressArrayData buffer[4];
+    short exit;             // ï¿½æ»®ï¿½ï¿½Éºï¿½ï¿½Ç·ï¿½ï¿½Ð»ï¿½ï¿½ï¿½Î»ï¿½Ã±Õ»ï¿½Ä£Ê½
+    short pad2[3];
+} TPressArray;
+
+typedef struct
+{
+    double kp;
+    double ki;
+    double kd;
+    double kvff;
+    double kaff;
+    int32_t integralLimit;
+    int32_t derivativeLimit;
+    short limitMax;
+    short limitMin;
+    short pad[2];
+} TPressPid;
+
+typedef struct
+{
+    short limit1;
+    short limit2;
+    short time;
+    short triggerCondition;        // Ñ¹ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½PRESS_GREATER_THAN_LIMIT,PRESS_LESS_THAN_LIMIT,
+    short loopMode;                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½ï¿½Ê²Ã´Ä£Ê½ï¿½ï¿½Ê²Ã´ï¿½æ»®ï¿½ï¿½
+    short pressProfileMode;
+    short pad[2];
+} TPressAutoSwitchPrm;
+
+typedef struct
+{
+    int32_t distance;              // ï¿½ï¿½ï¿½Ë¾ï¿½ï¿½ï¿½
+    short pad[2];
+    double vel;                    // ï¿½ï¿½ï¿½Ù¶ï¿½
+    double acc;                    // ï¿½ï¿½ï¿½Ë¼ï¿½ï¿½Ù¶ï¿½
+} TStopOffset;
+
+GT_API GTN_SetLoopMode(short core,short axis,TLoopMode *pMode);
+GT_API GTN_GetLoopMode(short core,short axis,TLoopMode *pMode);
+GT_API GTN_SetPressPrm(short core,short pressAxis,TPressPrm *pPressPrm);
+GT_API GTN_GetPressPrm(short core,short pressAxis,TPressPrm *pPressPrm);
+GT_API GTN_SetPressTarget(short core,short pressProfile,double value,TPressTargetPrm *pPressTargetPrm);
+GT_API GTN_GetPressTarget(short core,short pressProfile,double *pValue,TPressTargetPrm *pPressTargetPrm);
+GT_API GTN_SetPressArray(short core,short pressProfile,TPressArray *pPressArray);
+GT_API GTN_GetPressArray(short core,short pressProfile,TPressArray *pPressArray);
+GT_API GTN_SetPressPid(short core,short pressControl,TPressPid *pPid);
+GT_API GTN_GetPressPid(short core,short pressControl,TPressPid *pPid);
+GT_API GTN_GetPrfPress(short core,short pressProfile,double *pValue,double *pValueFilter);
+GT_API GTN_GetAtlPress(short core,short pressAxis,double *pValue);
+GT_API GTN_GetPressStatus(short core,short pressAxis,int32_t *pStatus);
+GT_API GTN_SetPressAutoSwitchPrm(short core,short pressAxis,TPressAutoSwitchPrm *pPrm);
+GT_API GTN_GetPressAutoSwitchPrm(short core,short pressAxis,TPressAutoSwitchPrm *pPrm);
+GT_API GTN_PressAutoSwitchEnable(short core,short pressAxis,short enable);
+GT_API GTN_GetPressFeedbackType(short core,short pressAxis,short *pFbType,short *pFbIndex);
+GT_API GTN_SetPressFeedbackType(short core,short pressAxis,short fbType,short fbIndex);
+GT_API GTN_SetPrfPress(short core,short pressProfile,double prfPressValue);
+GT_API GTN_SetStopOffset(short core,short axis,short mode,TStopOffset *pStopOffset);
+GT_API GTN_GetStopOffset(short core,short axis,short mode,TStopOffset *pStopOffset);
+GT_API GTN_SetPressRange(short core,short pressAxis,short centerSynch,int32_t range);
+GT_API GTN_GetPressRange(short core,short pressAxis,int32_t *pCenterPos,int32_t *pRange);
+GT_API GTN_SetPressCross(short core,short pressAxis,short dir,int32_t pos);
+GT_API GTN_GetPressCross(short core,short pressAxis,short *pDir,int32_t *pPos);
+GT_API GTN_SetPressTrigger(short core,short pressAxis,short pressThread,short triggerCondition);
+GT_API GTN_GetPressTrigger(short core,short pressAxis,short *pPressThread,short *pTriggerCondition);
+GT_API GTN_PressTriggerOn(short core,short pressAxis);
+GT_API GTN_PressTriggerOff(short core,short pressAxis);
+GT_API GTN_GetPressTriggeredPos(short core,short pressAxis,short *pEnable,double *pCntPos,short *pTriggeredPress);
+
+/*-----------------------------------------------------------*/
+/* Command                                                  */
+/*-----------------------------------------------------------*/
+GT_API GTN_GetCommandExecuteTime(short core,short mode,double *pTime);
+GT_API GTN_ClearCommandExecuteTime(short core,short mode);
+GT_API GTN_GetCmdCount(short core,short crd,short *pResult,short fifo);
+GT_API GTN_InitCmdExExtern(short core,short cmd);
+GT_API GTN_GetFloat64ExExtern(short core,double *pData);
+GT_API GTN_AddFloat64ExExtern(short core,double data);
+GT_API GTN_SendCommandExExtern(short core);
+
+
+typedef struct
+{
+    short master[2];
+    short masterValueSource[2];
+    int32_t gearRatioNumerator[2];
+    int32_t gearRatioDenominator[2];
+} TCombineAxes;
+
+typedef struct
+{
+    short enable;
+    double slavePos;
+    double slaveVel;
+} TCombineAxesStatus;
+
+GT_API GTN_SetCombineAxes(short core,short index,TCombineAxes *pCombineAxes);
+GT_API GTN_GetCombineAxes(short core,short index,TCombineAxes *pCombineAxes);
+GT_API GTN_CombineAxesOn(short core,short index);
+GT_API GTN_CombineAxesOff(short core,short index);
+GT_API GTN_GetCombineAxesStatus(short core,short index,TCombineAxesStatus *pCombineAxesStatus);
+
+typedef struct
+{
+    short type;
+    short index[2];
+} TAddition;
+
+typedef struct
+{
+	double pos;
+	double vel;
+} TAdditionStatus;
+
+GT_API GTN_SetAxisAddition(short core,short axis,short dataType,TAddition *pAddition);
+GT_API GTN_GetAxisAddition(short core,short axis,short dataType,TAddition *pAddition);
+GT_API GTN_GetAxisAdditionStatus(short core,short axis,short dataType,TAdditionStatus *pAdditionStatus);
+GT_API GTN_ZeroAxisAdditionPos(short core,short axis,short dataType,short count=1);
+
+typedef struct
+{
+    short profileType[3];
+    short profileIndex[3];
+    short profileId[3];
+    short encoderType[3];
+    short encoderIndex[3];
+    short encoderId[3];
+} TContourConfig;
+
+typedef struct
+{
+    double kp[3];
+    double ki[3];
+    short errorWindow[3];
+    short limit[3];
+} TContourControl;
+
+typedef struct
+{
+    short cornerStepIn;
+    short cornerStepOut;
+    short reserved1[2];
+    double cornerTheta;
+    short reserved2[4];
+    double window;
+    double para;
+} TContourMode;
+
+GT_API GTN_SetContourConfig(short core,short index,TContourConfig *pContourConfig);
+GT_API GTN_GetContourConfig(short core,short index,TContourConfig *pContourConfig);
+GT_API GTN_SetContourControl(short core,short index,TContourControl *pContourControl);
+GT_API GTN_GetContourControl(short core,short index,TContourControl *pContourControl);
+GT_API GTN_SetContourMode(short core,short index,TContourMode *pContourMode);
+GT_API GTN_GetContourMode(short core,short index,TContourMode *pContourMode);
+GT_API GTN_SetContourEnable(short core,short index,short enable);
+GT_API GTN_SetControlAddition(short core,short index,TAddition *pAddition);
+GT_API GTN_GetControlAddition(short core,short index,TAddition *pAddition);
+
+GT_API GTN_SetDisplayDip(short core,short mode);
+GT_API GTN_GetDisplayDip(short core,short *pMode);
+
+
+
+GT_API GTN_SetMcOverride(short core,short axis,short mode,double override,double smoothTime);
+GT_API GTN_GetMcOverride(short core,short axis,short mode,double *pOverrideTarget,double *pSmoothTime,double *pOverride);
+
+typedef struct
+{
+    short  index;
+}TPVTPosCompareStart;
+
+typedef struct
+{
+    short  index;
+}TPVTPosCompareStop;
+/*-----------------------------------------------------------*/
+/* ï¿½ï¿½ï¿½ßºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½                                    */
+/*-----------------------------------------------------------*/
+typedef struct
+{
+    short index;
+    short id;
+    short reverse1[2];
+    double reverse2[4];
+}TResPhyInfo;
+GT_API GTN_GetResPhyInfo(short core,short type,short index,TResPhyInfo *pStationPhyInfo);
+
+// ï¿½ß¼ï¿½ï¿½ï¿½Ï¢ï¿½á¹¹ï¿½ï¿½
+typedef struct
+{
+    short core;                                  // ï¿½ß¼ï¿½ï¿½Ëºï¿½,ï¿½ï¿½1ï¿½ï¿½Ê¼
+    short dataType;                              // ï¿½ï¿½Òª×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½
+    short index;                                 // ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½1ï¿½ï¿½Ê¼
+    short reserve[5];                            // ï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½
+} TLogicInfo;
+
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½á¹¹ï¿½ï¿½
+typedef struct
+{
+    short cardIndex;                             // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½1ï¿½ï¿½Ê¼
+    short stationPhyId;                          // ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+    short modulePhyId;                           // ï¿½ï¿½Õ¹Ä£ï¿½ï¿½Õ¾ï¿½ï¿½
+    short dataType;                              // ï¿½ï¿½Òª×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½
+    short index;                                 // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short reserve[3];                            // ï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½
+} TPhysicInfo;
+
+#define PORT_A_GENERAL_GLINK_II     (1)
+#define PORT_B_GENERAL_GLINK_II     (2)
+#define PORT_C_HIGH_SPEED_GLINK_II  (3)
+#define PORT_D_ETHER_CAT            (4)
+
+GT_API GTN_ReadPhysicalMap(void);
+GT_API ConvertPhysical(short core,short dataType,short terminal,short index);
+GT_API ConvertLogical(TLogicInfo *pLogicInfo,TPhysicInfo *pPhysicInfo);
+
+/*---------------------------------------------------------------------------------------------*/
+/* ï¿½ï¿½ï¿½ï¿½Í¨Ñ¶Ö¸ï¿½î£¨Í¨ï¿½ï¿½485/232Í¨ï¿½ï¿½Ö¸ï¿½î£©ï¿½ï¿½gts.libï¿½Ðµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¼ï¿½Ê¹ï¿½Ã£ï¿½                                   */
+/*---------------------------------------------------------------------------------------------*/
+GT_API GTN_RN_ComSerialOpen(short cardIndex, short stationPhyId, short comIndex);
+GT_API GTN_RN_ComSerialClose(short cardIndex, short stationPhyId, short comIndex);
+GT_API GTN_RN_ComSerialRead(short cardIndex, short stationPhyId, short comIndex, uint32_t  readLen, uint32_t *pResLen, unsigned char *pData);
+GT_API GTN_RN_ComSerialReadFast(short cardIndex, short stationPhyId, short comIndex, uint32_t readLen, uint32_t *pResLen, unsigned char *pData);
+GT_API GTN_RN_ComSerialWrite(short cardIndex, short stationPhyId, short comIndex,uint32_t writeLen, uint32_t *pResLen, unsigned char *pData);
+GT_API GTN_RN_ComSerialGetState(short cardIndex, short stationPhyId, short comIndex, unsigned char *pState);
+GT_API GTN_RN_ComSerialSetSettings(short cardIndex, short stationPhyId, short comIndex, uint32_t baudrate, unsigned char stopBits, unsigned char parity);
+GT_API GTN_RN_ComSerialClearErr(short cardIndex, short stationPhyId, short comIndex, unsigned char flag);
+GT_API GTN_RN_ComSerialSetMode(short cardIndex, short stationPhyId, short comIndex, unsigned short comMode);
+GT_API GTN_RN_ComSerialGetRecvFifoCnt(short cardIndex, short stationPhyId, short comIndex,short *pCount);
+
+//ï¿½ï¿½Õ¹Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ°Ö·Ö¸ï¿½î¼¯
+GT_API GTN_RN_SetExtDiDoReversePhysical(short cardIndex, short stationPhyId, short moduleId, int32_t* pInputReverse, int32_t inputCount,int32_t *pOutputReverse,int32_t outputCount);
+GT_API GTN_RN_GetExtDiDoReversePhysical(short cardIndex, short stationPhyId, short moduleId, int32_t* pInputReverse, int32_t inputCount,int32_t *pOutputReverse,int32_t outputCount);
+GT_API GTN_RN_GetExtAoPhysical(short cardIndex, short stationPhyId, short moduleId, int32_t aoIndex,double* pValue, int32_t count);
+GT_API GTN_RN_GetExtAoValuePhysical(short cardIndex, short stationPhyId, short moduleId, int32_t aoIndex,int32_t* pValue, int32_t count);
+GT_API GTN_RN_GetExtAiPhysical(short cardIndex, short stationPhyId, short moduleId, int32_t aiIndex,double* pValue, int32_t count);
+GT_API GTN_RN_GetExtAiValuePhysical(short cardIndex, short stationPhyId, short moduleId, int32_t aiIndex,int32_t* pValue, int32_t count);
+GT_API GTN_RN_SetExtAoValuePhysical(short cardIndex, short stationPhyId, short moduleId, int32_t aoIndex,int32_t* pValue, int32_t count);
+GT_API GTN_RN_SetExtAoPhysical(short cardIndex, short stationPhyId, short moduleId, int32_t aoIndex,double* pValue, int32_t count);
+GT_API GTN_RN_GetExtDiBitPhysical(short cardIndex, short stationPhyId, short moduleId, int32_t diIndex, uint32_t* pValue, int32_t count);
+GT_API GTN_RN_GetExtDiPhysical(short cardIndex, short stationPhyId, short moduleId, uint32_t* pValue, int32_t count);
+GT_API GTN_RN_GetExtDoPhysical(short cardIndex, short stationPhyId, short moduleId,uint32_t* pValue, int32_t count);
+GT_API GTN_RN_SetExtDoBitPhysical(short cardIndex,short stationPhyId,short moduleId,int32_t doIndex,uint32_t* pValue,int32_t count);
+GT_API GTN_RN_SetExtDoPhysical(short cardIndex, short stationPhyId, short moduleId, uint32_t* pValue, int32_t count);
+GT_API GTN_RN_SetExtModuleMode(short cardIndex,short mode);
+GT_API GTN_RN_GetExtModuleMode(short cardIndex,short *pMode);
+
+GT_API GTN_RN_UpdateExtModuleFirmware(short cardIndex, short stationPhyId, short moduleId, const char* pFile);
+GT_API GTN_RN_SetExtModuleComLedSts(short cardIndex, short stationPhyId, short moduleId, int32_t value);
+GT_API GTN_RN_GetExtModuleInfo(short cardIndex, short stationPhyId, short moduleId, short infoType, int32_t* pValue);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*------------------------------------------------------------------------*/
+/*------------------------------------------------------------------------*/
+/*                        ï¿½ï¿½ï¿½ï¿½ï¿½æ±¾ï¿½ï¿½ï¿½Üºï¿½ï¿½ï¿½                                */
+/*------------------------------------------------------------------------*/
+/*------------------------------------------------------------------------*/
+
+// ï¿½Ã»ï¿½ï¿½Ö¶ï¿½ï¿½ï¿½ï¿½ï¿½(XML)ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
+GT_API GTN_OpenCard(short channel=5,void *pPrm=NULL,char *pFileName=NULL);
+/**
+ * @brief ï¿½ï¿½È¡ï¿½è±¸ï¿½ï¿½ï¿½
+ * @param cardNum ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§[1,8]
+ * @param pHandle ï¿½ï¿½ï¿½ï¿½ï¿½è±¸ï¿½ï¿½ï¿½
+ * @return 0ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½É¹ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½
+ * @notice ï¿½ï¿½7ï¿½ï¿½ï¿½ï¿½ï¿½Å³ï¿½ï¿½ï¿½ï¿½ï¿½Î§
+ *         ï¿½ï¿½-6ï¿½ï¿½ï¿½è±¸Î´ï¿½ï¿½
+*/
+GT_API GTN_GetHandle(short cardNum,HANDLE *pHandle);
+GT_API GTN_InitRingNet(short mode,char *pFileName);
+GT_API GTN_SetJtGshdCount(short core,short gshdCount,short lastStationAxisCount);
+GT_API GTN_GetCardType(uint32_t *pCardTypeArray,short cardTypeArraySize,short *pCardTypeCount);
+
+#define NET_INIT_MODE_AUTO                       (0)    // ï¿½Ô¶ï¿½É¨ï¿½ï¿½ï¿½ï¿½ï¿½ç£¬Ä¬ï¿½ï¿½Ä£Ê½
+#define NET_INIT_MODE_SKIP_TERMINAL              (1)    // Ö§ï¿½ï¿½ECAT xmlï¿½Ä¼ï¿½ï¿½ï¿½Õ¾Ä£Ê½ï¿½ï¿½
+#define NET_INIT_MODE_MULT_OPEN                  (2)    // Ë«ï¿½ï¿½Ä£Ê½ï¿½ï¿½
+
+#define NET_INIT_MODE_XML_STRICT                 (100)  // XMLï¿½Ï¸ñ¿ª¿ï¿½Ä£Ê½
+
+#define NO_NET                                   (0xf)
+#define RING_NET                                 (6)
+#define ETHERCAT_NET                             (8)
+#define ETHERCAT_RING_MISC_NET                   (9)
+
+#define NET_SRC_NONE                             (NO_NET)
+#define NET_SRC_FROM_RING_NET                    (RING_NET)
+#define NET_SRC_FROM_ECAT_NET                    (ETHERCAT_NET)
+typedef struct  
+{
+    short relateEnable;
+    short netSrc;                                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½â²¿ï¿½ï¿½ï¿½ç¡£ï¿½ï¿½Ô´ï¿½ï¿½RingNetï¿½ï¿½ï¿½ï¿½EtherCAT,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ç¡£
+    short netSrcIndex;                           // ï¿½â²¿ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short reserve1[9];
+    double reserve2[3];
+}TSlaveRelateInfo;
+
+GT_API GTN_NetInit(short mode=0,void *pPrm=NULL,short overTime=0,int32_t *pStatus=NULL);
+GT_API GTN_SetMcSrcToSlaveRelateInfo(short core,short mcType,TSlaveRelateInfo *pSlaveInfo,short count);
+GT_API GTN_GetMcSrcToSlaveRelateInfo(short core,short mcIndex,short type,TSlaveRelateInfo *pSlaveInfo,short count);
+
+GT_API GTN_SetAxisCircularSafetyZone(short core,short safetyZoneIndex,short enable,TAxisCircularSafetyZone *pPrm);
+GT_API GTN_GetAxisCircularSafetyZone(short core,short safetyZoneIndex,short *pEnable,TAxisCircularSafetyZone *pPrm);
+GT_API GTN_SetPrfRefSafetyZone(short core,short profile,short enable,TProfileReferenceSafetyZone *pPrm);
+GT_API GTN_GetPrfRefSafetyZone(short core,short profile,short *pEnable,TProfileReferenceSafetyZone *pPrm);
+GT_API GTN_GetPrfRefSafetyZoneSts(short core,short profile,int32_t *pSts);
+GT_API GTN_GetAuEncVelFilter(short core,short type,short encoder,short *pFilterNum);
+GT_API GTN_SetAuEncVelFilter(short core,short type,short encoder,short filterNum);
+
+GT_API GTN_SetPosEx(short core,short profile,double pos);
+GT_API GTN_GetPosEx(short core,short profile,double *pPos);
+
+GT_API GTN_PrfTrapEx(short core,short profile);
+GT_API GTN_GetTrapRunTime(short core,short profile,TTrapPrm *pPrm,double currentPos,double targetPos,double targetVel,double runPos,double *pRunTime);
+GT_API GTN_GetTrapRunPos(short core,short profile,TTrapPrm *pPrm,double currentPos,double targetPos,double targetVel,double runTime,double *pRunPos);
+
+GT_API GTN_PvtTableUserData(short core,short tableId,short userDataType,double time,void *pData);
+
+typedef struct
+{
+    double distance;
+    double vM;              // ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double acc;             // ï¿½ï¿½ï¿½Ãµï¿½zï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double pa1;             // ï¿½ï¿½ï¿½Ù°Ù·Ö±ï¿½1
+    double pa2;             // ï¿½ï¿½ï¿½Ù°Ù·Ö±ï¿½2
+    double dec;             // ï¿½ï¿½ï¿½Ãµï¿½zï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double pd1;             // ï¿½ï¿½ï¿½Ù¶È°Ù·Ö±ï¿½1
+    double pd2;             // ï¿½ï¿½ï¿½Ù¶È°Ù·Ö±ï¿½2
+
+    double velM;            // Êµï¿½ï¿½ï¿½Ü´ïµ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½,ï¿½ï¿½ï¿½Ø¶ï¿½È¡ï¿½ï¿½
+    double accM;            // Êµï¿½ï¿½ï¿½Ü´ïµ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½,ï¿½ï¿½ï¿½Ø¶ï¿½È¡ï¿½ï¿½
+    double decM;            // Êµï¿½ï¿½ï¿½Ü´ïµ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½,ï¿½ï¿½ï¿½Ø¶ï¿½È¡ï¿½ï¿½
+    double time;            // Êµï¿½Ê¹æ»®Ê±ï¿½ä£¬ï¿½ï¿½ï¿½Ø¶ï¿½È¡ï¿½ï¿½
+}TPvtTableMoveAbsolutePrm;
+GT_API GTN_PvtTableMoveAbsoluteTwoSegment(short core,short profile,TPvtTableMoveAbsolutePrm *pTargetPos1,double *pDelay,TPvtTableMoveAbsolutePrm *pTargetPos2,short count);
+
+/*-----------------------------------------------------------*/
+/* Command Array                                             */
+/*-----------------------------------------------------------*/
+GT_API GTN_SetTriggerArray(short core,short trigger,TTrigger *pTrigger,short count);
+
+GT_API GTN_GetFunIdPro(short core,char *pFunName,short *pFunId);
+GT_API GTN_GetVarIdPro(short core,char *pFunName,char *pVarName,TVarInfo *pVarInfo);
+
+GT_API GTN_SetVarValueEx(short core,short page,TVarInfo *pVarInfo,double *pValue,short count=1);
+GT_API GTN_GetVarValueEx(short core,short page,TVarInfo *pVarInfo,double *pValue,short count=1);
+
+#define SLAVE_MIDDLE_POS_DIMENSION_MAX             (3)
+typedef struct
+{
+    double targetPos;             // ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½Î»ï¿½ï¿½
+    double safetyPos;             // ï¿½ï¿½È«ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+    double slaveMiddlePos[SLAVE_MIDDLE_POS_DIMENSION_MAX];             // ï¿½ï¿½ï¿½ï¿½ï¿½Ð¼ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½Ï¢
+} TBufLeapFrogInfo;
+
+GT_API GTN_BufLeapFrog(short core,short crd,short axis,TBufLeapFrogInfo *pLeapFrogInfo,short modal,short fifo);
+GT_API GTN_BufLeapFrogEx(short core,short crd,short axis,TBufLeapFrogInfo *pLeapFrogInfo,short modal,short fifo=0);
+GT_API GTN_SetCrdBufCommandDelay(short core,short crd,short fifo,short enable);
+
+GT_API GTN_SetCrdStopMode(short core,short crd,short stopMode);
+GT_API GTN_GetCrdStopMode(short core,short crd,short *pStopMode);
+
+typedef struct
+{
+    double synDistance;             // ï¿½ï¿½Ç°ï¿½ÎºÏ³É¾ï¿½ï¿½ï¿½
+    double movedsynDistance;        // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ÉµÄ¾ï¿½ï¿½ï¿½
+    double reserve1[10];            // ï¿½ï¿½ï¿½ï¿½
+}TCrdMoveInfo;
+
+GT_API GTN_GetCrdMoveInfo(short core,short crd,TCrdMoveInfo *pCrdMoveInfo,short fifo=0);
+
+GT_API GTN_LaserFollowMode(short core,short laserChannel,short *pLaserFollowSource,double *pLaserFollowStartPower,short laserCount);
+GT_API GTN_LaserFollowRatio(short core,short laserChannel,double *pLaserFollowRatio,double *pLaserFollowMinPower,double *pLaserFollowMaxPower,short laserCount);
+
+GT_API GTN_BufMultiLaserFollowOn(short core,short crd,int32_t laserChannelMask,short fifo);
+GT_API GTN_BufMultiLaserFollowOff(short core,short crd,int32_t laserChannelMask,short fifo);
+GT_API GTN_BufMultiLaserOn(short core,short crd,int32_t laserChannelMask,short fifo);
+GT_API GTN_BufMultiLaserOff(short core,short crd,int32_t laserChannelMask,short fifo);
+
+GT_API GTN_BufMultiLaserFollowOnEx(short core,short crd,int32_t laserChannelMask,short fifo);
+GT_API GTN_BufMultiLaserFollowOffEx(short core,short crd,int32_t laserChannelMask,short fifo);
+GT_API GTN_BufMultiLaserOnEx(short core,short crd,int32_t laserChannelMask,short fifo);
+GT_API GTN_BufMultiLaserOffEx(short core,short crd,int32_t laserChannelMask,short fifo);
+
+GT_API GTN_SetCrdContourErrorControlPrm(short core,short crd,short crdAxis,short enable,double *pCoef,short coefCount);
+GT_API GTN_GetCrdContourErrorControlPrm(short core,short crd,short crdAxis,short *pEnable,double *pCoef,short *pCoefCount);
+
+GT_API GTN_SetAxisMotionSmoothParameter(short core,short mode,void *pPrm,int32_t axisMask,TListInfo *pListInfo);
+GT_API GTN_GetAxisMotionSmoothParameter(short core,short axis,short *pMode,void *pPrm,short count);
+
+GT_API GTN_SetStopSmoothTime(short core,short profile,short smoothTime);
+GT_API GTN_GetStopSmoothTime(short core,short profile,short *pSmoothTime);
+
+GT_API GTN_SetCrossCompMode(short core,short axis,short cycleMode,short revCompCycle);
+GT_API GTN_GetCrossCompMode(short core,short axis,short *pCycleMode,short *pRevCompCycle);
+
+GT_API GTN_WriteDigitalOutputPro(short core,TDigitalOutputPro *pDo,TListInfo *pListInfo);
+GT_API GTN_SetStopIoPro(short core,short axis,short stopType,TStopIoPrm *pPrm,short count,TListInfo *pListInfo);
+GT_API GTN_GetStopIoPro(short core,short axis,short stopType,TStopIoPrm *pPrm,short *pCount);
+GT_API GTN_SetStopIoPrm(short core,short axis,short stopType,short inputType,short inputIndex,short mode,short modePrm);
+
+GT_API GTN_InitFPGAEncoder(short core);
+GT_API GTN_SetFPGAEncoder(short core,short enable,int32_t intervalTime,short reverseMask);
+GT_API GTN_GetFPGAEncoder(short core,int32_t *pDataChn1,int32_t *pDataChn2,int32_t *pDataChn3,int32_t *pDataChn4,int32_t *pCount,short *pOverFlowFlag);
+
+GT_API GTN_SetExtModuleAccessMode(short core,short mode);
+GT_API GTN_GetExtModuleAccessMode(short core,short *pMode);
+
+typedef struct
+{
+    short followMode;     //Î»ï¿½Ã±È½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½,0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short hsoOutputMode;  //hsoï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã±È½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½2ï¿½ï¿½ï¿½ï¿½ï¿½Õ¸ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½
+    short timeScale;      //Ê±ï¿½ä¾«ï¿½È£ï¿½0ï¿½ï¿½1usï¿½ï¿½1ï¿½ï¿½0.1us
+    short pad;
+    double maxValue;
+    double minValue;
+    double k;
+    double b;
+}TPosCompareFollowCrd;
+GT_API GTN_SetCrdPosCompareFollowPulseWidthPrm(short core,short crd,short posCompareIndex,short hsoIndex,TPosCompareFollowCrd *pPosCompareFollowCrd,short count);
+GT_API GTN_CrdPosCompareFollowPulseWidthEnable(short core,short crd,short posCompareIndex,short enable);
+
+typedef struct
+{
+    short index;              //Î»ï¿½Ã±È½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short enable;
+    short reserve1[2];
+    int32_t  reserve2[2];
+}TPosCompareOnOffList;
+GT_API GTN_PosCompareOnOffList(short core,short group,TPosCompareOnOffList *pPosCompareOnOff,TListInfo *pListInfo);
+
+typedef struct
+{
+    short index;
+    short reserve[3];
+    uint32_t count;
+    int32_t syncPos;
+    int32_t time;
+} TPosComparePsoPrmList;
+GT_API GTN_PosComparePsoPrmList(short core,short group,TPosComparePsoPrmList *pPrm,TListInfo *pListInfo);
+
+GT_API GTN_SetScanAlarmAutoStopMode(short core,short mode,uint32_t errorcodeCheckMask,uint32_t errorcodeCheckRef,short crd);
+GT_API GTN_GetScanAlarmAutoStopMode(short core,short *pMode,uint32_t *pErrorcodeCheckMask,uint32_t *pErrorcodeCheckRef,short crd);
+GT_API GTN_GetScanErrorCode(short core,uint32_t *pErrorCode,short crd);
+GT_API GTN_LoadScanCorrectionTable(short core,short scan,char *pFile,short type);
+
+GT_API GTN_AddTaskPro(short core,short taskType,void *pTaskData,short *pTaskIndex);
+
+typedef struct
+{
+    unsigned short resType;         // watchï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    unsigned short resIndex;        // watchï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    unsigned short resSubIndex;     // watchï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    unsigned short resCount;        // Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½È¡watchï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double resValue[256];           // ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½watchï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+} TMcVarResInfo;
+GT_API GTN_GetMcVarArray(short core,short resInfoCount,TMcVarResInfo *pResInfo);
+
+typedef struct
+{
+    TWatchVar var;
+    unsigned short condition;
+    double value;
+    double continueTime;
+} TWatchConditionVar;
+
+typedef struct
+{
+    short conditionDone;
+    short modal;
+    short reserve1[2];
+    int32_t segNum;
+    int32_t userTag;
+    int32_t reserve2[8];
+}TWaitForConditionInfo;
+
+GT_API GTN_WaitForConditionVar(short core,TWatchConditionVar *pWaitConditionVarList,short conditionCount,short operation,TWaitTimeout *pTimeout,TWatchVar *pWaitResultVar,TListInfo *pListInfo);
+GT_API GTN_GetWaitForConditionInfo(short core,short list,TWaitForConditionInfo *pWaitForConditionInfo);
+
+GT_API GTN_BufSetLongVar(short core,short crd,short index,int32_t value,short fifo);
+GT_API GTN_BufSetDoubleVar(short core,short crd,short index,double value,short fifo);
+
+GT_API GTN_SetGantryModePro(short core,short group,short master,short slave,short mode,int32_t syncErrorLimit);
+
+#define PREDICTION_MODE_AXIS_VELOCITY_TO_FOLLOWERROR                 (0)
+#define PREDICTION_MODE_AXIS_VELOCITY_TO_VELOCITY                    (1)
+#define PREDICTION_MODE_AXIS_POSITION_TO_POSITION                    (2)
+GT_API GTN_SetAxisPrediction(short core,short axis,short mode,short enable,double *pCoef,short count1,short count2);
+GT_API GTN_GetAxisPrediction(short core,short axis,short *pMode,short *pEnable,double *pCoef,short *pCount1,short *pCount2);
+
+GT_API GTN_InitializeCommandListConfig(short core,TCommandListConfig *pConfig,short count=2);
+
+/*-----------------------------------------------------------*/
+/* TIMERï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½                                      */
+/*-----------------------------------------------------------*/
+
+#define  START_TIMER_MAX		32
+
+typedef struct
+{
+    short mode;				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö»ï¿½ï¿½Îª0
+    short clear;			// ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Â¼Öµï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼Öµï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼Öµï¿½ï¿½ï¿½ï¿½ï¿½Â¼ï¿½Â¼ï¿½ï¿½Ê¼Öµ
+    short reserve[2];
+}TStartTimerPrm;
+
+typedef struct
+{
+    short run;
+    short reserve[3];
+    double value;
+}TTimerInfo;
+
+GT_API GTN_StartTimer(short core,short index,TStartTimerPrm *pStartTimerPrm,short count,TListInfo *pListInfo);
+GT_API GTN_StopTimer(short core,short index,short count,TListInfo *pListInfo);
+GT_API GTN_GetTimerInfo(short core,short index,TTimerInfo *pInfo,short count);
+
+GT_API GTN_CheckTerminalLicenseRingNet(short core,short station,short fuctionType,int32_t *pInfo);
+/*-----------------------------------------------------------*/
+/* ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½Ö¸ï¿½ï¿½                                              */
+/*-----------------------------------------------------------*/
+GT_API GTN_RN_Recover(short cardIndex);
+/*-----------------------------------------------------------*/
+/* GSHDï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½                                      */
+/*-----------------------------------------------------------*/
+GT_API GTN_SetTorqueLimit(short core,short axis,TTorqueLimit *pTorqueLimit);
+GT_API GTN_GetTorqueLimit(short core,short axis, TTorqueLimit *pTorqueLimit);
+
+GT_API GTN_SetServoPosLoopPid(short core,short axis,TServoPosLoopPid *pServoPosLoopPid);
+GT_API GTN_GetServoPosLoopPid(short core,short axis,TServoPosLoopPid *pServoPosLoopPid);
+
+typedef struct
+{
+    uint32_t objectIndex;        //Ò»ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½
+    unsigned short subIndex;     //ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½
+    unsigned short reserve;      //ï¿½ï¿½ï¿½ï¿½Î»
+    short byteSize;              //ï¿½Ö½Ú³ß´ï¿½
+    short memType;               //ï¿½ï¿½ï¿½ï¿½æ´¢Î»ï¿½ï¿½ 0-RAM  1-FLASH
+}TServoParamReader;
+GT_API GTN_ReadServoParamInfo(short core,short axis, TServoParamReader *pTServoParamReader, unsigned char* pData);
+GT_API GTN_WriteServoParamInfo(short core,short axis, TServoParamReader *pTServoParamReader, unsigned char* pData);
+GT_API GTN_RN_GetServoAlarmInfo(short core,short axis,uint32_t *pAlarmCode);
+
+GT_API GTN_WriteServo35thHomingFlag(short core, short axis, short flag);
+
+GT_API GTN_SetServoSpdLoopPid(short core,short axis,TServoSpdLoopPid *pServoSpdLoopPid);
+GT_API GTN_GetServoSpdLoopPid(short core,short axis,TServoSpdLoopPid *pServoSpdLoopPid);
+
+GT_API GTN_SetServoPid(short core,short axis,short loop,short mode,void *pServoPid);
+GT_API GTN_GetServoPid(short core,short axis,short loop,short mode,void *pServoPid);
+GT_API GTN_SetServoPidRatio(short core,short axis,double ratio);
+GT_API GTN_GetServoPidRatio(short core,short axis,double *pRatio);
+
+typedef struct
+{
+    double gain1;  // Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double gain2;  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double smoothTime; // Æ½ï¿½ï¿½Ê±ï¿½ä£¬ï¿½ï¿½Î»ms
+    double spdLimitUpper; // ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½Þ£ï¿½ï¿½ï¿½Î»rpm
+    double spdLimitLower; // ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½Þ£ï¿½ï¿½ï¿½Î»rpm
+    double reserved[4]; //ï¿½ï¿½ï¿½ï¿½
+}TServoNonlinearGlobalGain;
+GT_API GTN_RN_GetServoNonlinearGlobalGain(short core,short axis,short mode,short dataType,TServoNonlinearGlobalGain *pServoPid);
+GT_API GTN_RN_SetServoNonlinearGlobalGain(short core,short axis,short mode,short dataType,TServoNonlinearGlobalGain *pServoGlobalGain);
+
+
+/*-----------------------------------------------------------*/
+/* ï¿½ï¿½È«Ä£Ê½ï¿½ï¿½ï¿½ï¿½                                              */
+/*-----------------------------------------------------------*/
+GT_API GTN_RN_SetStationSafeModeControl(short cardIndex,short stationPhyId,short enable,short clearMode);
+GT_API GTN_RN_SetStationSafeModeOut(short cardIndex,short stationPhyId,short type,short index,short *pEnable,double *pValue,short count);
+
+GT_API GTN_SetVelLookAheadModeLa(short core, short crd, int VelMode);  //ï¿½ï¿½ï¿½Ù¶ï¿½Ç°Õ°Ä£Ê½Ä£Ê½
+GT_API GT_SetMaxOverrideLa(short crd,double maxSynVelRatio);
+GT_API GTN_SetProfileModeLa(short core,short crd,short profileMode);
+
+
+GT_API GTN_BufSetLongVarEx(short core,short crd,short index,int32_t value,short fifo);
+GT_API GTN_BufSetDoubleVarEx(short core,short crd,short index,double value,short fifo);
+
+
+typedef struct
+{
+    int32_t segmentNumber;
+    int32_t posX;
+    int32_t posY;
+    short gpo;					// 24V
+    short hso;					// 5V
+    short reserve[4];			// È·ï¿½ï¿½Ö¸ï¿½î³¤ï¿½ï¿½Îª16Word
+} TPosCompareCommandPos;
+
+typedef struct
+{
+    int32_t segmentNumber;
+    int32_t time;
+    short pad[2];
+    short gpo;
+    short hso;
+}TPosCompareCommandTime;
+
+typedef union
+{
+    TPosCompareCommandPos pos;
+    TPosCompareCommandTime time;
+    short data16[12];
+}TPosComparePredictiondataUnion;
+
+typedef struct
+{
+    short type;
+    short pad[3];
+    TPosComparePredictiondataUnion data;
+}TPosComparePredictionData;
+
+GT_API GTN_SetPosComparePredictionDataToDsp(short core,short posCompareIndex,short count,TPosComparePredictionData *pData,short *pWriteCount);
+
+/*-----------------------------------------------------------*/
+/* ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½                                      */
+/*-----------------------------------------------------------*/
+GT_API GTN_SetAuAbsEncMultiTurnRange(short core,short encoder,double range);
+GT_API GTN_ReadAuAbsEncPos(short core,short encoder,double *pPos);
+
+GT_API GTN_SetEncryptConfigRingNet(short core,short station,TEncryptConfigPrm *pConfigPrm, short *pSts);
+GT_API GTN_GetEncryptDataRingNet(short core,short station,TEncryptData *pReadPrm);
+GT_API GTN_SetEncryptDataRingNet(short core,short station,TEncryptData *pWritePrm);
+
+GT_API GTN_ClearPressStatus(short core,short pressAxis);
+
+/*-----------------------------------------------------------*/
+/* ï¿½ï¿½Ô²ï¿½å²¹Ö¸ï¿½ï¿½                                              */
+/*-----------------------------------------------------------*/
+#define ELLIPSE_AUX_POINT_COUNT                 (5)
+
+#define ELLIPSE_MODE_AUX_POINT                  (0)
+#define ELLIPSE_MODE_STANDARD                   (1)
+
+#define ELLIPSE_MODE_AUX_POINT_2D               (0)
+#define ELLIPSE_MODE_STANDARD_2D                (1)
+
+typedef struct
+{
+    double pos[ELLIPSE_AUX_POINT_COUNT][INTERPOLATION_AXIS_MAX];    // ï¿½ï¿½Ô²ï¿½Ï¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+}TEllipseAuxPoint;
+
+typedef struct
+{
+    double centerPoint[INTERPOLATION_AXIS_MAX];// ï¿½ï¿½Ô²Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double theta;                              // ï¿½ï¿½Ô²ï¿½ï¿½×ªï¿½Ç¶ï¿½
+    double a;                                  // ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½
+    double b;                                  // ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½
+}TEllipseStandard;
+
+typedef union
+{
+    TEllipseAuxPoint auxPoint;                 // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½
+    TEllipseStandard standard;                 // ï¿½ï¿½×¼Ä£Ê½ï¿½ï¿½ï¿½ï¿½
+
+    double reserve[60];
+} TEllipseParameterUnion;
+
+typedef struct
+{
+    double endPoint[INTERPOLATION_AXIS_MAX];   // ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½
+    short plane;                               // ï¿½ï¿½Ô²Æ½ï¿½ï¿½Ñ¡ï¿½ï¿½0ï¿½ï¿½XYï¿½ï¿½1ï¿½ï¿½YZï¿½ï¿½2ï¿½ï¿½ZX
+    short dir;                                 // ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ë³Ê±ï¿½ë£»1ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+    short overrideSelect;                      // ï¿½Ù¶È±ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½1ï¿½é±¶ï¿½Ê£ï¿½1ï¿½ï¿½ï¿½ï¿½2ï¿½é±¶ï¿½ï¿½
+    short mode;                                // ï¿½ï¿½Ô²Ä£Ê½ï¿½ï¿½Ä¿Ç°Ö»Ö§ï¿½Ö²ï¿½ï¿½ï¿½0(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½)
+
+    TEllipseParameterUnion data;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+} TEllipseParameter;
+
+//-------------------------------------------------------
+//ï¿½ï¿½ï¿½ï¿½Ëµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô²ï¿½å²¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,Ä£Ê½ï¿½ï¿½ELLIPSE_MODE_AU_POINT_2D
+//plane--------------ï¿½ï¿½Ô²Æ½ï¿½ï¿½Ñ¡ï¿½ï¿½INTERPOLATION_CIRCLE_PLAT_XY(0)ï¿½ï¿½XYï¿½ï¿½INTERPOLATION_CIRCLE_PLAT_YZ(1)ï¿½ï¿½YZï¿½ï¿½INTERPOLATION_CIRCLE_PLAT_ZX(2)ï¿½ï¿½ZX
+//dir----------------ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ë³Ê±ï¿½ë£»1ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+//overrideSelect-----ï¿½Ù¶È±ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½1ï¿½é±¶ï¿½Ê£ï¿½1ï¿½ï¿½ï¿½ï¿½2ï¿½é±¶ï¿½ï¿½
+//pad----------------Õ¼Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½
+//endPoint1----------ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½1,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½planeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½palneÎªXYÆ½ï¿½æ£¬ï¿½ï¿½endPoint1ï¿½ï¿½pos1ÎªXï¿½ï¿½ï¿½ê£¬endPoint2ï¿½ï¿½pos2ÎªYï¿½ï¿½ï¿½ï¿½
+//endPoint2----------ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½2
+//pos1---------------ï¿½ï¿½Ô²ï¿½Ï¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1
+//pos2---------------ï¿½ï¿½Ô²ï¿½Ï¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½2
+//-------------------------------------------------------
+typedef struct
+{
+    short plane;
+    short dir;
+    short overrideSelect;
+    short pad;
+
+    double endPoint1;
+    double endPoint2;
+
+    double pos1[ELLIPSE_AUX_POINT_COUNT];
+    double pos2[ELLIPSE_AUX_POINT_COUNT];
+} TEllipseAuxPoint2D;
+
+//-------------------------------------------------------
+//ï¿½ï¿½ï¿½ï¿½Ëµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô²ï¿½å²¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,Ä£Ê½ï¿½ï¿½ELLIPSE_MODE_STANDARD_2D
+//plane--------------ï¿½ï¿½Ô²Æ½ï¿½ï¿½Ñ¡ï¿½ï¿½INTERPOLATION_CIRCLE_PLAT_XY(0)ï¿½ï¿½XYï¿½ï¿½INTERPOLATION_CIRCLE_PLAT_YZ(1)ï¿½ï¿½YZï¿½ï¿½INTERPOLATION_CIRCLE_PLAT_ZX(2)ï¿½ï¿½ZX
+//dir----------------ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ë³Ê±ï¿½ë£»1ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+//overrideSelect-----ï¿½Ù¶È±ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½1ï¿½é±¶ï¿½Ê£ï¿½1ï¿½ï¿½ï¿½ï¿½2ï¿½é±¶ï¿½ï¿½
+//pad----------------Õ¼Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½
+//endPoint1----------ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½1,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½planeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½palneÎªXYÆ½ï¿½æ£¬ï¿½ï¿½endPoint1ÎªXï¿½ï¿½ï¿½ê£¬endPoint2ÎªYï¿½ï¿½ï¿½ï¿½
+//endPoint2----------ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½2
+//centerPoint1-------ï¿½ï¿½Ô²Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½planeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½palneÎªXYÆ½ï¿½æ£¬ï¿½ï¿½centerPoint1ÎªXï¿½ï¿½ï¿½ê£¬centerPoint2ÎªYï¿½ï¿½ï¿½ï¿½
+//centerPoint2-------ï¿½ï¿½Ô²Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½2
+//theta--------------ï¿½ï¿½Ô²ï¿½ï¿½×ªï¿½Ç¶È£ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½
+//a------------------ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½
+//b------------------ï¿½ï¿½Ô²ï¿½ï¿½ï¿½á£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È³ï¿½ï¿½ï¿½ï¿½
+//-------------------------------------------------------
+typedef struct
+{
+    short plane;
+    short dir;
+    short overrideSelect;
+    short pad;
+
+    double endPoint1;
+    double endPoint2;
+
+    double centerPoint1;
+    double centerPoint2;
+
+    double theta;
+    double a;
+    double b;
+}TEllipseStandard2D;
+
+GT_API GTN_Ellipse(short core,short crd,TEllipseParameter *pEllipse,double synVel,double synAcc,double velEnd,int32_t segNum,short fifo=0);
+GT_API GTN_EllipseEx(short core,short crd,TEllipseParameter *pEllipse,double synVel,double synAcc,double velEnd,int32_t segNum,short fifo=0);
+
+GT_API GTN_EllipsePro(short core,short crd,short mode,void *pData,double synVel,double synAcc,double velEnd,int32_t segNum,short fifo=0);
+GT_API GTN_EllipseProEx(short core,short crd,short mode,void *pData,double synVel,double synAcc,double velEnd,int32_t segNum,short fifo=0);
+
+
+/*-----------------------------------------------------------*/
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½î¹¦ï¿½ï¿½        	                                   */
+/*-----------------------------------------------------------*/
+#define BATCH_COMMAND_END_MODE_DEFAULT                     (0)
+#define BATCH_COMMAND_END_MODE_GET_MC_VAR_EX               (1)
+
+typedef struct
+{
+    short commandCount;                // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short errorCommandNumber;          // Ö´ï¿½Ð³ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½
+    short errorCode;                   // Ö´ï¿½Ð³ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ï¢ï¿½ï¿½
+    short reserve[5];
+}TBatchCommandResult;
+
+GT_API GTN_BatchCommandBegin(short core);
+GT_API GTN_BatchCommandEnd(short core,TBatchCommandResult *pResult,short mode,void *pPrm,void *pValue,short count);
+
+/*-----------------------------------------------------------*/
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½           	                                   */
+/*-----------------------------------------------------------*/
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Øºï¿½ï¿½ï¿½
+#define MC_HEIGHT_FREQUENCY            (450)
+// ï¿½ï¿½ï¿½Ã¡ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ²ï¿½ï¿½ï¿½
+typedef struct
+{
+   short active;                 // ï¿½ß¶È¿ï¿½ï¿½Æµï¿½Ê¹ï¿½Ü±ï¿½Ö¾ï¿½ï¿½
+   short ctlMode;                // ï¿½ß¶È±Õ»ï¿½ï¿½ï¿½ï¿½Æ»ï¿½ï¿½Ç¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   short linkHeightCtlGroup;     // ï¿½ï¿½ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½ß¶È¿ï¿½ï¿½Æ¡ï¿½
+   short feedbackType;           // ï¿½ß¶È¿ï¿½ï¿½ÆµÄ·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0,ï¿½È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ß¶ï¿½Æµï¿½ï¿½ï¿½Åºï¿½
+   short feedbackIndex;          // ï¿½ß¶È¿ï¿½ï¿½ÆµÄ·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¶ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   short interval;				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ä£¬ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Î»ï¿½ï¿½
+   int32_t errorLimit;              // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½î¡£
+   short reserve[8];             // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½
+}THeightControlPrm;
+
+GT_API GTN_SetAxisHeightControlPrm(short core,short axis,THeightControlPrm *pPrm);
+GT_API GTN_GetAxisHeightControlPrm(short core,short axis,THeightControlPrm *pPrm);
+
+// ï¿½ï¿½ï¿½Ã¡ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½
+GT_API GTN_SetHeightInterpolationTable(short core, short heightCtlGroup, int32_t n, double* pPosEnc, double* pPosHeight);
+GT_API GTN_GetHeightInterpolationTable(short core, short heightCtlGroup, int32_t n, double* pPosEnc, double* pPosHeight, int32_t* pRealCount);
+
+GT_API GTN_SetAxisHeightControlPid(short core,short axis,TPid *pPid);
+GT_API GTN_ZerophaseFilter(short core,int32_t dataLen,double inputdata[],double smoothArray[]);
+
+GT_API GTN_GetAxisErrorStatusLink(short core,short axis,short *pLinkAxis,short *pLinkMode,short *pCcount);
+GT_API GTN_SetAxisErrorStatusLink(short core,short axis,short *pLinkAxis,short *pLinkMode,short count);
+
+typedef struct
+{
+    short type;					// ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç±ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã»ï¿½ï¿½Ç¹æ»®Î»ï¿½Ã»ï¿½ï¿½Çµï¿½ï¿½Ý¸ß¶ï¿½
+    short index;				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¹æ»®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int32_t  crossPos;			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¹Ø±Õ¸ï¿½ï¿½æ¹¦ï¿½ÜµÄ´ï¿½Ô½ï¿½ß¶ï¿½
+    short dir;					// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¹Ø±ÕµÄ´ï¿½Ô½ï¿½ï¿½ï¿½ï¿½
+    short pad1[3];
+}THeightCrossPrm;
+
+typedef struct
+{
+    short keepEnable;				// 0:ï¿½Ë¶ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ß¶ï¿½,1:ï¿½Ë¶ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ß¶Èºó£¬±ï¿½ï¿½Ö¸ß¶È¸ï¿½ï¿½ï¿½
+    short pad1[3];
+    THeightCrossPrm enableData;		// ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¶È¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    THeightCrossPrm disableData;	// ï¿½Ô¶ï¿½ï¿½Ø±Õ¸ß¶È¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+}THeightFollowPrm;
+
+#define HEIGHT_DIR_CROSS_POSITIVE            (1)
+#define HEIGHT_DIR_CROSS_NEGATIVE            (2)
+#define HEIGHT_DIR_CROSS_EQUAL               (3)
+
+#define HEIGHT_FOLLOW_ENABLE_MODE_MANUAL						(0)
+#define HEIGHT_FOLLOW_ENABLE_MODE_AUTO							(1)
+// ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½/ï¿½Ø±Õ¸ï¿½ï¿½æ¹¦ï¿½Ü»ï¿½ï¿½ï¿½Ó¦ï¿½Ã³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¹Ø±Õ¸ß¶È¸ï¿½ï¿½æ¹¦ï¿½ï¿½
+GT_API GTN_SetAxisHeightFollowMode(short core,short axis,short mode,THeightFollowPrm *pPrm);
+
+
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã¸ï¿½ï¿½æ¹¦ï¿½Ü´ò¿ª¡ï¿½ï¿½Ø±ï¿½
+GT_API GTN_AxisHeightControlEnable(short core,short axis,short enable,int32_t pos=10);
+// ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+GT_API GTN_GetHeightInterpolationPos(short core, short heightCtlGroup, double* pHeightFrq, double* pHeightPosRaw, double* pInterpolationPos);
+// ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½Ï¢
+
+typedef struct
+{
+    short ctlMode;			// ï¿½ï¿½Ç°ï¿½ï¿½Õ»ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Çµï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½Ê±Õ»ï¿½ï¿½ï¿½
+    short errorSts;			// ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½
+    double cmpValue;		// ï¿½ï¿½ï¿½ï¿½Öµ
+}THeightInf;
+GT_API GTN_GetAxisHeightInf(short core,short axis,THeightInf *pHeightInf);
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
+GT_API GTN_ClearAxisHeightSts(short core,short axis);
+
+//FIRï¿½Ë²ï¿½ï¿½ï¿½
+#define HEIGHT_FILTER_TYPE_FREQUENCY			(1)
+#define HEIGHT_FILTER_TYPE_CMP_VALUE			(2)
+GT_API GTN_GetAxisHeightFrqFilter(short core,short axis,short type,short *pFilterNum);
+GT_API GTN_SetAxisHeightFrqFilter(short core,short axis,short type,short filterNum);
+
+
+// ï¿½ê¶¨ï¿½ï¿½ï¿½ï¿½
+
+#define CALIBRATION_MODE_DIFFERENT_STEP		(1)
+// ï¿½ê¶¨stage
+#define DIFFERENT_STEP_CALIBRATION_STAGE_NONE						(-1)//ï¿½ï¿½ï¿½ï¿½
+#define DIFFERENT_STEP_CALIBRATION_STAGE_HOME_SEARCH				(1)//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define DIFFERENT_STEP_CALIBRATION_STAGE_GO_OFFSET					(2)//ï¿½Ë¶ï¿½Æ«ï¿½ï¿½
+#define DIFFERENT_STEP_CALIBRATION_STAGE_CALIBRATION_INIT			(3)//ï¿½ï¿½Ê¼ï¿½ê¶¨Ç°ï¿½Ä³ï¿½Ê¼ï¿½ï¿½
+#define DIFFERENT_STEP_CALIBRATION_STAGE_CALIBRATION				(4)//ï¿½ê¶¨ï¿½ï¿½ï¿½ï¿½
+#define DIFFERENT_STEP_CALIBRATION_STAGE_CALIBRATION_DONE			(5)//ï¿½ê¶¨ï¿½ï¿½ï¿½
+#define DIFFERENT_STEP_CALIBRATION_STAGE_CALIBRATION_STOP			(6)//ï¿½ê¶¨Í£Ö¹
+
+#define DIFFERENT_STEP_CALIBRATION_STAGE_HOME_START_ERROR			(100)
+#define DIFFERENT_STEP_CALIBRATION_STAGE_HOME_SEARCH_ERROR			(101)
+#define DIFFERENT_STEP_CALIBRATION_STAGE_GO_OFFSET_ERROR			(102)
+#define DIFFERENT_STEP_CALIBRATION_STAGE_CALIBRATION_ERROR			(103)
+#define DIFFERENT_STEP_CALIBRATION_STAGE_NOT_AXIS_ON				(104)
+#define DIFFERENT_STEP_CALIBRATION_STAGE_SET_TABLE_ERROR			(105)
+
+// ï¿½ï¿½ï¿½ê¶¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define DIFFERENT_STEP_CALIBRATION_STEP_MAX							(4000)
+
+#define CALIBRATION_MODE_DIFFERENT_STEP		(1)
+#define CALIBRATION_STEP_MAX			(50)
+
+typedef struct
+{
+   short heightCtlGroup;                 // ï¿½ß¶È¿ï¿½ï¿½Æµï¿½ï¿½ï¿½Å£ï¿½ï¿½Ú¼ï¿½Â·ï¿½ß¶È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short motorEncoder;						// ï¿½Ú¼ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   short pad[2];                         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+
+   double homeVel;                      // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ë£©,ï¿½ï¿½ï¿½ï¿½0
+    double homeDir;							// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½
+   int32_t frqMutationStopValue;           // ï¿½ï¿½ï¿½ï¿½Ê±Æµï¿½ï¿½Í»ï¿½ï¿½Í£Ö¹ï¿½ï¿½Öµ,ï¿½ï¿½ï¿½ï¿½0
+   int32_t offset;                         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½Æ«ï¿½Ã¡ï¿½ï¿½ï¿½Í£ï¿½ï¿½Î»ï¿½Ã¿ï¿½Ê¼ï¿½ê¶¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0
+
+   double distance;                     // ï¿½ê¶¨ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½åµ¥Î»ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½0
+   double calibrationVel;               // ï¿½ê¶¨ï¿½Ù¶ï¿½,ï¿½ï¿½ï¿½ï¿½0
+   double calibrationStepCount;         // ï¿½ê¶¨ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½0
+   double calibrationCountPerStep[CALIBRATION_STEP_MAX]; // Ã¿ï¿½Î±ê¶¨ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½Üµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½4000ï¿½ï¿½ï¿½ã¡£
+   double reserve[4];                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+}TDifferentStepCalibration;
+
+typedef union
+{
+    TDifferentStepCalibration differentStep;
+}THeightCalibration;
+
+typedef struct
+{
+    short mode;							// Ä¿Ç°Ö»ï¿½ï¿½ï¿½Ç±ä²½ï¿½ï¿½ï¿½ï¿½ï¿½Ô±ê¶¨ï¿½ï¿½CALIBRATION_MODE_DIFFERENT_STEP
+    THeightCalibration prm;
+}THeightCalibrationPrm;
+
+GT_API GTN_ClearAxisHeightCalibrationSts(short core,short axis);
+GT_API GTN_StopAxisHeightCalibration(short core,short axis);
+GT_API GTN_RunAxisHeightCalibration(short core,short axis,short *pStage);
+GT_API GTN_SetAxisHeightCalibration(short core,short axis,THeightCalibrationPrm *pPrm);
+
+typedef struct
+{
+    int32_t positiveMutationValue;		// ï¿½Ó½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½Í»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short positiveMutationStopLinkLimitType;// ï¿½Ó½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±,Æµï¿½ï¿½Í»ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½Í¡ï¿½
+    int32_t negativeMutationValue;		//Ô¶ï¿½ëµ²ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½Í»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short negativeMutationStopLinkLimitType;// Ô¶ï¿½ëµ²ï¿½ï¿½Ê±,Æµï¿½ï¿½Í»ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½Í¡ï¿½
+}TFrqMutationStopPrm;
+GT_API GTN_HeightFrqMutationStopEnable(short core, short axis, short enable, TFrqMutationStopPrm* pMutationStopPrm);
+GT_API GTN_GetHeightFrqMutationStopEnable(short core,short axis,short *pEnable,TFrqMutationStopPrm *pMutationStopPrm);
+
+GT_API GTN_GoToAxisFollowHeight(short core, short axis, int32_t followCmd, THeightFollowPrm* pFollowPrm, double trapVel, TTrapPrm* pTrapPrm);
+
+GT_API GTN_GetAxisHeightBand(short core,short axis,int32_t *pBand,int32_t *pTime);
+GT_API GTN_SetAxisHeightBand(short core,short axis,int32_t band,int32_t time);
+
+#define HEIGHT_FINDEDGE_LATCH_MAX   4
+
+typedef struct
+{
+    short type;
+    short moveAxis;
+    short latchNum;
+    short reserve1;
+    short latchType[HEIGHT_FINDEDGE_LATCH_MAX];
+    short latchIndex[HEIGHT_FINDEDGE_LATCH_MAX];
+    int32_t  heightDiff;
+    int32_t reserve2;
+    double findTime;
+}THeightFindEdgePrm;
+
+typedef struct
+{
+    short findEdgeSts;
+    short error;
+    double latchValue[HEIGHT_FINDEDGE_LATCH_MAX];
+}THeightFindEdgeResult;
+
+GT_API GTN_SetHeightFindEdgePrm(short core, short heightFbIndex, THeightFindEdgePrm* pFindEdgePrm);
+GT_API GTN_GetHeightFindEdgeResult(short core,short heightFbIndex,THeightFindEdgeResult *pFindEdgeResult);
+GT_API GTN_GetHeightFindEdgeCoef(short core,short heightFbIndex,double* alpha,double* beta);
+GT_API GTN_CloseHeightFindEdge(short core,short heightFbIndex);
+GT_API GTN_SetHeightFindEdgeStopMask(short core,short heightFbIndex,int32_t mask,int32_t option);
+GT_API GTN_GetHeightFindEdgeStopMask(short core,short heightFbIndex,int32_t* mask,int32_t* option);
+
+typedef struct
+{
+    double vel;			// ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double acc;			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double dec;			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double smoothTime;  // Æ½ï¿½ï¿½Ê±ï¿½ï¿½
+
+    double safetyVel;	// ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½Õ¸ß¶ï¿½Ê±ï¿½ï¿½ï¿½Ù¶ï¿½
+
+    short slaveType;					// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¡ï¿½
+    short slaveIndex;					// ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int32_t followCmd;		// ï¿½ï¿½ï¿½ï¿½ß¶ï¿½
+    short followEnable;	// ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¶ï¿½ï¿½Ç·ñ±£³Ö¡ï¿½
+    short enable;		// ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
+    short reserve1[2];
+    double reserve2[4];
+}TSetAxisLeapFrogPrm;
+GT_API GTN_SetAxisLeapFrogPrm(short core,short axis,TSetAxisLeapFrogPrm* pAxisLeapFrogPrm);
+
+GT_API GTN_SetLightPowerCtrlPara(short core,unsigned short ctrlMode,unsigned short *pDutyCycle,unsigned short *pPulseWidth);
+GT_API GTN_GetLightPowerCtrlPara(short core,unsigned short *pCtrlMode,unsigned short *pDutyCycle,unsigned short *pPulseWidth);
+
+GT_API GTN_UTL_ConvertPhysicToLogic(TPhysicInfo *pPhysicInfo,TLogicInfo *pLogicInfo);
+GT_API GTN_OpenSimulation(short core,double time,double ratio);
+GT_API GTN_CloseSimulation(short core);
+GT_API GTN_GetSimulationStatus(short core,short *pSts);
+
+//-------------------------------------------------------------------------------------------------
+// Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------
+// Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½
+typedef struct
+{
+    double pos[2];                               // xï¿½á¡¢yï¿½ï¿½Î»ï¿½ï¿½
+    double compensateValue;	                     // zï¿½á²¹ï¿½ï¿½Î»ï¿½ï¿½
 }TCompensatePathPoint;
 
-// Â·¾¶²¹³¥±í½á¹¹Ìå
+// Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½
 typedef struct
 {
-	short tableIndex;                            // Â·¾¶²¹³¥±íË÷Òý
-	short axisType[2];                           // ²éÑ¯Â·¾¶²¹³¥±íX¡¢Y·½ÏòÎ»ÖÃÀàÐÍ£¬MC_PROFILE:¹æ»®Î»ÖÃ MC_ENCODER:±àÂëÆ÷Î»ÖÃ
-	short axisIndex[2];                          // ²éÑ¯Â·¾¶²¹³¥±íX¡¢Y·½ÏòËùÊ¹ÓÃµÄÖáºÅ						
-	short reserve1[3];                            // ±£ÁôÖµ£¬±ØÐëÎª0
-	double offset[2];                            // xÖá¡¢yÖáÆ«ÒÆ
-	double compensateVelMax;                     // ²¹³¥Öµ±ä»¯µÄ×î´óËÙ¶È £¬µ¥Î»£ºpulse/ms£¬ÓÃÓÚ£¨1£©½áÊø²¹³¥Ê±£¬Ïû³ý²¹³¥ÖµµÄ¹ý³Ì£¨2£©³¬³ö²¹³¥µÄÎó²î´øÊ±£¬²¹³¥Öµ±ä»¯µÄ¹ý³Ì
-	double approachRadius;                       // ²¹³¥ÆðÊ¼µãºÍ²¹³¥ÖÕµãµÄÓÐÐ§ÇøÓò°ë¾¶
-	double workBand;                             // ²¹³¥ÔËÐÐÊ±µÄÎó²î´ø
-	double workHeight;                           // zÖá¹¤×÷¸ß¶È
-	double reserve2[2];							 // ±£ÁôÖµ£¬±ØÐëÎª0
+    short tableIndex;                            // Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short axisType[2];                           // ï¿½ï¿½Ñ¯Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Xï¿½ï¿½Yï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½MC_PROFILE:ï¿½æ»®Î»ï¿½ï¿½ MC_ENCODER:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+    short axisIndex[2];                          // ï¿½ï¿½Ñ¯Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Xï¿½ï¿½Yï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ãµï¿½ï¿½ï¿½ï¿½						
+    short reserve1[3];                            // ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    double offset[2];                            // xï¿½á¡¢yï¿½ï¿½Æ«ï¿½ï¿½
+    double compensateVelMax;                     // ï¿½ï¿½ï¿½ï¿½Öµï¿½ä»¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½ ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½pulse/msï¿½ï¿½ï¿½ï¿½ï¿½Ú£ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½Ä¹ï¿½ï¿½Ì£ï¿½2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ä»¯ï¿½Ä¹ï¿½ï¿½ï¿½
+    double approachRadius;                       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Í²ï¿½ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ë¾¶
+    double workBand;                             // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double workHeight;                           // zï¿½á¹¤ï¿½ï¿½ï¿½ß¶ï¿½
+    double reserve2[2];							 // ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
 }TCompensatePathParameter;
 
-// Â·¾¶²¹³¥×´Ì¬½á¹¹Ìå
+// Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½á¹¹ï¿½ï¿½
 typedef struct{
-	short enable;								 // Â·¾¶²¹³¥Ê¹ÄÜ±êÖ¾
-	short state;								 // Â·¾¶²¹³¥×´Ì¬
-	short errorStatus;                           // Â·¾¶²¹³¥ÊÇ·ñ³¬³öerrorBand  0:Î´³¬³öÎó²î´ø 1£º³¬³öÎó²î´ø
-	short pointIndex;                            // Â·¾¶²¹³¥µ±Ç°µãµÄ²¹³¥ÆðµãË÷Òý
-	double compensateStartPos[2];                // Â·¾¶²¹³¥µ±Ç°µãµÄ²¹³¥ÆðµãÎ»ÖÃ
-	double compensateValue;                      // Â·¾¶²¹³¥µ±Ç°µãµÄ²¹³¥Á¿
-	double reserve1[2];                          // ±£ÁôÖµ£¬Îª0
+    short enable;								 // Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ü±ï¿½Ö¾
+    short state;								 // Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
+    short errorStatus;                           // Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ñ³¬³ï¿½errorBand  0:Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short pointIndex;                            // Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½Ä²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double compensateStartPos[2];                // Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½Ä²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+    double compensateValue;                      // Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½Ä²ï¿½ï¿½ï¿½ï¿½ï¿½
+    double reserve1[2];                          // ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½Îª0
 }TCompensatePathStatus;
 
-// ÉèÖÃÂ·¾¶²¹³¥±í
+// ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 GT_API GTN_SetCompensatePathTable(short core,short tableIndex, TCompensatePathPoint *pCompensatePathPoint, short pointCount);
-// ÉèÖÃÂ·¾¶²¹³¥²ÎÊý
+// ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 GT_API GTN_SetCompensatePathParameter(short core,short axis, TCompensatePathParameter *pCompensatePath);
-// ¶ÁÈ¡Â·¾¶²¹³¥²ÎÊý
+// ï¿½ï¿½È¡Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 GT_API GTN_GetCompensatePathParameter(short core,short axis, TCompensatePathParameter *pCompensatePath);
-// Æô¶¯Â·¾¶²¹³¥
+// ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 GT_API GTN_StartCompensatePath(short core,short axis, short startMode = 0, void* pParameter = NULL);
-// ¹Ø±ÕÂ·¾¶²¹³¥
+// ï¿½Ø±ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 GT_API GTN_StopCompensatePath(short core,short axis, short stopMode = 0, void* pParameter = NULL);
-// »ñÈ¡Â·¾¶²¹³¥×´Ì¬
+// ï¿½ï¿½È¡Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
 GT_API GTN_GetCompensatePathStatus(short core,short axis, TCompensatePathStatus *pCompensatePathStatus);
 
 /*-----------------------------------------------------------*/
-/* ¸¨Öú¾ø¶ÔÖµ±àÂëÆ÷						                              */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½                                          */
 /*-----------------------------------------------------------*/
 //-----------------------------------------------------------------------------------
-// ¹¦ÄÜËµÃ÷£ºÅäÖÃ¸¨Öú¾ø¶ÔÖµ±àÂëÆ÷µÄ¶àÈ¦·¶Î§£¬¸ÃÖ¸Áî¸¨Öú±àÂëÆ÷²»°üº¬ÊÖÂÖ£¬ÎïÀíË÷Òý½Ó¿Ú
-// input£ºcardIndex----¿¨ºÅ£¬È¡Öµ·¶Î§£º[1,16]
-// input£ºstationPhyId----ÎïÀíÕ¾ºÅ£¬È¡Öµ·¶Î§£º[0,64]
-// input£ºencoder----¸¨Öú±àÂëÆ÷ÔÚµ±Ç°Õ¾µÄÎïÀíÐòºÅ£¬È¡Öµ·¶Î§£º[1,8]
-// input£ºrange----¸¨Öú±àÂëÆ÷¶àÈ¦¼ÆÊýµÄ×î´óÖµ¡£ÀýÈç£º±àÂëÆ÷¶àÈ¦ÊÇ16Î»µÄ£¬Ôòrange=65536£¬
+// ï¿½ï¿½ï¿½ï¿½Ëµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¶ï¿½È¦ï¿½ï¿½Î§ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½î¸¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½
+// inputï¿½ï¿½cardIndex----ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,16]
+// inputï¿½ï¿½stationPhyId----ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,64]
+// inputï¿½ï¿½encoder----ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½Ç°Õ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,8]
+// inputï¿½ï¿½range----ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ç£ºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦ï¿½ï¿½16Î»ï¿½Ä£ï¿½ï¿½ï¿½range=65536ï¿½ï¿½
 //-----------------------------------------------------------------------------------
 GT_API GTN_RN_SetAuAbsEncMultiTurnRange(short cardIndex,short stationPhyId,short encoder,double range);
 
 //-----------------------------------------------------------------------------------
-// ¹¦ÄÜËµÃ÷£º¶ÁÈ¡¸¨Öú¾ø¶ÔÖµ±àÂëÆ÷µÄÎ»ÖÃ£¬¸ÃÖ¸Áî¸¨Öú±àÂëÆ÷²»°üº¬ÊÖÂÖ£¬ÎïÀíË÷Òý½Ó¿Ú
-// input£ºcardIndex----¿¨ºÅ£¬È¡Öµ·¶Î§£º[1,16]
-// input£ºstationPhyId----ÎïÀíÕ¾ºÅ£¬È¡Öµ·¶Î§£º[0,64]
-// input£ºencoder----¸¨Öú±àÂëÆ÷ÔÚµ±Ç°Õ¾µÄÎïÀíÐòºÅ£¬È¡Öµ·¶Î§£º[1,8]
-// output£ºpPos----¶ÁÈ¡µÄ¾ø¶ÔÖµ¸¨Öú±àÂëÆ÷µÄÎ»ÖÃÖµ
+// ï¿½ï¿½ï¿½ï¿½Ëµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã£ï¿½ï¿½ï¿½Ö¸ï¿½î¸¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½
+// inputï¿½ï¿½cardIndex----ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,16]
+// inputï¿½ï¿½stationPhyId----ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,64]
+// inputï¿½ï¿½encoder----ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½Ç°Õ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,8]
+// outputï¿½ï¿½pPos----ï¿½ï¿½È¡ï¿½Ä¾ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½Öµ
 //-----------------------------------------------------------------------------------
 GT_API GTN_RN_ReadAuAbsEncPos(short cardIndex,short stationPhyId,short encoder,double *pPos);
 
 //-----------------------------------------------------------------------------------
-// ¹¦ÄÜËµÃ÷£ºÅäÖÃ¾ø¶ÔÖµ±àÂëÆ÷µÄ¶àÈ¦·¶Î§£¬ÎïÀíË÷Òý½Ó¿Ú
-// input£ºcardIndex----¿¨ºÅ£¬È¡Öµ·¶Î§£º[1,16]
-// input£ºstationPhyId----ÎïÀíÕ¾ºÅ£¬È¡Öµ·¶Î§£º[0,64]
-// input£ºencoder----±àÂëÆ÷ÔÚµ±Ç°Õ¾µÄÎïÀíÐòºÅ£¬È¡Öµ·¶Î§£º[1,8]
-// input£ºrange----±àÂëÆ÷¶àÈ¦¼ÆÊýµÄ×î´óÖµ¡£ÀýÈç£º±àÂëÆ÷¶àÈ¦ÊÇ16Î»µÄ£¬Ôòrange=65536£¬
+// ï¿½ï¿½ï¿½ï¿½Ëµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¾ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¶ï¿½È¦ï¿½ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½
+// inputï¿½ï¿½cardIndex----ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,16]
+// inputï¿½ï¿½stationPhyId----ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,64]
+// inputï¿½ï¿½encoder----ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½Ç°Õ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,8]
+// inputï¿½ï¿½range----ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ç£ºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦ï¿½ï¿½16Î»ï¿½Ä£ï¿½ï¿½ï¿½range=65536ï¿½ï¿½
 //-----------------------------------------------------------------------------------
 GT_API GTN_RN_SetAbsEncMultiTurnRange(short cardIndex,short stationPhyId,short encoder,double range);
 
 //-------------------------------------------------------------------------------------------------------
-// ¹¦ÄÜËµÃ÷£º¶ÁÈ¡¾ø¶ÔÖµ±àÂëÆ÷µÄÎ»ÖÃÖµ£¬ÎïÀíË÷Òý½Ó¿Ú
-// input£ºcardIndex----¿¨ºÅ£¬È¡Öµ·¶Î§£º[1,16]
-// input£ºstationPhyId----ÎïÀíÕ¾ºÅ£¬È¡Öµ·¶Î§£º[0,64]
-// input£ºencoder----±àÂëÆ÷ÔÚµ±Ç°Õ¾µÄÎïÀíÐòºÅ£¬È¡Öµ·¶Î§£º[1,8]
-// output£ºpPos----¶ÁÈ¡µÄ¾ø¶ÔÖµ±àÂëÆ÷µÄÎ»ÖÃÖµ
+// ï¿½ï¿½ï¿½ï¿½Ëµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½
+// inputï¿½ï¿½cardIndex----ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,16]
+// inputï¿½ï¿½stationPhyId----ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,64]
+// inputï¿½ï¿½encoder----ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½Ç°Õ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,8]
+// outputï¿½ï¿½pPos----ï¿½ï¿½È¡ï¿½Ä¾ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½Öµ
 //-------------------------------------------------------------------------------------------------------
 GT_API GTN_RN_ReadAbsEncPos(short cardIndex,short stationPhyId,short encoder,double *pPos);
 
 /*-----------------------------------------------------------*/
-/* ´®ÐÐÍ¨Ñ¶Ö¸Áî£¨±¾µØ485/232Í¨ÐÅÖ¸Áî£©  (ÐèÁ´½Ógt_rn.lib£¬²»ÍÆ¼öÊ¹ÓÃ)*/
+/* ï¿½ï¿½ï¿½ï¿½Í¨Ñ¶Ö¸ï¿½î£¨ï¿½ï¿½ï¿½ï¿½485/232Í¨ï¿½ï¿½Ö¸ï¿½î£©  (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½gt_rn.libï¿½ï¿½ï¿½ï¿½ï¿½Æ¼ï¿½Ê¹ï¿½ï¿½)*/
 /*-----------------------------------------------------------*/
 short GT_RN_ComOpen(short index);
 short GT_RN_ComClose(short index);
@@ -7272,115 +9196,185 @@ short GT_RN_ComSetMode(short index,unsigned short comMode);
 
 
 /*-----------------------------------------------------------*/
-/* ´®ÐÐÍ¨Ñ¶Ö¸Áî£¨Í¨ÓÃ485/232Í¨ÐÅÖ¸Áî£©(ÐèÁ´½Ógt_rn.lib£¬²»ÍÆ¼öÊ¹ÓÃ)*/
+/* ï¿½ï¿½ï¿½ï¿½Í¨Ñ¶Ö¸ï¿½î£¨Í¨ï¿½ï¿½485/232Í¨ï¿½ï¿½Ö¸ï¿½î£©(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½gt_rn.libï¿½ï¿½ï¿½ï¿½ï¿½Æ¼ï¿½Ê¹ï¿½ï¿½)*/
 /*-----------------------------------------------------------*/
 short GTN_RN_SerialComOpen(short cardIndex, short stationphyId, short comIndex);
 short GTN_RN_SerialComClose(short cardIndex, short stationphyId, short comIndex);
-short GTN_RN_SerialComRead(short cardIndex, short stationphyId, short comIndex, uint32_t readLen, uint32_t* pResLen, unsigned char * pData);
-short GTN_RN_SerialComWrite(short cardIndex, short stationphyId, short comIndex, uint32_t writeLen , uint32_t* pResLen, unsigned char * pData);
-short GTN_RN_SerialComGetState(short cardIndex, short stationphyId, short comIndex, unsigned char *pState);
-short GTN_RN_SerialComSetSettings(short cardIndex, short stationphyId, short comIndex, uint32_t baudrate,unsigned char stopBits, unsigned char parity);
+short GTN_RN_SerialComRead(short cardIndex, short stationphyId, short comIndex, uint32_t readLen, uint32_t* pResLen, unsigned char* pData);
+short GTN_RN_SerialComWrite(short cardIndex, short stationphyId, short comIndex, uint32_t writeLen, uint32_t* pResLen, unsigned char* pData);
+short GTN_RN_SerialComGetState(short cardIndex, short stationphyId, short comIndex, unsigned char* pState);
+short GTN_RN_SerialComSetSettings(short cardIndex, short stationphyId, short comIndex, uint32_t baudrate, unsigned char stopBits, unsigned char parity);
 short GTN_RN_SerialComClearErr(short cardIndex, short stationphyId, short comIndex, unsigned char flag);
 short GTN_RN_SerialComSetMode(short cardIndex, short stationphyId, short comIndex, unsigned short comMode);
 
-//¶ÁÈ¡ÍøÂç¸¨Öú±àÂëÆ÷
+//ï¿½ï¿½È¡ï¿½ï¿½ï¿½ç¸¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 GT_API GTN_RN_GetRemotAuEncPos(short cardIndex, short stationPhyId, short auEncIndex,double *pAuEncPos,short anEncCount);
 
 //-------------------------------------------------------------------------------------------------------
-//»ñÈ¡ÖáÄ£¿éLEDÏÔÊ¾Ä£Ê½
+//ï¿½ï¿½È¡ï¿½ï¿½Ä£ï¿½ï¿½LEDï¿½ï¿½Ê¾Ä£Ê½
 //GTN_RN_ReadLedDispalyMode(short cardIndex, short stationPhyId, unsigned char *pMode, unsigned char *pRadix)
-// mode:µÆ°åÊýÂë¹ÜÏÔÊ¾Ä£Ê½£º 
-//0£º¹¤×÷Ä£Ê½(ÉÏµç³õÊ¼×´Ì¬ÏÔÊ¾Áã£¬ÖáÊ¹ÄÜºóÏÔÊ¾Ð¡Êýµã£¬¾ßÌåÇÐ»»·½Ê½´ý¶¨)£»  
-//1£ºÕ¾ºÅÄ£Ê½(ÏÔÊ¾Õ¾ºÅ£¬¶ÌÔÝÏÔÊ¾²¦Âë±ä¶¯)£»  
-//2£º±¨¾¯Ä£Ê½(Ô¤Áô)£»
-//radix:µÆ°åÊýÂë¹ÜÏÔÊ¾½øÖÆ£º 0£º¶þ½øÖÆ£»  1£º°Ë½øÖÆ£»  2£ºÊ®½øÖÆ£»  3£ºÊ®Áù½øÖÆ£»
+// mode:ï¿½Æ°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾Ä£Ê½ï¿½ï¿½ 
+//0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½(ï¿½Ïµï¿½ï¿½Ê¼×´Ì¬ï¿½ï¿½Ê¾ï¿½ã£¬ï¿½ï¿½Ê¹ï¿½Üºï¿½ï¿½ï¿½Ê¾Ð¡ï¿½ï¿½ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½)ï¿½ï¿½  
+//1ï¿½ï¿½Õ¾ï¿½ï¿½Ä£Ê½(ï¿½ï¿½Ê¾Õ¾ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ä¶¯)ï¿½ï¿½  
+//2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½(Ô¤ï¿½ï¿½)ï¿½ï¿½
+//radix:ï¿½Æ°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Æ£ï¿½ 0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ£ï¿½  1ï¿½ï¿½ï¿½Ë½ï¿½ï¿½Æ£ï¿½  2ï¿½ï¿½Ê®ï¿½ï¿½ï¿½Æ£ï¿½  3ï¿½ï¿½Ê®ï¿½ï¿½ï¿½ï¿½ï¿½Æ£ï¿½
 //-------------------------------------------------------------------------------------------------------
 GT_API GTN_RN_ReadLedDispalyMode(short cardIndex, short stationPhyId, unsigned char *pMode, unsigned char *pRadix);
 //-------------------------------------------------------------------------------------------------------
-//ÉèÖÃÖáÄ£¿éLEDÏÔÊ¾Ä£Ê½
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½LEDï¿½ï¿½Ê¾Ä£Ê½
 //GTN_RN_WriteLedDisplayMode(short cardIndex, short stationPhyId, unsigned char mode, unsigned char radix)
-// mode:µÆ°åÊýÂë¹ÜÏÔÊ¾Ä£Ê½£º 
-//0£º¹¤×÷Ä£Ê½(ÉÏµç³õÊ¼×´Ì¬ÏÔÊ¾Áã£¬ÖáÊ¹ÄÜºóÏÔÊ¾Ð¡Êýµã£¬¾ßÌåÇÐ»»·½Ê½´ý¶¨)£»  
-//1£ºÕ¾ºÅÄ£Ê½(ÏÔÊ¾Õ¾ºÅ£¬¶ÌÔÝÏÔÊ¾²¦Âë±ä¶¯)£»  
-//2£º±¨¾¯Ä£Ê½(Ô¤Áô)£»
-//radix:µÆ°åÊýÂë¹ÜÏÔÊ¾½øÖÆ£º 0£º¶þ½øÖÆ£»  1£º°Ë½øÖÆ£»  2£ºÊ®½øÖÆ£»  3£ºÊ®Áù½øÖÆ£»
+// mode:ï¿½Æ°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾Ä£Ê½ï¿½ï¿½ 
+//0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½(ï¿½Ïµï¿½ï¿½Ê¼×´Ì¬ï¿½ï¿½Ê¾ï¿½ã£¬ï¿½ï¿½Ê¹ï¿½Üºï¿½ï¿½ï¿½Ê¾Ð¡ï¿½ï¿½ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½)ï¿½ï¿½  
+//1ï¿½ï¿½Õ¾ï¿½ï¿½Ä£Ê½(ï¿½ï¿½Ê¾Õ¾ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ä¶¯)ï¿½ï¿½  
+//2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½(Ô¤ï¿½ï¿½)ï¿½ï¿½
+//radix:ï¿½Æ°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Æ£ï¿½ 0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ£ï¿½  1ï¿½ï¿½ï¿½Ë½ï¿½ï¿½Æ£ï¿½  2ï¿½ï¿½Ê®ï¿½ï¿½ï¿½Æ£ï¿½  3ï¿½ï¿½Ê®ï¿½ï¿½ï¿½ï¿½ï¿½Æ£ï¿½
 //-------------------------------------------------------------------------------------------------------
 GT_API GTN_RN_WriteLedDisplayMode(short cardIndex, short stationPhyId, unsigned char mode, unsigned char radix);
 //-------------------------------------------------------------------------------------------------------
-//µ¼³öËÅ·þ²ÎÊý
+//ï¿½ï¿½ï¿½ï¿½ï¿½Å·ï¿½ï¿½ï¿½ï¿½ï¿½
 //GTN_RN_ExportServoParams(short cardIndex, short stationPhyId, short axis, char *pFilePath, char *pFileName)
-// cardIndex:´Ó1¿ªÊ¼
-// stationPhyId:´Ó0¿ªÊ¼
-// axis:ÖáºÅ
-// pFilePath£ºÄ£°åÎÄ¼þµÄÂ·¾¶
-// pFileName£ºµ¼³öµÄÎÄ¼þÂ·¾¶¼°Ãû³Æ
+// cardIndex:ï¿½ï¿½1ï¿½ï¿½Ê¼
+// stationPhyId:ï¿½ï¿½0ï¿½ï¿½Ê¼
+// axis:ï¿½ï¿½ï¿½
+// pFilePathï¿½ï¿½Ä£ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Â·ï¿½ï¿½
+// pFileNameï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //-------------------------------------------------------------------------------------------------------
 GT_API GTN_RN_ExportServoParams(short cardIndex, short stationPhyId, short axis, char *pFilePath, char *pFileName);
 //-------------------------------------------------------------------------------------------------------
-//µ¼ÈëËÅ·þ²ÎÊý
+//ï¿½ï¿½ï¿½ï¿½ï¿½Å·ï¿½ï¿½ï¿½ï¿½ï¿½
 //GTN_RN_ImportServoParams(short cardIndex, short stationPhyId, short axis, char *pFilePath, char *pFileName)
-// cardIndex:´Ó1¿ªÊ¼
-// stationPhyId:´Ó0¿ªÊ¼
-// axis:ÖáºÅ
-// pFilePath£ºÄ£°åÎÄ¼þµÄÂ·¾¶
-// pFileName£ºµ¼³öµÄÎÄ¼þÂ·¾¶¼°Ãû³Æ
+// cardIndex:ï¿½ï¿½1ï¿½ï¿½Ê¼
+// stationPhyId:ï¿½ï¿½0ï¿½ï¿½Ê¼
+// axis:ï¿½ï¿½ï¿½
+// pFilePathï¿½ï¿½Ä£ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Â·ï¿½ï¿½
+// pFileNameï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //-------------------------------------------------------------------------------------------------------
 GT_API GTN_RN_ImportServoParams(short cardIndex, short stationPhyId, short axis, char *pFilePath, char *pFileName);
 
-//»ñÈ¡¶àÖá¾ø¶ÔÖµ±àÂëÆ÷
+//ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 typedef struct 
 {
-	short stationId;
-	short axis;
-	uint64_t multiLines;
-	double pos;
+    short stationId;
+    short axis;
+    uint64_t multiLines;
+    double pos;
 }StAbsEncPos;
 GT_API GTN_RN_GetMultiAbsEncPos(short cardIndex,StAbsEncPos* pStAbsEncPos,short count);
 
 //-------------------------------------------------------------------------------------------------------
-// ³õÊ¼»¯PC¶ËDLL Buffer´óÐ¡
-// cardIndex:´Ó1¿ªÊ¼
-// stationPhyId:´Ó0¿ªÊ¼
-// bufferAddrWidth£ºÉèÖÃDLL BufferµÄ¿Õ¼ä´óÐ¡
+// ï¿½ï¿½ï¿½Ã±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦/ï¿½ï¿½È¦Î»ï¿½ï¿½ï¿½ï¿½Ä¿Ç°ï¿½ï¿½402Ö§ï¿½Ö£ï¿½
+// cardIndexï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// stationPhyIdï¿½ï¿½Õ¾ï¿½ï¿½
+// singleBitNumï¿½ï¿½ï¿½ï¿½È¦ï¿½ï¿½ï¿½ï¿½ÖµÎ»ï¿½ï¿½ï¿½ï¿½Ä¿Ç°Ö§ï¿½ï¿½25Î»
+// multiBitNumï¿½ï¿½ï¿½ï¿½È¦ï¿½ï¿½ï¿½ï¿½ÖµÎ»ï¿½ï¿½ï¿½ï¿½ Ä¿Ç°Ð´0
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_SetAbsEncRange(short cardIndex, short stationPhyId, short singleBitNum, short multiBitNum);
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½Ã±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+// cardIndexï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// stationPhyIdï¿½ï¿½Õ¾ï¿½ï¿½
+// encoderï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// typeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// 0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦ï¿½ï¿½ï¿½ï¿½
+// 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½
+// 2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// 3ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+// 4ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// 5ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò²ï¿½Öµï¿½ï¿½ï¿½ï¿½
+// 6ï¿½ï¿½ï¿½ï¿½È¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// pData:Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½Ï¸Ëµï¿½ï¿½ï¿½ï¿½Î¿ï¿½Ö¸ï¿½ï¿½Ëµï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_SetEncoderInfo(short cardIndex, short stationPhyId, short encoder, short type, uint32_t *pData);
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+// cardIndexï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// stationPhyIdï¿½ï¿½Õ¾ï¿½ï¿½
+// encoderï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// typeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// 0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦ï¿½ï¿½ï¿½ï¿½
+// 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½
+// 2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// 3ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+// 4ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// 5ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò²ï¿½Öµï¿½ï¿½ï¿½ï¿½
+// 6ï¿½ï¿½ï¿½ï¿½È¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// pData:ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½Ï¸Ëµï¿½ï¿½ï¿½ï¿½Î¿ï¿½Ö¸ï¿½ï¿½Ëµï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_GetEncoderInfo(short cardIndex, short stationPhyId, short encoder, short type, uint32_t *pData);
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½Ê¼ï¿½ï¿½PCï¿½ï¿½DLL Bufferï¿½ï¿½Ð¡
+// cardIndex:ï¿½ï¿½1ï¿½ï¿½Ê¼
+// stationPhyId:ï¿½ï¿½0ï¿½ï¿½Ê¼
+// bufferAddrWidthï¿½ï¿½ï¿½ï¿½ï¿½ï¿½DLL Bufferï¿½Ä¿Õ¼ï¿½ï¿½Ð¡
 //-------------------------------------------------------------------------------------------------------
 GT_API GTN_RN_ScanCmpInitialWrBuffer(short cardIndex, short stationPhyId, unsigned short bufferAddrWidth);
 //-------------------------------------------------------------------------------------------------------
-// »ñÈ¡µ±Ç°DLL BufferÖÐµÄÓÐÐ§Êý¾ÝÁ¿ºÍ»¹ÓÐ¶àÉÙÊ£Óà¿Õ¼ä¿ÉÒÔÐ´Èë
-// cardIndex:´Ó1¿ªÊ¼
-// stationPhyId:´Ó0¿ªÊ¼
-// pValidWordNum£ºµ±Ç°DLL Buffer»¹ÓÐ¶àÉÙword¿Õ¼äµÄÊý¾Ý£¬Ã»ÓÐ·¢ËÍµ½ÖáÄ£¿é
-// pRemainsWordSpase: µ±Ç°DLL Buffer»¹ÓÐ¶àÉÙword¿Õ¼äµÄÊý¾Ý£¬ÔÊÐíÓÃ»§Ð´Èë
+// ï¿½ï¿½È¡ï¿½ï¿½Ç°DLL Bufferï¿½Ðµï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í»ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½Ê£ï¿½ï¿½Õ¼ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½
+// cardIndex:ï¿½ï¿½1ï¿½ï¿½Ê¼
+// stationPhyId:ï¿½ï¿½0ï¿½ï¿½Ê¼
+// pValidWordNumï¿½ï¿½ï¿½ï¿½Ç°DLL Bufferï¿½ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½wordï¿½Õ¼ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½Ã»ï¿½Ð·ï¿½ï¿½Íµï¿½ï¿½ï¿½Ä£ï¿½ï¿½
+// pRemainsWordSpase: ï¿½ï¿½Ç°DLL Bufferï¿½ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½wordï¿½Õ¼ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ð´ï¿½ï¿½
 //-------------------------------------------------------------------------------------------------------
 GT_API GTN_RN_ScanCmpGetWrBufferStatus(short cardIndex, short stationPhyId, uint32_t *pValidWordNum, uint32_t *pRemainsWordSpase);
 //-------------------------------------------------------------------------------------------------------
-// ½«Êý¾ÝÐ´ÈëDLL BufferÖÐ
-// cardIndex:´Ó1¿ªÊ¼
-// stationPhyId:´Ó0¿ªÊ¼
-// pData£ºÒªÐ´ÈëµÄÊý¾ÝÖ¸Õë
-// pWordNumVaild: ÆÚÍûÐ´ÈëµÄÊý¾ÝµÄwordµÄ¸öÊý
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½DLL Bufferï¿½ï¿½
+// cardIndex:ï¿½ï¿½1ï¿½ï¿½Ê¼
+// stationPhyId:ï¿½ï¿½0ï¿½ï¿½Ê¼
+// pDataï¿½ï¿½ÒªÐ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
+// pWordNumVaild: ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ýµï¿½wordï¿½Ä¸ï¿½ï¿½ï¿½
 //-------------------------------------------------------------------------------------------------------
 GT_API GTN_RN_ScanCmpWrBufferData(short cardIndex, short stationPhyId, unsigned short *pData, uint32_t wordNum, uint32_t *pWordNumVaild);
 //-------------------------------------------------------------------------------------------------------
-// ¸ù¾ÝÖáÄ£¿éµÄbuffer×´Ì¬£¬½«DLL BufferÖÐµÄÊý¾Ý¶ÁÈ¡£¬¸üÐÂµ½ÖáÄ£¿é»º³åÇø¡£
-// cardIndex:´Ó1¿ªÊ¼
-// stationPhyId:´Ó0¿ªÊ¼
-// dataType£ºÐèÒªÑ¹Èë»º³åÇøµÄÊý¾ÝÀàÐÍ: 0£ºSCAN£¬Õñ¾µÏà¹ØÊý¾Ý1£ºCMP£¬Î»ÖÃ±È½ÏÏà¹ØÊý¾Ý
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½buffer×´Ì¬ï¿½ï¿½ï¿½ï¿½DLL Bufferï¿½Ðµï¿½ï¿½ï¿½ï¿½Ý¶ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Âµï¿½ï¿½ï¿½Ä£ï¿½é»ºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// cardIndex:ï¿½ï¿½1ï¿½ï¿½Ê¼
+// stationPhyId:ï¿½ï¿½0ï¿½ï¿½Ê¼
+// dataTypeï¿½ï¿½ï¿½ï¿½ÒªÑ¹ï¿½ë»ºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: 0ï¿½ï¿½SCANï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½CMPï¿½ï¿½Î»ï¿½Ã±È½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //-------------------------------------------------------------------------------------------------------
 GT_API GTN_RN_ScanCmpUpdateBufferDataToFPGA(short cardIndex, short stationPhyId, short dataType);
 //-------------------------------------------------------------------------------------------------------
-// Ê¹ÄÜÖáÄ£¿é»º³åÇø£¬Ê¹ÄÜºóÖáÄ£¿é´ÓÖ¸Áî»º³åÇø¶ÁÈ¡Ö¸Áî£¨Ö»Ó¦ÓÃÓÚÕñ¾µ£©
-// cardIndex:´Ó1¿ªÊ¼
-// stationPhyId:´Ó0¿ªÊ¼
+// Ê¹ï¿½ï¿½ï¿½ï¿½Ä£ï¿½é»ºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Üºï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½Ö¸ï¿½î»ºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Ö¸ï¿½î£¨Ö»Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ñ¾µ£ï¿½
+// cardIndex:ï¿½ï¿½1ï¿½ï¿½Ê¼
+// stationPhyId:ï¿½ï¿½0ï¿½ï¿½Ê¼
 //-------------------------------------------------------------------------------------------------------
 GT_API GTN_RN_ScanEnableFifo(short cardIndex, short stationPhyId);
 //-------------------------------------------------------------------------------------------------------
-// ¹Ø±ÕÖáÄ£¿é»º³åÇø£¬¹Ø±ÕºóÖáÄ£¿éÔÝÍ£´Ó»º³åÇø¶ÁÈ¡Ö¸Áî£¨Ö»Ó¦ÓÃÓÚÕñ¾µ£©
-// cardIndex:´Ó1¿ªÊ¼
-// stationPhyId:´Ó0¿ªÊ¼
+// ï¿½Ø±ï¿½ï¿½ï¿½Ä£ï¿½é»ºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø±Õºï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½Í£ï¿½Ó»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Ö¸ï¿½î£¨Ö»Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ñ¾µ£ï¿½
+// cardIndex:ï¿½ï¿½1ï¿½ï¿½Ê¼
+// stationPhyId:ï¿½ï¿½0ï¿½ï¿½Ê¼
 //-------------------------------------------------------------------------------------------------------
 GT_API GTN_RN_ScanDisableFifo(short cardIndex, short stationPhyId);
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½xmlï¿½Ä¼ï¿½ï¿½ï¿½
+// cardIndex:		    ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+// path:                ï¿½ï¿½ÒªÐ´ï¿½ï¿½ï¿½xmlï¿½Ä¼ï¿½Â·ï¿½ï¿½+ï¿½ï¿½ï¿½ï¿½
+// tpfUpdataProgressPt: ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â¼ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½xmlï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½
+// ptrv:                ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½tpfUpdataProgressPtï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// progress:            ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½tpfUpdataProgressPtï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_UploadServoParaFile(short cardIndex, short stationPhyId, char *path, void(*tpfUpdataProgressPt)(void*, short*), void* ptrv, short& progress);
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½xmlï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// cardIndex:		    ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+// path:                ï¿½ï¿½ÒªÐ´ï¿½ï¿½ï¿½xmlï¿½Ä¼ï¿½Â·ï¿½ï¿½+ï¿½ï¿½ï¿½ï¿½
+// tpfUpdataProgressPt: ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â¼ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½xmlï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½
+// ptrv:                ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½tpfUpdataProgressPtï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// progress:            ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½tpfUpdataProgressPtï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_DownloadServoParaFile(short cardIndex,  short stationPhyId, char* path, void(*tpfUpdataProgressPt)(void*, short*), void* ptrv, short& progress);
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// cardIndex:		    ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+// progress:            ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ä½ï¿½ï¿½ï¿½,È¡Öµï¿½ï¿½Î§[0..100]
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_UpdateProgress(short cardIndex, short stationPhyId, unsigned short progress);
 
-//»ñÈ¡ÖáÍ£Ö¹ÏêÏ¸ÐÅÏ¢¹¦ÄÜ
+//ï¿½ï¿½È¡ï¿½ï¿½Í£Ö¹ï¿½ï¿½Ï¸ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½
 GT_API GTN_GetAxisStopInfo(short core,short axis,int32_t *pInfo,double *pPos,short count=1);
 GT_API GTN_ClearAxisStopInfo(short core,short axis,short count=1);
 GT_API GTN_SetAxisStopInfoMode(short core,short axis,short *pMode,short count);
@@ -7388,45 +9382,369 @@ GT_API GTN_GetAxisStopInfoMode(short core,short axis,short *pMode,short count);
 
 typedef struct TPvtLinePrm
 {
-	short mode;  //²ÎÊýÉúÐ§Ä£Ê½
-	short smoothTimer;  //Æ½ÎÈÊ±¼ä
-	int32_t moveTime;  //ÔË¶¯Ê±¼ä
-	int32_t pad;       //±£ÁôÎ»
-	double synVel;   //ºÏ³ÉÄ¿±êËÙ¶È
-	double synAcc;  //ºÏ³É¼ÓËÙ¶È
-	double synJeck; //ºÏ³É¼Ó¼ÓËÙ¶È
+    short mode;  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§Ä£Ê½
+    short smoothTimer;  //Æ½ï¿½ï¿½Ê±ï¿½ï¿½
+    int32_t moveTime;  //ï¿½Ë¶ï¿½Ê±ï¿½ï¿½
+    int32_t pad;       //ï¿½ï¿½ï¿½ï¿½Î»
+    double synVel;   //ï¿½Ï³ï¿½Ä¿ï¿½ï¿½ï¿½Ù¶ï¿½
+    double synAcc;  //ï¿½Ï³É¼ï¿½ï¿½Ù¶ï¿½
+    double synJeck; //ï¿½Ï³É¼Ó¼ï¿½ï¿½Ù¶ï¿½
 }TPvtLinePrm;
 GT_API GTN_PvtLine(short core,short axisCount,short *moveAxis,int32_t *pos,TPvtLinePrm *pPrm);
 
 GT_API GTN_GetTerminalLinkCount(short core,unsigned short *pTerminalLinkCount);
 
 
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½Ã±ï¿½ï¿½ï¿½ï¿½ï¿½ID
+// cardIndex:		ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:    Õ¾ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼
+// regionId:        ï¿½ï¿½ÒªÐ´ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½IDï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..15]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö®Ç°Ä¬ï¿½ï¿½Îª240ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_SetLocalHubID(short cardIndex, short stationPhyId, short regionId);
 
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ID
+// cardIndex:		ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:    Õ¾ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼
+// pRegionId:       ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½IDï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..15]
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_GetLocalHubID(short cardIndex, short stationPhyId, short *pRegionId);
 
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½hubï¿½ï¿½Ï¢
+// cardIndex:		ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:    Õ¾ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼
+// regionLocalId:   ï¿½ï¿½ï¿½Ã±ï¿½ï¿½ï¿½ï¿½ï¿½IDï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..15]
+// pRegionID:       ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½Úµï¿½ï¿½ï¿½IDï¿½ï¿½ È¡Öµï¿½ï¿½Î§[0..15]
+// regionNums:      ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..16]
+// comByteSize:     ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½Ö½ï¿½ï¿½ï¿½(bytes)ï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..240]
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_SetMultiHubCfgInfo(short cardIndex, short stationPhyId, short regionLocalId, short* pRegionID, short regionNums, short comByteSize);
 
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½hubï¿½ï¿½Ï¢
+// cardIndex:		ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:    Õ¾ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼
+// pRegionLocalId:  ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½IDï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..15]
+// pRegionID:       ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½Úµï¿½ï¿½ï¿½IDï¿½ï¿½ È¡Öµï¿½ï¿½Î§[0..15]
+// pRegionNums:     ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..16]
+// pComByteSize:    ï¿½ï¿½È¡ï¿½ï¿½Ö®ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½Ö½ï¿½ï¿½ï¿½(bytes)ï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..240]
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_GetMultiHubCfgInfo(short cardIndex, short stationPhyId, short *pRegionLocalId, short* pRegionID, short* pRegionNums, short *pComByteSize);
 
+//-------------------------------------------------------------------------------------------------------
+// Ð´ï¿½ï¿½ï¿½Ýµï¿½Ä¿ï¿½ï¿½ï¿½ï¿½
+// cardIndex:		ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:    Õ¾ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼
+// regionId:        Ð´ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½IDï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..15]
+// pData:           Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// byteOffset:      Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ÝµÄµï¿½Ö·Æ«ï¿½Ã£ï¿½ï¿½ï¿½ÖµÎª4ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..240]
+// byteNum:         ÒªÐ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÖµÎª4ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..240]
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_MultiHubPcComWr(short cardIndex, short stationPhyId, short regionId, unsigned char* pData, unsigned short byteOffset, unsigned short byteNum);
 
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½
+// cardIndex:		ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:    Õ¾ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼
+// regionId:        Ð´ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½IDï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..15]
+// pData:           Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// byteOffset:      Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ÝµÄµï¿½Ö·Æ«ï¿½Ã£ï¿½ï¿½ï¿½ÖµÎª4ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..240]
+// byteNum:         ÒªÐ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÖµÎª4ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..240]
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_MultiHubPcComRd(short cardIndex, short stationPhyId, short regionId, unsigned char* pData, unsigned short byteOffset, unsigned short byteNum);
 
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½È¡Eepromï¿½ï¿½ï¿½Ý¡ï¿½
+// cardIndex:		ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:    Õ¾ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼
+// ofst:            ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½ï¿½Eepromï¿½ï¿½Ö·
+// pValue:          ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Öµ
+// num:             ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½Ä¸ï¿½ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_ReadEepromData(short cardIndex, short stationPhyId, unsigned short ofst, unsigned char* pValue, unsigned short num);
 
+//-------------------------------------------------------------------------------------------------------
+// Ð´ï¿½ï¿½Eepromï¿½ï¿½ï¿½Ý¡ï¿½
+// cardIndex:		ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:    Õ¾ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼
+// ofst:            ï¿½ï¿½ÒªÐ´ï¿½ï¿½ï¿½Eepromï¿½ï¿½Ö·
+// pValue:          ï¿½ï¿½ÒªÐ´ï¿½ï¿½ï¿½Öµ
+// num:             ï¿½ï¿½ÒªÐ´ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_WriteEepromData(short cardIndex, short stationPhyId, unsigned short ofst, unsigned char* pValue, unsigned short num);
 
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+// cardIndex:		ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:    Õ¾ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼
+// slotInfo:        [15--8]ï¿½ï¿½Ê¾ï¿½å¿¨ï¿½ï¿½ï¿½Í£ï¿½ 1: ï¿½×°å£»2ï¿½ï¿½ï¿½Ó°å£»3ï¿½ï¿½Í¨Ñ¶ï¿½ï¿½ [7--0]ï¿½ï¿½Ê¾ï¿½å¿¨ï¿½ï¿½Å£ï¿½ï¿½ß°ï¿½Î»Îª1(ï¿½×°ï¿½)Ê±ï¿½ï¿½È¡Öµï¿½ï¿½Î§ 1ï¿½ï¿½ï¿½ß°ï¿½Î»Îª2ï¿½ï¿½ï¿½Ó°å£©Ê±ï¿½ï¿½È¡Öµï¿½ï¿½Î§[1..7]; ï¿½ß°ï¿½Î»Îª3ï¿½ï¿½Í¨Ñ¶ï¿½å£©Ê±ï¿½ï¿½È¡Öµï¿½ï¿½Î§ 1
+// mcDef:           ï¿½ï¿½Ô´ï¿½ê¶¨ï¿½å£¬ï¿½ï¿½Ï¸Ëµï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½Â¼I 
+// pData:           ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Öµï¿½ï¿½16Î»ï¿½ï¿½Öµï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_GetStationSlotResourceEx(short cardIndex, short stationPhyId, short slotInfo, short mcDef, unsigned short *pData);
 
+GT_API GTN_RN_GetStationInfomation(short cardIndex, short stationPhyId, unsigned char infoType, unsigned char infoCount, uint32_t* pInfo);
 
+//-------------------------------------------------------------------------------------------------------
+// 500ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½cpuï¿½ï¿½IlinkÄ£ï¿½ï¿½ï¿½ï¿½ï¿½È¨ï¿½ï¿½Ä¬ï¿½Ï´ï¿½cpuï¿½É¿Ø£ï¿½ï¿½ï¿½cpuï¿½ï¿½Ä£ï¿½é·¢ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¨ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½cpu
+// cardIndex:		ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:    Õ¾ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼
+// moduleId:        IlinkÄ£ï¿½ï¿½Idï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..63]
+// data:            Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½bit0ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½1ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½10msï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ÎªÃ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_IlinkSetHeartbeat(short cardIndex, short stationPhyId, short moduleId, unsigned short data);
 
+//-------------------------------------------------------------------------------------------------------
+// 500ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½CPUÍ¨ï¿½ï¿½Ð´
+// cardIndex:		ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:    Õ¾ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼
+// dataCount:       Ò»ï¿½ï¿½Í¨Ñ¶Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§[1..256]dword
+// data:            Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_IlinkPcComWr(short cardIndex, short stationPhyId, unsigned short dataCount, uint32_t* data);
 
+//-------------------------------------------------------------------------------------------------------
+// 500ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½CPUÍ¨ï¿½Å¶ï¿½
+// cardIndex:		ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:    Õ¾ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼
+// dataCount:       Ò»ï¿½ï¿½Í¨Ñ¶ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§[1..256]dword
+// data:            ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_IlinkPcComRd(short cardIndex, short stationPhyId, unsigned short dataCount, uint32_t* data);
 
+//-------------------------------------------------------------------------------------------------------
+// 	ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+// cardIndex:		ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:    Õ¾ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼
+// pData:           ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+// dataCount:       ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½
+// pResCount:       Êµï¿½Ê»ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½
+// slotInfo:        [15--8]ï¿½ï¿½Ê¾ï¿½å¿¨ï¿½ï¿½ï¿½Í£ï¿½
+//  1: ï¿½×°å£»2ï¿½ï¿½ï¿½Ó°å£»3ï¿½ï¿½Í¨Ñ¶ï¿½ï¿½
+//	[7--0]ï¿½ï¿½Ê¾ï¿½å¿¨ï¿½ï¿½Å£ï¿½
+//	ï¿½ß°ï¿½Î»Îª1(ï¿½×°ï¿½)Ê±ï¿½ï¿½È¡Öµï¿½ï¿½Î§ 1ï¿½ï¿½
+//	ï¿½ß°ï¿½Î»Îª2ï¿½ï¿½ï¿½Ó°å£©Ê±ï¿½ï¿½È¡Öµï¿½ï¿½Î§[1..7];
+//  ï¿½ß°ï¿½Î»Îª3ï¿½ï¿½Í¨Ñ¶ï¿½å£©Ê±ï¿½ï¿½È¡Öµï¿½ï¿½Î§ 1
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_GetStationSlotResource(short cardIndex, short stationPhyId, uint32_t* pData, short dataCount, short* pResCount, short slotInfo);
 
+GT_API GTN_RN_WriteResourceTable(short cardIndex, uint32_t *pResDef, short count, char* pData, short* pDataSize);
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// cardIndex:		    ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+// fltLength:           ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¬ï¿½ï¿½Öµ100ï¿½ï¿½ï¿½ï¿½ï¿½ã·½Ê½ï¿½ï¿½fltLength = 0.443*ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½/ï¿½ï¿½Ö¹Æµï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_SamplingFilterSet(short cardIndex, short stationPhyId, short fltLength);
 
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡
+// cardIndex:		    ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+// fltLength:           ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¬ï¿½ï¿½Öµ100ï¿½ï¿½ï¿½ï¿½ï¿½ã·½Ê½ï¿½ï¿½fltLength = 0.443*ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½/ï¿½ï¿½Ö¹Æµï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_SamplingFilterGet(short cardIndex, short stationPhyId, short *pFltLength);
 
+//-------------------------------------------------------------------------------------------------------
+// PCï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¿ï¿½
+// cardIndex:		    ï¿½ï¿½ï¿½ï¿½
+// callBackFun:         ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½
+// pParamA:             ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½NULL
+//-------------------------------------------------------------------------------------------------------
+typedef short (*FunCallBack)(void*, int32_t, void*);
+GT_API GTN_RN_InitialUserCallBack(short cardIndex,FunCallBack callBackFun, void* pParamA);
 
+//-------------------------------------------------------------------------------------------------------
+// PCÍ¨Ñ¶Ð´ï¿½ï¿½ï¿½ï¿½
+// cardIndex:		    ï¿½ï¿½ï¿½ï¿½
+// phyStationId:        PCÍ¨Ñ¶Ê±ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½Í¶Ô¶Ëµï¿½IDï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¶ï¿½Î»PCï¿½Ë£ï¿½idï¿½ï¿½È¡Öµï¿½ï¿½Î§[0,31]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¶ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë£ï¿½id=0xF2
+// pData:               ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½NULL
+// byteNumï¿½ï¿½            PCÍ¨ï¿½ï¿½ï¿½Ö½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§[0,240]
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_UserOverRnWrite(short cardIndex, short phyStationId, unsigned char* pData, int32_t byteNum);
 
+//-------------------------------------------------------------------------------------------------------
+// Ð´phyï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+// cardIndex:		    ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+// phyIndex:            phyÐ¾Æ¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§[1..2]
+// phyAddr:             phyÐ¾Æ¬ï¿½ï¿½Ö·ï¿½ï¿½ È¡Öµ0
+// regAddr:             phyï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½Ö·
+// data:               ÒªÐ´ï¿½ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_WritePhyRegValue(short cardIndex, short stationPhyId, short phyIndex, short phyAddr, short regAddr, short data);
 
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½phyï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+// cardIndex:		    ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+// phyIndex:            phyÐ¾Æ¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§[1..2]
+// phyAddr:             phyÐ¾Æ¬ï¿½ï¿½Ö·ï¿½ï¿½ È¡Öµ0
+// regAddr:             phyï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½Ö·
+// pData:               ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ä¼Ä´ï¿½ï¿½ï¿½Öµ
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_ReadPhyRegValue(short cardIndex, short stationPhyId, short phyIndex, short phyAddr, short regAddr, short* pData);
 
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½phyï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+// cardIndex:		    ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+// phyIndex:            phyÐ¾Æ¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§[1..2]
+// pData:               ï¿½ï¿½È¡ï¿½ï¿½×´Ì¬Öµ ï¿½ï¿½ï¿½ï¿½ï¿½Ý¶ï¿½ï¿½ï¿½Îªï¿½ï¿½
+//                      [15]=wr_active/wr_ing(1ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½)  
+//                      [12:8]=reg_addr(ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½Ö·)  
+//                      [7]=rd_active/rd_ing(1ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½)  
+//                      [4:0]=phy_addr(phyÐ¾Æ¬ï¿½ï¿½Ö·)
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_ReadPhySts(short cardIndex, short stationPhyId, short phyIndex, short* pData);
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½
+// cardIndex:          ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_ScanInitial(short cardIndex, short stationPhyId);
+
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´ï¿½á¹¹ï¿½å£º 
+typedef struct {
+    unsigned short type;        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0 : Ö±ï¿½ï¿½1 : Ô²ï¿½ï¿½  
+    unsigned short closewise;  //Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ò£¬½ï¿½Ô²ï¿½ï¿½Ê¹ï¿½ï¿½  
+    uint32_t cutEnable;    //ï¿½Ç·ï¿½ï¿½Ð¸î£¬0: ï¿½ï¿½ï¿½Ð¸î£»1:ï¿½Ð¸ï¿½  
+    double targetPosX;          //Xï¿½ï¿½Ä¿ï¿½ï¿½Î»ï¿½Ã£ï¿½ï¿½ï¿½Î»mm  
+    double targetPosY;          //Yï¿½ï¿½Ä¿ï¿½ï¿½Î»ï¿½Ã£ï¿½ï¿½ï¿½Î»mm  
+    double circleCenterX;       //Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Xï¿½ï¿½ï¿½ï¿½ï¿½ê£¬ï¿½ï¿½Î»mm (ï¿½ï¿½Ô²ï¿½ï¿½Ê¹ï¿½ï¿½) 
+    double circleCenterY;       //Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Yï¿½ï¿½ï¿½ï¿½ï¿½ê£¬ï¿½ï¿½Î»mm(ï¿½ï¿½Ô²ï¿½ï¿½Ê¹ï¿½ï¿½) 
+}StBatteryTargetSegment;
+
+#define MAX_SEGMENT_NUM (100)  
+typedef struct {
+    unsigned short segmentNum;//Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¹ï¿½ï¿½É¶ï¿½ï¿½ï¿½  
+    unsigned short cycleNum;//ï¿½ï¿½ï¿½Ù¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½  
+    StBatteryTargetSegment batteryTargetSegment[MAX_SEGMENT_NUM];//ï¿½ï¿½ï¿½ï¿½Ã¿Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢  
+    double segmentIncreaseX[MAX_SEGMENT_NUM]; //ï¿½ï¿½Î»mm--ï¿½ï¿½n+1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½nï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¿Ò»ï¿½ï¿½ï¿½å²¹ï¿½Îµï¿½xï¿½ï¿½ï¿½ï¿½ä»¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¹Ì¶ï¿½ï¿½ï¿½ï¿½ä£¬ï¿½ï¿½ï¿½ÖµÎª0ï¿½ï¿½ 
+    double segmentIncreaseY[MAX_SEGMENT_NUM]; //ï¿½ï¿½Î»mm--ï¿½ï¿½n+1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½nï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¿Ò»ï¿½ï¿½ï¿½å²¹ï¿½Îµï¿½yï¿½ï¿½ï¿½ï¿½ä»¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¹Ì¶ï¿½ï¿½ï¿½ï¿½ä£¬ï¿½ï¿½ï¿½ÖµÎª0ï¿½ï¿½ 
+}StScanShape;
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´
+// cardIndex:          ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+// pParam:             ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´ï¿½á¹¹ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_ScanBatteryShape(short cardIndex, short stationPhyId, StScanShape* pParam);
+
+typedef struct {
+    int32_t encAxisSrc; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½Ï£ï¿½0ï¿½ï¿½Xï¿½á£»1ï¿½ï¿½Yï¿½á¡£              
+    int32_t prfEncSel;//ï¿½ï¿½ï¿½ï¿½Ô´Ñ¡ï¿½ï¿½0ï¿½ï¿½Ê¹ï¿½Ã±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½1ï¿½ï¿½Ê¹ï¿½Ã¹æ»®ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½             
+    double encPulsePreDistance;  //Êµï¿½Ê¼ï¿½ï¿½ï¿½mmï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(pulse/mm),ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Æµï¿½ï¿½Ä¡ï¿½             
+    double scanPulsePreDistance;  //Êµï¿½Ê¼ï¿½ï¿½ï¿½mmï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½bit/mmï¿½ï¿½ 
+} StScanBatteryParam;
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø²ï¿½ï¿½ï¿½
+// cardIndex:          ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+// pParam:             ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´ï¿½á¹¹ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_SetScanBatteryParam(short cardIndex, short stationPhyId, StScanBatteryParam* pParam);
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ø²ï¿½ï¿½ï¿½
+// cardIndex:          ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+// pParam:             ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´ï¿½á¹¹ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_GetScanBatteryParam(short cardIndex, short stationPhyId, StScanBatteryParam* pParam);
+
+//ï¿½ï¿½ï¿½ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú½ï¿½ï¿½ï¿½ñ¾µ°ï¿½×°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½â£º 
+typedef struct {
+    unsigned short followMode : 1;    //ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½ñ¾µ°ï¿½ï¿½ï¿½ï¿½è¶¨ï¿½Ù¶ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ñ¾µ°ï¿½ï¿½Õ¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½Ë¶ï¿½  
+    unsigned short followAxisSel : 1; //ï¿½ñ¾µ¸ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½0ï¿½ï¿½Xï¿½á£» 1ï¿½ï¿½Yï¿½ï¿½  
+    unsigned short reserveBit2 : 1;  
+    unsigned short fdbackReverse : 1;  //ï¿½ï¿½ï¿½ï¿½ï¿½Ð¸ï¿½ÄºÏ³ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ã¿ªÊ¼ï¿½Ë¶ï¿½ï¿½Ä·ï¿½ï¿½ï¿½ï¿½ï¿½Xï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¸ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 
+    unsigned short axisXReverse : 1;  //ï¿½ï¿½ï¿½ï¿½axi_src_selï¿½ï¿½axi_x_selÑ¡ï¿½ï¿½ï¿½Xï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½à·´ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ 
+    unsigned short axisYReverse : 1;  //ï¿½ï¿½ï¿½ï¿½axi_src_selï¿½ï¿½axi_x_selÑ¡ï¿½ï¿½ï¿½Yï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½à·´ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½
+    unsigned short reserveBit7to6 : 2;   
+    unsigned short scanXReverse : 1; //ï¿½ñ¾µµï¿½Xï¿½á°²×°ï¿½Ç·ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½à·´ï¿½ï¿½1ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ 
+    unsigned short scanYReverse : 1; //ï¿½ñ¾µµï¿½Yï¿½á°²×°ï¿½Ç·ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½à·´ï¿½ï¿½1ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ 
+    unsigned short scanZReverse : 1; //ï¿½ñ¾µµï¿½Zï¿½á°²×°ï¿½Ç·ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½à·´ï¿½ï¿½1ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ 
+    unsigned short scanXYSwitch : 1; //ï¿½ñ¾µµï¿½XYï¿½ï¿½ï¿½ï¿½Ç·ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  
+    unsigned short scanBXReverse : 1;  //ï¿½ï¿½ï¿½ï¿½ï¿½ñ¾µµï¿½Xï¿½á°²×°ï¿½Ç·ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½à·´ï¿½ï¿½1ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½  
+    unsigned short scanBYReverse : 1;  //ï¿½ï¿½ï¿½ï¿½ï¿½ñ¾µµï¿½Yï¿½á°²×°ï¿½Ç·ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½à·´ï¿½ï¿½1ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ 
+    unsigned short scanBZReverse : 1;  //ï¿½ï¿½ï¿½ï¿½ï¿½ñ¾µµï¿½Zï¿½á°²×°ï¿½Ç·ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½à·´ï¿½ï¿½1ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ 
+    unsigned short scanBXYSwitch : 1;  //ï¿½ï¿½ï¿½ï¿½ï¿½ñ¾µµï¿½XYï¿½ï¿½ï¿½ï¿½Ç·ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 
+}StScanAttributeCfg;
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// cardIndex:          ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+// pParam:             ï¿½ï¿½ï¿½ï¿½ï¿½Ô²ï¿½ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_SetScanAttribute(short cardIndex, short stationPhyId, StScanAttributeCfg* pParam);
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// cardIndex:          ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+// pParam:             ï¿½ï¿½ï¿½ï¿½ï¿½Ô²ï¿½ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_GetScanAttribute(short cardIndex, short stationPhyId, StScanAttributeCfg* pParam);
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´
+// cardIndex:          ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+// type:               ï¿½ñ¾µ¹ì¼£ï¿½ï¿½ï¿½Í£ï¿½ 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// pParam:             ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´NULL
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_ScanShapeType(short cardIndex, short stationPhyId, uint32_t type, StScanShape* pParam = NULL);
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½ï¿½ï¿½ñ¾µ¹ï¿½ï¿½ï¿½Ä£Ê½
+// cardIndex:          ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+// mode:               0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ÐµÄ³ï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¹ï¿½ï¿½ï¿½×´Ì¬ 2ï¿½ï¿½ï¿½ï¿½Î»Ä£Ê½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½Ð¹ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½
+// pParam:             ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´NULL
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_GetScanBatteryMode(short cardIndex, short stationId, uint32_t* pMode, void* pParam = NULL);
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½È¡ï¿½ñ¾µ¹ï¿½ï¿½ï¿½Ä£Ê½
+// cardIndex:          ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:        Õ¾ï¿½ï¿½
+// mode:               0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ÐµÄ³ï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¹ï¿½ï¿½ï¿½×´Ì¬ 2ï¿½ï¿½ï¿½ï¿½Î»Ä£Ê½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½Ð¹ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½
+// pParam:             ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´NULL
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_SetScanBatteryMode(short cardIndex, short stationPhyId, uint32_t mode, void* pParam = NULL);
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä·Ö±ï¿½ï¿½ï¿½
+// cardIndex:          ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:       Õ¾ï¿½ï¿½
+// axis:               ï¿½ï¿½ï¿½
+// resolution:         ï¿½ï¿½ï¿½×ªnÈ¦ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½Ù¸ï¿½ï¿½ï¿½ï¿½ï¿½
+// n:                  ï¿½ï¿½ï¿½×ªï¿½ï¿½È¦ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_WriteFollowResolution(short cardIndex, short stationPhyId, short axis, uint32_t resolution, unsigned short n);
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½È«ï¿½Õ»ï¿½
+// cardIndex:          ï¿½ï¿½ï¿½ï¿½
+// stationPhyId:       Õ¾ï¿½ï¿½
+// axis:               ï¿½ï¿½ï¿½
+// en:                 ï¿½Ç·ï¿½ï¿½ï¿½È«ï¿½Õ»ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½Ø±ï¿½È«ï¿½Õ»ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È«ï¿½Õ»ï¿½
+// assoPosErr:         ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½î£¬0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_EnablePosCloseLoop(short cardIndex, short stationPhyId, short axis, bool en, bool assoPosErr);
 
 
 
 /*------------------------------------------------------------------------*/
 /*------------------------------------------------------------------------*/
-/*                        EtherCATÍøÂçÐ­Òé¹¦ÄÜº¯Êý		                    */
+/*                        EtherCATï¿½ï¿½ï¿½ï¿½Ð­ï¿½é¹¦ï¿½Üºï¿½ï¿½ï¿½		                    */
 /*------------------------------------------------------------------------*/
 /*------------------------------------------------------------------------*/
 
@@ -7454,34 +9772,40 @@ GT_API GTN_GetTerminalLinkCount(short core,unsigned short *pTerminalLinkCount);
 #define  ECAT_ACT_TORQUE	3
 #define  ECAT_ACT_CT		4
 
+#define ERROR_CODE_NO_SLAVE		-10
+#define ERROR_CODE_NO_ENI		-9
+#define ERROR_CODE_CONFIG_FAIL	-8
+#define ERROR_CODE_ENI_ERROR	-1
+
 typedef struct
 {
-	int32_t slave_cnt;
-	int32_t slave_type;
-	int32_t motion_cnt;
-	int32_t io_nmap;
-	int32_t io_length;
-	uint32_t Vid;
-	uint32_t Pid;
-	int io_type;             //1 ÊäÈë  2 Êä³ö  3 ÊäÈëÊä³ö
-	int dump[10];
+    int32_t slave_cnt;
+    int32_t slave_type;
+    int32_t motion_cnt;
+    int32_t io_nmap;
+    int32_t io_length;
+    uint32_t Vid;
+    uint32_t Pid;
+    int io_type;             //1 ï¿½ï¿½ï¿½ï¿½  2 ï¿½ï¿½ï¿½  3 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int dump[10];
 } TSlaveInfo;
 
 typedef struct
 {
-	short dcError; 
-	short workingCountErrorCnt; //·¢ÏÖ¶ÏÏß¼ÆÊý
-	short ecatCommStatus;      //×ÜÏßÍ¨Ñ¶×´Ì¬
-	short workingCount;        //µ±Ç°WorkingCountÖµ
-	short offlineFlag;         //¶ÏÏß±êÖ¾
-	short rootOfflineFlag;    //¸ù²¿¶ÏÏß±êÖ¾
-	short workingCountFirstError;  //·¢ÏÖ¶ÏÏßÊ±µÄ¼ÆÊý
-	short profileTimeOutFlag;      //¹æ»®³¬Ê±±êÖ¾
-	short dump[20];
+    short dcError; 
+    short workingCountErrorCnt; //ï¿½ï¿½ï¿½Ö¶ï¿½ï¿½ß¼ï¿½ï¿½ï¿½
+    short ecatCommStatus;      //ï¿½ï¿½ï¿½ï¿½Í¨Ñ¶×´Ì¬
+    short workingCount;        //ï¿½ï¿½Ç°WorkingCountÖµ
+    short offlineFlag;         //ï¿½ï¿½ï¿½ß±ï¿½Ö¾
+    short rootOfflineFlag;    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß±ï¿½Ö¾
+    short workingCountFirstError;  //ï¿½ï¿½ï¿½Ö¶ï¿½ï¿½ï¿½Ê±ï¿½Ä¼ï¿½ï¿½ï¿½
+    short profileTimeOutFlag;      //ï¿½æ»®ï¿½ï¿½Ê±ï¿½ï¿½Ö¾
+    short dump[20];
 } TEcatErrInfo;
 
 //EtherCAT interface
-// ÉèÖÃHome»ØÁã²ÎÊý£¬Èç¹ûÖ¸ÕëÎª¿Õ£¬Ôò²»ÐèÒª·¢sdoÖ¸Áî [Thunder-2020-9-24]
+// ï¿½ï¿½ï¿½ï¿½Homeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½Îªï¿½Õ£ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½sdoÖ¸ï¿½ï¿½ [Thunder-2020-9-24]
+GT_API GTN_SetEcatHomingPrmPro( short core, short axis,short method,double speed1,double speed2,double acc,int32_t offset,unsigned short probeFunction,unsigned short mask);
 GT_API GTN_SetEcatHomingPrmEx( short core, short axis,short *psMethod,double *pdSpeed1,double *pdSpeed2,double *pdAcc,int32_t *plOffset,unsigned short *pusProbeFunction );
 GT_API GTN_SetEcatHomingPrm(short core,short axis,short method,double speed1,double speed2,double acc,int32_t offset,unsigned short probeFunction);
 GT_API GTN_StartEcatHoming(short core,short axis);
@@ -7542,6 +9866,8 @@ GT_API GTN_EcatSDOUploadEx(short core,unsigned short axisNumber,unsigned short i
 GT_API GTN_EcatIOReadInput(short core,unsigned short slaveno,unsigned short offset,unsigned short nSize,unsigned char *pValue);
 GT_API GTN_EcatIOReadOutput(short core,unsigned short slaveno,unsigned short offset,unsigned short nSize,unsigned char *pValue);
 GT_API GTN_EcatIOWriteOutput(short core,unsigned short slaveno,unsigned short offset,unsigned short nSize,unsigned char *pValue);
+GT_API GTN_EcatIOBitReadInput(short core,unsigned short slaveno,unsigned short offset,unsigned short Index,unsigned char *pValue);
+GT_API GTN_EcatIOBitReadOutput(short core,unsigned short slaveno,unsigned short offset,unsigned short Index,unsigned char *pValue);
 GT_API GTN_EcatIOBitWriteOutput(short core,unsigned short slaveno,unsigned short offset,short Index,unsigned char value);
 GT_API GTN_EcatIOSynch(short core);
 GT_API GTN_EcatIOUpdateUpload(short core);
@@ -7550,23 +9876,43 @@ GT_API GTN_GetEcatAxisPdoData(short core,short axis,unsigned short object,unsign
 GT_API GTN_SetEcatSlaveObjectData(short core,short slaveIndex,unsigned short object,unsigned short objectSubIndex,unsigned char *pValue,unsigned int data_size,unsigned char *pOpMode);
 GT_API GTN_GetEcatSlaveObjectData(short core,short slaveIndex,unsigned short object,unsigned short objectSubIndex,unsigned char *pValue,unsigned int data_size,unsigned char *pOpMode);
 
-// ÐÂÔöÔÚCSVÄ£Ê½ÏÂ£¬Ä¿±êËÙ¶È60ffµÄ×î´óÖµ£¬µ¥Î»Çý¶¯Æ÷60ffµ¥Î»[Thunder-2019-10-11]
+typedef struct 
+{
+    unsigned short skip_count;
+	unsigned short netOpenSts;
+	unsigned short *slave_position;
+	char *eniFilePath;
+	unsigned short reserve2[20];
+}TEcatInitPrm;
+
+GT_API GTN_InitEcatComm_MultiTask(short core,TEcatInitPrm *pPrm);
+GT_API GTN_InitEcatComm_PhysicalID(short core);
+
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½CSVÄ£Ê½ï¿½Â£ï¿½Ä¿ï¿½ï¿½ï¿½Ù¶ï¿½60ffï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½60ffï¿½ï¿½Î»[Thunder-2019-10-11]
 GT_API GTN_SetEcatAxisMaxTargetVel(short core,short axis,uint32_t targetMaxVel);
 GT_API GTN_GetEcatAxisMaxTargetVel(short core,short axis,uint32_t *targetMaxVel);
 
-//³§ÉÌ×Ô¶¨ÒåÁË¶ÔÏó×Ö0x6040µÄ¸ß8Î»Ê±£¬½«¸ß8Î»µÄÖµÌîÈëÖ¸Áî£¬ÄÚ²¿ºÍµÍ8Î»Î»»òÔËËã
+//ï¿½ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½0x6040ï¿½Ä¸ï¿½8Î»Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½8Î»ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½Ö¸ï¿½î£¬ï¿½Ú²ï¿½ï¿½Íµï¿½8Î»Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 GT_API GTN_SetEcatAxisCtrlwordEx(short core,short axis,unsigned short ctrlex);
 GT_API GTN_GetEcatAxisCtrlwordEx(short core,short axis,unsigned short *ctrlex);
 
+GT_API GTN_SetEcatAxisLmtHomeIndex(short core,short axis,short index_LimitN,short index_LimitP,short index_Home);
+GT_API GTN_GetEcatAxisLmtHomeIndex(short core,short axis,short *index_LimitN,short *index_LimitP,short *index_Home);
 GT_API GTN_RelateEcatIOSlaveToMCIOModule(short core,short slaveindex,short IOModuleindex);
 GT_API GTN_SetMCIOModuleValue(short core,short IOModuleindex,short iomapindex,int32_t *val,short cnt);
 GT_API GTN_GetMCIOModuleValue(short core,short IOModuleindex,short iomapindex,int32_t *val,short cnt);
 
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¼Î»ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
+GT_API GTN_InitMcAxisGap(short core);
+GT_API GTN_SetMcAxisGap(short core,short axis,short count);
+GT_API GTN_GetMcAxisGap(short core,short axis,short *actualAxisNo,short count);
 GT_API GTN_RelateEcatSlaveToMcAuEncoder(short core,short auenc,short ecatAxisIndex);
 GT_API GTN_RelateEcatSlaveToMcMpgEncoder(short core,short mpg,short ecatAxisIndex);
 GT_API GTN_RelateEcatSlaveToMcAuEncoderEx(short core,short auenc,short ecatIndex,short ecatType,short pdoOffset,short pdoByteLength);
 GT_API GTN_RelateEcatSlaveToMcMpgDi(short core,short mpg,short ecatAxisIndex,short bitoffset);
 GT_API GTN_RelateEcatSlaveToMcMpgDiEx(short core,short mpg,short ecatIndex,short ecatType,short bitoffset,short pdoOffset);
+GT_API GTN_RelateEcSlvToMcAuEnc(short core,short auenc,short ecatAxisIndex);         //CPACï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½
+GT_API GTN_RelateEcSlvToMcMpgEnc(short core,short mpg,short ecatAxisIndex);
 GT_API GTN_RelateEcatSlaveToMcMpgEncoderEx(short core,short mpg,short ecatIndex,short ecatType,short pdoOffset,short pdoByteLength);
 GT_API GTN_RelateEcatSlaveToMcAdc(short core,short adc,short ecatIndex,short ecatType,short pdoOffset,short pdoByteLength);
 GT_API GTN_RelateEcatSlaveToMcAuAdc(short core,short auadc,short ecatIndex,short ecatType,short pdoOffset,short pdoByteLength);
@@ -7578,4 +9924,2403 @@ GT_API GTN_RelateEcatSlaveToMcAuDac(short core,short auDac,short ecatIndex,short
 GT_API GTN_GetMcRelateEcatSlaveInfo(short core,short mcType,short index,short *pEcatIndex,short *pEcatType,short *pPdoOffset,short *pBitoffset,short *pdPoByteLength);
 GT_API GTN_GetAxisModuleInfo(short core,short axis,short *pModule,short *pSubAxis);
 
+typedef void(* TCallbackFunction)(const short data[512],void *pUserDataBack);
+GT_API GTN_SetCallbackFunctionParameter(short core,TCallbackFunction callbackFunction);
+GT_API GTN_StopCallbackFunction(short core);
+GT_API GTN_RegisterCallbackFunction(short core,TCallbackFunction callbackFunction,void *pUserData=NULL);
 
+GT_API GTN_RN_ReadEEPROM(short cardIndex, short stationPhyId, short axis, unsigned short ofst, unsigned char* pValue, unsigned short num);
+GT_API GTN_RN_WriteEEPROM(short cardIndex, short stationPhyId, short axis, unsigned short ofst, unsigned char* pValue, unsigned short num);
+GT_API GTN_RN_ResetServoDSP(short cardIndex, short stationPhyId, short axis);
+GT_API GTN_ResetServoDSP(short core, short axis);
+GT_API GTN_RN_WriteSetId(short cardIndex, short stationPhyId, short setId);
+GT_API GTN_RN_ReadSetId(short cardIndex, short stationPhyId, short *pSetId);
+GT_API GTN_RN_DisableSetId(short cardIndex, short stationPhyId);
+GT_API GTN_RN_FORWrite(short cardIndex,short stationPhyId, short* pData, uint32_t dataCount, uint32_t* pDataCount, char* pFileName);
+GT_API GTN_RN_SetStationSlotResourceEx( short cardIndex, short stationPhyId, char* pFileName, short slotInfo);
+GT_API GTN_GetCoreInfo(short cardIndex, short* pCoreIndex, short* pCoreCount, short* pCoreValidFlag, short cardCount);
+
+typedef struct
+{
+    short resType;//Êµï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½
+    short resIndex;//Êµï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½
+    //short mapType;
+    short mapIndex;
+    short mapCount;
+} TResTypeMapInfo;
+
+typedef struct
+{
+    short resMapType;//ï¿½ß¼ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½
+    short resMapCount;//ï¿½ß¼ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½
+    TResTypeMapInfo resmapInfo[64];//Ã¿ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½resMapï¿½ï¿½ï¿½ï¿½
+} TTerminalResMapInfo;
+
+typedef struct
+{
+    short netType;
+    unsigned short terminalType;
+    unsigned short terminalSubType;
+    short phyId;
+    short slotCount;
+    unsigned short slotType[16];
+    unsigned short slotSubType[16];	           //ï¿½ï¿½Ç°Õ¾Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½Ã»ï¿½ï¿½Ä¬ï¿½ï¿½Îª0
+    short stationResMapCount;
+    TTerminalResMapInfo terminalResMapInfo[64];//Ã¿ï¿½ï¿½Õ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½
+} TTerminalInfo;
+GT_API GTN_GetTerminalInfo(short core,short index,TTerminalInfo *pTerminalInfo);
+
+/*-----------------------------------------------------------*/
+/* RemoteChannel                                             */
+/*-----------------------------------------------------------*/
+
+#define RING_NET_PDU_FAST_LINK_TYPE_NONE                   (0)
+#define RING_NET_PDU_FAST_LINK_TYPE_REMOTE_AU_ENCODER      (1)
+#define RING_NET_PDU_FAST_LINK_TYPE_POS_COMPARE_LINEAR     (2)
+
+typedef struct
+{
+    short stationPhyId;
+    short index;
+    short type;
+} TRemoteChannelPrm;
+
+typedef struct
+{
+    short enableFlag;
+    short occupy;
+    short type;
+    short index;
+    short lastReceiveError;
+    short lastSendError;
+    unsigned short errorCount;
+    unsigned short continueErrorCount;
+} TRemoteChannelInfo;
+
+GT_API GTN_GetRemoteChannelResult(short core,double *pValue,short channelIndex,short channelCount);
+GT_API GTN_GetRemoteChannelInfo(short core,TRemoteChannelInfo *pInfo,short channelIndex,short channelCount);
+GT_API GTN_GetRemoteChannelPrm(short core,TRemoteChannelPrm *pPrm,short channelIndex,short channelCount);
+GT_API GTN_SetRemoteChannelPrm(short core,TRemoteChannelPrm *pPrm,short *pChannelIndex,short channelCount);
+GT_API GTN_ClearRemoteChannel(short core,short channelIndex,short channelCount);
+//---------------------------------------------------------
+// LaserPro
+//---------------------------------------------------------
+
+// ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+#define LASER_ON_MODE_DEFAULT                    (0)
+
+// ï¿½ï¿½ï¿½ï¿½Ø±ï¿½Ä£Ê½
+#define LASER_OFF_MODE_POWER_OFF                 (0)  // ï¿½ï¿½ï¿½ï¿½Ø±ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò²ï¿½Ø±ï¿½
+#define LASER_OFF_MODE_POWER_HOLD                (1)  // ï¿½ï¿½ï¿½ï¿½Ø±ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+#define LASER_FOLLOW_MODE_NONE                   (0)  // Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define LASER_FOLLOW_MODE_RATIO                  (1)  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define LASER_FOLLOW_MODE_TABLE                  (2)  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define LASER_FOLLOW_MODE_DUO_TABLE              (3)  // Ë«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+#define LASER_FOLLOW_POWER_TYPE_DUTY             (0)
+#define LASER_FOLLOW_POWER_TYPE_FREQUENCY        (1)
+#define LASER_FOLLOW_POWER_TYPE_PULSE_WIDTH      (2)
+#define LASER_FOLLOW_POWER_TYPE_VOLTAGE          (3)
+#define LASER_FOLLOW_POWER_TYPE_PARALLEL         (4)
+
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï³ï¿½ï¿½Ù¶ï¿½Ô´
+#define LASER_FOLLOW_SYNCH_VEL_SOURCE_PROFILE              (0)
+#define LASER_FOLLOW_SYNCH_VEL_SOURCE_ENCODER              (1)
+
+typedef struct
+{
+    short laserOn;                               // ï¿½ï¿½ï¿½â¿ªï¿½Ø¹ï¿½ï¿½Åºï¿½
+    short laserEnable;                           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¤Ê¹ï¿½ï¿½ï¿½Åºï¿½
+    short laserRed;                              // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸Ê¾ï¿½Åºï¿½
+    short laserPowerLatch;                       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½
+    double duty;                                 // ï¿½ï¿½Ç°PWMï¿½ï¿½Õ¼ï¿½Õ±ï¿½Öµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½%
+    double frequency;                            // ï¿½ï¿½Ç°PWMï¿½ï¿½Æµï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½kHz
+    double pulseWidth;                           // ï¿½ï¿½Ç°PWMï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½us
+    double voltage;                              // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½V
+    double parallel;                             // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½â²¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+}TLaserPowerPro;
+
+typedef struct
+{
+    short laserOn;                               // ï¿½ï¿½ï¿½â¿ªï¿½Ø¹ï¿½ï¿½Åºï¿½
+    short laserEnable;                           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¤Ê¹ï¿½ï¿½ï¿½Åºï¿½
+    short laserRed;                              // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸Ê¾ï¿½Åºï¿½
+    short laserPowerLatch;                       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½
+    double duty;                                 // ï¿½ï¿½Ç°PWMï¿½ï¿½Õ¼ï¿½Õ±ï¿½Öµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½%
+    double frequency;                            // ï¿½ï¿½Ç°PWMï¿½ï¿½Æµï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½kHz
+    double pulseWidth;                           // ï¿½ï¿½Ç°PWMï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½us
+    double voltage;                              // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½V
+    double parallel;                             // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½â²¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+
+    double minDuty;                              // Õ¼ï¿½Õ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,100]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½%
+    double maxDuty;                              // Õ¼ï¿½Õ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,100]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½%
+    double minFrequency;                         // Æµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1562.5]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½kHz
+    double maxFrequency;                         // Æµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1562.5]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½kHz
+    double minPulseWidth;                        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,65535]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½us
+    double maxPulseWidth;                        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,65535]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½us
+    double minVoltage;                           // ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½Ð¡Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,10]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½V
+    double maxVoltage;                           // ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,10]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½V
+    double minParallel;                          // ï¿½ï¿½ï¿½â²¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,255]
+    double maxParallel;                          // ï¿½ï¿½ï¿½â²¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,255]
+
+    double laserOnDelay;                         // ï¿½ï¿½ï¿½â¿ªï¿½ï¿½ï¿½ï¿½Ê±Ê±ï¿½ä£¬ï¿½ï¿½Î»ï¿½ï¿½us
+    double laserOffDelay;                        // ï¿½ï¿½ï¿½ï¿½Ø¹ï¿½ï¿½ï¿½Ê±Ê±ï¿½ä£¬ï¿½ï¿½Î»ï¿½ï¿½us
+}TLaserPro;
+
+typedef struct
+{
+    short powerType;                             // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½ï¿½ï¿½ï¿½Í£ï¿½0ï¿½ï¿½Õ¼ï¿½Õ±È£ï¿½1ï¿½ï¿½Æµï¿½Ê£ï¿½2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½3ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½4ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short group;                                 // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½groupï¿½ï¿½
+    short source;                                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï³ï¿½ï¿½Ù¶ï¿½Ô´ï¿½ï¿½0ï¿½ï¿½ï¿½æ»®ï¿½ï¿½ï¿½Ï³ï¿½ï¿½Ù¶È£ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï³ï¿½ï¿½Ù¶ï¿½
+    short coordSystem;                           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï³ï¿½ï¿½Ù¶Èµï¿½ï¿½ï¿½ï¿½ï¿½Ïµ
+    double ratio;                                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½
+    double minPower;                             // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½Öµ
+    double maxPower;                             // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+}TLaserFollowPrmPro;
+
+typedef struct
+{
+    short powerType;                             // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½ï¿½ï¿½ï¿½Í£ï¿½0ï¿½ï¿½Õ¼ï¿½Õ±È£ï¿½1ï¿½ï¿½Æµï¿½Ê£ï¿½2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½3ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½4ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short group;                                 // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½groupï¿½ï¿½
+    short source;                                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï³ï¿½ï¿½Ù¶ï¿½Ô´ï¿½ï¿½0ï¿½ï¿½ï¿½æ»®ï¿½ï¿½ï¿½Ï³ï¿½ï¿½Ù¶È£ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï³ï¿½ï¿½Ù¶ï¿½
+    short coordSystem;                           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï³ï¿½ï¿½Ù¶Èµï¿½ï¿½ï¿½ï¿½ï¿½Ïµ
+    short tableId;                               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,2]
+    short pad[3];
+    double minPower;                             // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½Öµ
+    double maxPower;                             // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+}TLaserFollowTablePrmPro;
+
+typedef struct
+{
+    short group;                                 // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½groupï¿½ï¿½
+    short source;                                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï³ï¿½ï¿½Ù¶ï¿½Ô´ï¿½ï¿½0ï¿½ï¿½ï¿½æ»®ï¿½ï¿½ï¿½Ï³ï¿½ï¿½Ù¶È£ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï³ï¿½ï¿½Ù¶ï¿½
+    short coordSystem;                           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï³ï¿½ï¿½Ù¶Èµï¿½ï¿½ï¿½ï¿½ï¿½Ïµ
+    short dutyTableId;                           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½Õ±È±ï¿½ï¿½Ä±ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,2]
+    short frequencyTableId;                      // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½Ê±ï¿½ï¿½Ä±ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,2]
+    short pad[3];
+    double minDuty;                              // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½Õ±ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,100]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½%
+    double maxDuty;                              // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½Õ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,100]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½%
+    double minFrequency;                         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1562.5]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½kHz
+    double maxFrequency;                         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1562.5]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½kHz
+}TLaserFollowDuoTablePrmPro;
+
+typedef struct
+{
+    short enable;                                // Ê¹ï¿½ï¿½
+    short mode;                                  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+    short errorCode;                             // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÜµÄ´ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½Ê¶ï¿½ï¿½ï¿½ï¿½ï¿½ÄµØ·ï¿½
+    short returnValue;                           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü³ï¿½ï¿½ï¿½ï¿½Ø·ï¿½ï¿½Ä·ï¿½ï¿½ï¿½Öµ
+
+    double power;                                // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+    double powerAnother;                         // Í¬Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+
+    TLaserFollowPrmPro ratioPrm;                 // ï¿½ï¿½mode=LASER_FOLLOW_MODE_RATIOÊ±ï¿½ï¿½Ó¦ï¿½Ä²ï¿½ï¿½ï¿½
+    TLaserFollowTablePrmPro tablePrm;            // ï¿½ï¿½mode=LASER_FOLLOW_MODE_TABLEÊ±ï¿½ï¿½Ó¦ï¿½Ä²ï¿½ï¿½ï¿½
+    TLaserFollowDuoTablePrmPro duoTablePrm;      // ï¿½ï¿½mode=LASER_FOLLOW_MODE_DUO_TABLEÊ±ï¿½ï¿½Ó¦ï¿½Ä²ï¿½ï¿½ï¿½
+}TLaserFollowPro;
+
+GT_API GTN_SetLaserEnablePro(short core,short laserChannel,short enable,short mode=0,TListInfo *pListInfo=NULL);
+GT_API GTN_SetLaserDelayPro(short core,short laserChannel,double laserOnDelay,double laserOffDelay,TListInfo *pListInfo=NULL);
+GT_API GTN_SetLaserPwmPrmPro(short core,short laserChannel,TLaserPwmPrmPro *pPrm,TListInfo *pListInfo=NULL);
+GT_API GTN_SetLaserPwmDutyPro(short core,short laserChannel,double duty,TListInfo *pListInfo=NULL);
+GT_API GTN_SetLaserPwmFrequencyPro(short core,short laserChannel,double frequency,TListInfo *pListInfo=NULL);
+GT_API GTN_SetLaserPwmPulseWidthPro(short core,short laserChannel,double pulseWidth,TListInfo *pListInfo=NULL);
+GT_API GTN_SetLaserVoltagePrmPro(short core,short laserChannel,double minVoltage,double maxVoltage,TListInfo *pListInfo=NULL);
+GT_API GTN_SetLaserVoltagePro(short core,short laserChannel,double voltage,TListInfo *pListInfo=NULL);
+GT_API GTN_SetLaserParallelPrmPro(short core,short laserChannel,double minParallel,double maxParallel,TListInfo *pListInfo=NULL);
+GT_API GTN_SetLaserParallelPro(short core,short laserChannel,double parallel,TListInfo *pListInfo=NULL);
+GT_API GTN_SetLaserIoPro(short core,short laserChannel,short doType,short doValue,TListInfo *pListInfo=NULL);
+GT_API GTN_GetLaserPowerPro(short core,short laserChannel,TLaserPowerPro *pLaserPowerPro);
+GT_API GTN_GetLaserPro(short core,short laserChannel,TLaserPro *pLaserPro);
+GT_API GTN_SetLaserFollowEnablePro(short core,short laserChannel,short enable,TListInfo *pListInfo=NULL);
+GT_API GTN_SetLaserFollowPrmPro(short core,short laserChannel,TLaserFollowPrmPro *pPrm,TListInfo *pListInfo=NULL);
+GT_API GTN_SetLaserFollowTablePrmPro(short core,short laserChannel,TLaserFollowTablePrmPro *pPrm,TListInfo *pListInfo=NULL);
+GT_API GTN_SetLaserFollowDuoTablePrmPro(short core,short laserChannel,TLaserFollowDuoTablePrmPro *pPrm,TListInfo *pListInfo=NULL);
+GT_API GTN_ClearLaserFollowTablePro(short core,short laserChannel,short tableId);
+GT_API GTN_SetLaserFollowTablePro(short core,short laserChannel,short tableId,int32_t count,double *pSynchVel,double *pPower);
+GT_API GTN_GetLaserFollowTablePro(short core,short laserChannel,short tableId,int32_t count,double *pSynchVel,double *pPower,int32_t *pReadCount);
+GT_API GTN_GetLaserFollowPro(short core,short laserChannel,TLaserFollowPro *pLaserFollowPro);
+GT_API GTN_SetLaserPowerLatchIoPrameterPro(short core,short laserChannel,double waitTime,double pulseWidth,double enable,TListInfo *pListInfo=NULL);
+
+#define SCAN_START_IN_LIST_MODE_INDIVIDUAL                 (0)
+#define SCAN_START_IN_LIST_MODE_CHECK                      (1)
+
+/**
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½Ö§ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param scanCrd ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pListInfo Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½á¹¹ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
+ * @param pListInfo->reserve1[1] Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½Ö´ï¿½Ð¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ñ¾µ³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹Ö¸ï¿½ï¿½ï¿½ï¿½
+ * @return 17001ï¿½ï¿½TListInfoï¿½á¹¹ï¿½ï¿½ï¿½ï¿½listï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17002ï¿½ï¿½TListInfoï¿½á¹¹ï¿½ï¿½ï¿½ï¿½modalï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17053ï¿½ï¿½scanCrdï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½Å²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17501ï¿½ï¿½TListInfoï¿½á¹¹ï¿½ï¿½ï¿½ï¿½reserve1[1]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         11001ï¿½ï¿½ï¿½ï¿½ï¿½Ã¹ï¿½GTN_CommandListDataEndï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î´Ö´ï¿½ï¿½ï¿½ï¿½É£ï¿½ï¿½ï¿½ï¿½ï¿½ÒªÑ¹ï¿½ï¿½ï¿½ï¿½
+ *         11002ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½
+ *         11003ï¿½ï¿½ï¿½ï¿½Ç°Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Ý´ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½Ø´ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½GTN_SetCommandListConfigï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½Ø´ï¿½Ð¡
+ *         11004ï¿½ï¿½ï¿½ï¿½Ç°Ö¸ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ð·ï¿½ï¿½ä»ºï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ä£¬ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½GTN_SetCommandListConfigï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½
+ *         11091ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ð¶ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´
+ *         11915ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ãµï¿½Ç°Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹Ö¸ï¿½ï¿½
+*/
+GT_API GTN_ScanCrdStartPro(short core,short scanCrd,TListInfo *pListInfo);
+
+/**
+ * @brief Í£Ö¹ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½Ö§ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param scanCrd ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param stopType ï¿½ï¿½Í£Ö¹Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½Î»Í£Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½Ò¸ï¿½Î»ï¿½ñ¾µ£ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹ï¿½ï¿½2ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½ï¿½Ä©
+ * @param pListInfo Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½á¹¹ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
+ * @return 17001ï¿½ï¿½TListInfoï¿½á¹¹ï¿½ï¿½ï¿½ï¿½listï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17002ï¿½ï¿½TListInfoï¿½á¹¹ï¿½ï¿½ï¿½ï¿½modalï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17052ï¿½ï¿½stopTypeï¿½ï¿½Í£Ö¹Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17053ï¿½ï¿½scanCrdï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½Å²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         11001ï¿½ï¿½ï¿½ï¿½ï¿½Ã¹ï¿½GTN_CommandListDataEndï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î´Ö´ï¿½ï¿½ï¿½ï¿½É£ï¿½ï¿½ï¿½ï¿½ï¿½ÒªÑ¹ï¿½ï¿½ï¿½ï¿½
+ *         11002ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½
+ *         11003ï¿½ï¿½ï¿½ï¿½Ç°Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Ý´ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½Ø´ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½GTN_SetCommandListConfigï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½Ø´ï¿½Ð¡
+ *         11004ï¿½ï¿½ï¿½ï¿½Ç°Ö¸ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ð·ï¿½ï¿½ä»ºï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ä£¬ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½GTN_SetCommandListConfigï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½
+ *         11091ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ð¶ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´
+ *         11915ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ãµï¿½Ç°Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹Ö¸ï¿½ï¿½
+*/
+GT_API GTN_ScanCrdStopPro(short core,short scanCrd,short stopType,TListInfo *pListInfo);
+
+typedef struct  
+{
+    double kp;
+    double ki;
+    double kd;
+    double kvff;
+    double kaff;
+    int32_t   integralLimit;
+    int32_t   derivativeLimit;
+    short  limit;
+    short  reserve[3];
+}TPidAlign;
+
+typedef struct  
+{
+    short mode;
+    short master;
+    short slave;
+    short reserve[3];
+    int32_t syncErrorLimit;
+    TPidAlign gantryMasterPid;
+    TPidAlign gantrySlavePid;
+    TPidAlign masterPid;
+    TPidAlign slavePid;
+}TGantryPrmPro;
+
+GT_API GTN_SetGantryPrmPro(short core,short group,TGantryPrmPro *pGantryPrmPro);
+
+//---------------------------------------------------------
+// KeSai
+//---------------------------------------------------------
+typedef struct
+{
+    uint16_t axis_id;
+    uint16_t axis_mode;   // fixed to 1 for Gear
+    uint16_t axis_ctrl;   // 0: IDLE; 1: stop; 2: fast_stop; 3: run 
+    uint16_t mode;        // 0 : IDLEï¿½ï¿½ 1ï¿½ï¿½ï¿½Ò¿ï¿½ï¿½ï¿½runï¿½ï¿½ï¿½ï¿½2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 3ï¿½ï¿½
+    uint16_t reserve;     // must be 0.
+    uint16_t reserve2;    // must be 0.
+    int32_t modify_delta;
+    int32_t ratio_a;      // ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Öµ
+    int32_t ratio_b;      // ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Öµ
+}TStGearParam;
+
+typedef struct
+{
+    uint16_t axis_id;
+    uint16_t axis_mode;   // fixed to 2 for Trap
+    uint16_t axis_ctrl;   // 0: IDLE; 1: stop; 2: fast_stop; 3: run;  
+    uint16_t reserve;     // must be 0.
+    int64_t target_pos;
+    uint32_t max_vel;
+    uint16_t reserve2[2]; // must be 0.
+}TStTrapParam;
+
+typedef struct
+{
+    uint16_t axis_id;
+    uint16_t axis_mode;   // fixed to 3 for Jog
+    uint16_t axis_ctrl;   // 0: IDLE; 1: stop; 2: fast_stop; 3: run;  
+    uint16_t reserve;     // must be 0.
+
+    int32_t target_vel;
+    uint32_t max_acc;
+    uint32_t reserve1;
+    uint16_t reserve2[2]; // must be 0.
+}TStJogParam;
+
+typedef struct
+{
+    uint16_t axis_id;
+    uint16_t axis_mode;   // fixed to 8 for grantry trap
+    uint16_t axis_ctrl;   // 0: IDLE; 1: stop; 2: fast_stop; 3: run;  
+    uint16_t reserve;     // must be 0.
+
+    int64_t target_pos;
+    uint32_t max_vel;
+
+    int32_t main_axis_shift;
+    int32_t second_axis_shift;
+    uint16_t reserve2[2];  // must be 0.
+}TStGantrayTrapParam;
+
+typedef struct
+{
+    uint16_t axis_id;
+    uint16_t axis_mode;   // fixed to 16 for driver vel
+    uint16_t axis_ctrl;   // 0: IDLE; 1: stop; 2: fast_stop; 3: run ;  
+    uint16_t reserve;     // must be 0.
+
+    int32_t target_vel;
+    uint16_t reserve3[2]; // must be 0.
+    int64_t reserve2;
+}TStDriverVelParam;
+
+typedef struct
+{
+    uint16_t axis_id;
+    uint16_t axis_mode;   // fixed to 17 for driver acc
+    uint16_t axis_ctrl;   // 0: IDLE; 1: stop; 2: fast_stop; 3: run ;  
+    uint16_t reserve;     // must be 0.
+
+    int32_t target_acc;
+    uint16_t reserve3[2]; // must be 0.
+    int64_t reserve2;
+}TStDriverCurParam;
+
+typedef struct
+{
+    int16_t profileMode;
+    uint16_t reserve2[3]; //must be 0.
+    TStTrapParam trapPrm;
+    TStJogParam jogPrm;
+    TStGearParam gearPrm;
+    TStGantrayTrapParam gantrayTrapPrm;
+    TStDriverVelParam driverVelPrm;
+    TStDriverCurParam driverCurPrm;
+}TSetMultiMcFunctionPrm;
+
+typedef struct
+{
+    uint16_t prmErrorInf;
+    int16_t readCommandVarTableIndex;     // ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int16_t readCount;                    // Òªï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int16_t pad[2];                       // ï¿½Ö½Ú¶ï¿½ï¿½ë£¬ï¿½ï¿½ï¿½ï¿½
+    int16_t realReadCount;                // Êµï¿½Ê¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double* pVarValue;                    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+}TMultiMcFunctionReadPrm;
+
+GT_API GTN_StartMcMultiFunction(short core, unsigned short axisCount, unsigned short writeEnable, TSetMultiMcFunctionPrm* pSetPrm, TMultiMcFunctionReadPrm* pGetPrm);
+GT_API GTN_LoadReadCommandVarTable(short core, short tableIndex, char* pFile);
+GT_API GTN_ReadCommandVarTable(short core, short tableIndex, double* pVarValue, short count, short* pRealCount);
+
+//---------------------------------------------------------
+// Axis Simulation
+//---------------------------------------------------------
+
+#define AXISSIMULATION_RESERVE1_SUBMODE           (0)
+
+typedef struct
+{
+    short enable;
+    short reserve1[3];
+    double reserve2[4];
+} TAxisSimulationParameter;
+
+GT_API GTN_SetAxisSimulationParameter(short core,short profile,TAxisSimulationParameter *pPrm,short count);
+GT_API GTN_GetAxisSimulationParameter(short core,short profile,TAxisSimulationParameter *pPrm,short count);
+GT_API GTN_GetAxisSimulationBeginPos(short core,short profile,double *pBeginPos,short count);
+//---------------------------------------------------------
+// User Flash
+//---------------------------------------------------------
+//ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½Flashï¿½ï¿½ï¿½ï¿½
+GT_API GTN_ProgramCardNumToFlash(short core,short coreNum);
+GT_API GTN_ReadCardNumFromFlash(short core,short *pCardNum);
+
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½Flashï¿½ï¿½ï¿½ï¿½
+#define PORT_D_ETHER_CAT                (4)  // Dï¿½ï¿½
+
+#define PORT_NET_TYPE_DEFAULT           (-1) // Ä¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½       (ï¿½Ë¿Ø¶ï¿½ï¿½å£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½Ô­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+#define PORT_NET_TYPE_GLINKII_IN        (0)  // GlinkIIï¿½ï¿½ï¿½ï¿½ï¿½ï¿½      (FPGAï¿½ï¿½ï¿½ï¿½)
+#define PORT_NET_TYPE_ECAT              (2)  // Ecatï¿½ï¿½ï¿½ï¿½           (FPGAï¿½ï¿½ï¿½ï¿½)
+
+GT_API GTN_SetPortNetTypeInfo(short core,short port,short netType);
+GT_API GTN_GetPortNetTypeInfo(short core,short port,short *pNetType,short *pFlag,short *pInfo);
+
+//---------------------------------------------------------
+// RingNet Sampling
+//---------------------------------------------------------
+
+//ï¿½È»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+typedef struct
+{
+    short varId;
+    short stationId;
+    short varType;
+    short varIndex;
+}StSamplingVar;
+GT_API GTN_RN_SamplingInit(short cardIndex,short stationPhyId);
+GT_API GTN_RN_SamplingAddVar(short cardIndex, short stationPhyId, StSamplingVar stVar);
+GT_API GTN_RN_SamplingReadData(short cardIndex,short stationPhyId,short varIdndex,double* pBuffer,int32_t bufSize,int32_t* pReadCount);
+GT_API GTN_RN_SamplingClear(short cardIndex, short stationPhyId, short mode);
+GT_API GTN_RN_SamplingPrintData(short cardIndex, short stationPhyId, const char* pFileName, int32_t startIndex, uint32_t printCount);
+GT_API GTN_RN_SamplingGetInfo(short cardIndex, short stationPhyId, short infoType, uint32_t *pInfo);
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½Ý²É¼ï¿½ï¿½ï¿½ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½
+// cardIndex:ï¿½ï¿½1ï¿½ï¿½Ê¼
+// stationPhyId:ï¿½ï¿½0ï¿½ï¿½Ê¼
+// pFileNameï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_LoadFileConfig(short cardIndex,short stationPhyId,char *pFileName);
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½Ý²É¼ï¿½ï¿½ï¿½ï¿½Ü£ï¿½ï¿½ï¿½È¡ï¿½É¼ï¿½ï¿½ï¿½ï¿½ï¿½
+// cardIndex:ï¿½ï¿½1ï¿½ï¿½Ê¼
+// stationPhyId:ï¿½ï¿½0ï¿½ï¿½Ê¼
+// pDataï¿½ï¿½ï¿½ï¿½ï¿½Ý·ï¿½ï¿½Ø£ï¿½ï¿½Ã»ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// dataCountï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½Ø¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¸ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§[0,4096]
+// pResDataCountï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½Ê¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¸ï¿½ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_HighSpeedSamplingGetAllData(short cardIndex,short stationPhyId,unsigned short *pData,uint32_t dataCount,uint32_t*pResDataCount);
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½Ý²É¼ï¿½ï¿½ï¿½ï¿½Ü£ï¿½ï¿½Ø±ï¿½DMAï¿½ï¿½ï¿½Ý²É¼ï¿½
+// cardIndex:ï¿½ï¿½1ï¿½ï¿½Ê¼
+// stationPhyId:ï¿½ï¿½0ï¿½ï¿½Ê¼
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_HighSpeedSamplingOffAll(short cardIndex,short stationPhyId);
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½Ý²É¼ï¿½ï¿½ï¿½ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½DMAï¿½ï¿½ï¿½Ý²É¼ï¿½
+// cardIndex:ï¿½ï¿½1ï¿½ï¿½Ê¼
+// stationPhyId:ï¿½ï¿½0ï¿½ï¿½Ê¼
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_RN_HighSpeedSamplingOnAll(short cardIndex,short stationPhyId);
+
+//initModeï¿½ï¿½ï¿½ï¿½0ÎªÄ¬ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½Ù´Î¿ï¿½ï¿½ï¿½Ê±ï¿½á¸´Î»ï¿½ï¿½ï¿½ï¿½Ê¼×´Ì¬ï¿½ï¿½initModeï¿½ï¿½ï¿½ï¿½1Îªï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½Ù´Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½
+GT_API GTN_SetExtModuleInitMode(short core,short initMode);
+GT_API GTN_GetExtModuleInitMode(short core,short *pInitMode);
+
+//-----------------------------------------------------------------------------------
+// ï¿½ï¿½È¡Ilinkï¿½ï¿½Õ¹Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// inputï¿½ï¿½cardIndex----ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,16]ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1
+// inputï¿½ï¿½stationPhyId----ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,64]
+// inputï¿½ï¿½moduleId----ï¿½ï¿½Õ¹Ä£ï¿½ï¿½IDï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,63]
+// inputï¿½ï¿½address----ï¿½ï¿½Õ¹Ä£ï¿½ï¿½ï¿½Ö·
+// outputï¿½ï¿½data----ï¿½ï¿½È¡ï¿½ï¿½Öµ
+// outputï¿½ï¿½dwordNum----ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ý¸ï¿½ï¿½ï¿½
+//-----------------------------------------------------------------------------------
+GT_API GTN_RN_IlinkRdPduData32(short cardIndex, short stationPhyId, unsigned char moduleId, uint32_t address, uint32_t* data, uint32_t dwordNum);
+
+//-----------------------------------------------------------------------------------
+// Ð´Ilinkï¿½ï¿½Õ¹Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// inputï¿½ï¿½cardIndex----ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,16]ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1
+// inputï¿½ï¿½stationPhyId----ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,64]
+// inputï¿½ï¿½moduleId----ï¿½ï¿½Õ¹Ä£ï¿½ï¿½IDï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,63]
+// inputï¿½ï¿½address----ï¿½ï¿½Õ¹Ä£ï¿½ï¿½ï¿½Ö·
+// outputï¿½ï¿½data----ï¿½ï¿½È¡ï¿½ï¿½Öµ
+// outputï¿½ï¿½dwordNum----ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ý¸ï¿½ï¿½ï¿½
+//-----------------------------------------------------------------------------------
+GT_API GTN_RN_IlinkWrPduData32(short cardIndex, short stationPhyId, unsigned char moduleId, uint32_t address, uint32_t* data, uint32_t dwordNum);
+
+/*-----------------------------------------------------------*/
+/* Catch Up                                                  */
+/*-----------------------------------------------------------*/
+#define CATCH_UP_STATE_IDLE                                                (0)   // ï¿½ï¿½ï¿½ï¿½×´Ì¬
+#define CATCH_UP_STATE_WAIT                                                (100) // ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½×·ï¿½ï¿½
+#define CATCH_UP_STATE_CATCH_UP                                            (200) // ×·ï¿½ï¿½ï¿½ï¿½ï¿½á£¬ï¿½ï¿½Î´ï¿½ïµ½Í¬ï¿½ï¿½
+#define CATCH_UP_STATE_SYNCH                                               (300) // ï¿½ã½ºÍ·ï¿½Í¹ï¿½ï¿½ï¿½Í¬ï¿½ï¿½
+#define CATCH_UP_STATE_STOP_SYNCH                                          (400) // ï¿½ã½ºÍ·ï¿½ï¿½ï¿½ï¿½Í£Ö¹
+#define CATCH_UP_STATE_STOP_SYNCH_DONE                                     (500) // ï¿½ã½ºÍ·ï¿½ï¿½ï¿½ï¿½Í£Ö¹
+
+//-----------------------------------------------------------------------------
+// 0 ï¿½È´ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
+//-----------------------------------------------------------------------------
+#define CATCH_UP_STATE_IDLE                                                (0)  // ï¿½ï¿½ï¿½ï¿½×´Ì¬
+
+//-----------------------------------------------------------------------------
+// 100 ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½×·ï¿½ï¿½
+//-----------------------------------------------------------------------------
+#define CATCH_UP_STATE_WAIT                                                (100)
+
+#define CATCH_UP_STATE_WAIT_FOR_PIECE_IN_SITU_VIA_FOLLOW                   (CATCH_UP_STATE_WAIT+12)  // ï¿½ï¿½Ô­Î»ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+#define CATCH_UP_STATE_WAIT_FOR_PIECE_IN_SITU_SYNCH_ONLY_VIA_FOLLOW        (CATCH_UP_STATE_WAIT+22)  // ï¿½ï¿½Ô­Î»ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define CATCH_UP_STATE_WAIT_FOR_START_IN_SITU_SYNCH_ONLY_VIA_FOLLOW        (CATCH_UP_STATE_WAIT+23)  // ï¿½ï¿½Ô­Î»ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô½ï¿½ï¿½ï¿½ï¿½Î»
+
+#define CATCH_UP_STATE_WAIT_FOR_PIECE_IN_SITU_VIA_TRAP                     (CATCH_UP_STATE_WAIT+32)  // ï¿½ï¿½Ô­Î»ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»
+#define CATCH_UP_STATE_WAIT_FOR_START_IN_SITU_VIA_TRAP                     (CATCH_UP_STATE_WAIT+33)  // ï¿½ï¿½Ô­Î»ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»
+
+#define CATCH_UP_STATE_WAIT_FOR_PIECE_IN_SITU_SYNCH_ONLY_VIA_TRAP          (CATCH_UP_STATE_WAIT+42)  // ï¿½ï¿½Ô­Î»ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»
+#define CATCH_UP_STATE_WAIT_FOR_START_IN_SITU_SYNCH_ONLY_VIA_TRAP          (CATCH_UP_STATE_WAIT+43)  // ï¿½ï¿½Ô­Î»ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»
+
+#define CATCH_UP_STATE_TO_PARKING_NO_PIECE_VIA_FOLLOW                      (CATCH_UP_STATE_WAIT+70) // Ã»ï¿½Ð¹ï¿½ï¿½ï¿½ï¿½ï¿½FOLLOWï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»
+#define CATCH_UP_STATE_TO_PARKING_VIA_FOLLOW                               (CATCH_UP_STATE_WAIT+71) // ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½Ð¡ï¿½Ú²ï¿½ï¿½ï¿½Î»ï¿½ï¿½FOLLOWï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»
+#define CATCH_UP_STATE_WAIT_FOR_PIECE_IN_PARKING_VIA_FOLLOW                (CATCH_UP_STATE_WAIT+72) // ï¿½Ú²ï¿½ï¿½ï¿½Î»ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define CATCH_UP_STATE_WAIT_FOR_START_IN_PARKING_VIA_FOLLOW                (CATCH_UP_STATE_WAIT+73) // ï¿½Ú²ï¿½ï¿½ï¿½Î»ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+
+#define CATCH_UP_STATE_TO_PARKING_NO_PIECE_VIA_TRAP                        (CATCH_UP_STATE_WAIT+80) // Ã»ï¿½Ð¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»
+#define CATCH_UP_STATE_TO_PARKING_VIA_TRAP                                 (CATCH_UP_STATE_WAIT+81) // Ã»ï¿½Ð¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»
+#define CATCH_UP_STATE_WAIT_FOR_PIECE_IN_PARKING_VIA_TRAP                  (CATCH_UP_STATE_WAIT+82) // ï¿½Ú²ï¿½ï¿½ï¿½Î»ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define CATCH_UP_STATE_WAIT_FOR_START_IN_PARKING_VIA_TRAP                  (CATCH_UP_STATE_WAIT+83) // ï¿½Ú²ï¿½ï¿½ï¿½Î»ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+#define CATCH_UP_STATE_TO_RETURN_POSITION_VIA_TRAP                         (CATCH_UP_STATE_WAIT+84) // ï¿½ï¿½ï¿½ï¿½ï¿½Ú¹ï¿½Ç®Ç°ï¿½ï¿½ï¿½ï¿½sa+soï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò·ï¿½ï¿½ï¿½Î»ï¿½Ã´ï¿½ï¿½Ú²ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½Î»ï¿½ï¿½
+#define CATCH_UP_STATE_WAIT_FOR_START_IN_RETURN_POSITION_VIA_TRAP          (CATCH_UP_STATE_WAIT+85) // ï¿½Ú·ï¿½ï¿½ï¿½Î»ï¿½ÃµÈ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+#define CATCH_UP_STATE_CALCULATE_RETURN_POS_TO_PARKING_VIA_TRAP            (CATCH_UP_STATE_WAIT+86)	// ï¿½Ú·ï¿½ï¿½Ø²ï¿½ï¿½ï¿½ï¿½Ä¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¹ï¿½ï¿½ï¿½Ñ¹ï¿½ë£¬ï¿½ï¿½Ì¬ï¿½ï¿½ï¿½ã·µï¿½ØµÄºï¿½ï¿½Êµï¿½Ä¿ï¿½ï¿½Î»ï¿½ï¿½
+
+//-----------------------------------------------------------------------------
+// 200 ×·ï¿½ï¿½ï¿½ï¿½ï¿½á£¬ï¿½ï¿½Î´ï¿½ïµ½Í¬ï¿½ï¿½
+//-----------------------------------------------------------------------------
+#define CATCH_UP_STATE_CATCH_UP                                            (200)
+
+#define CATCH_UP_STATE_CATCH_UP_VIA_FOLLOW                                 (CATCH_UP_STATE_CATCH_UP+12) // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×·ï¿½ï¿½
+
+#define CATCH_UP_STATE_RETURN_CATCH_UP_VIA_FOLLOW                          (CATCH_UP_STATE_CATCH_UP+16) // ï¿½ã½ºÍ·ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½Î»ï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×·ï¿½ï¿½
+
+#define CATCH_UP_STATE_TO_PIECE_NO_SLOPE_VIA_TRAP                          (CATCH_UP_STATE_CATCH_UP+20) // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã£ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define CATCH_UP_STATE_TO_PIECE_SLOPE_ESCAPE_VIA_TRAP                      (CATCH_UP_STATE_CATCH_UP+21) // Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹ï¿½Ë£ï¿½Ç¿ï¿½Æ½ï¿½ï¿½ï¿½GearÍ¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+#define CATCH_UP_STATE_CATCH_UP_IN_SLOPE_VIA_TRAP                          (CATCH_UP_STATE_CATCH_UP+22) // ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½Î»Í¬ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+#define CATCH_UP_STATE_CATCH_UP_SLOPE_DONE_VIA_TRAP                        (CATCH_UP_STATE_CATCH_UP+23) // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã£ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+#define CATCH_UP_STATE_RETURN_CATCH_UP_IN_SLOPE_VIA_TRAP                   (CATCH_UP_STATE_CATCH_UP+26) // ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+
+#define CATCH_UP_STATE_STOPPING_TO_RETURN_POS_VIA_TRAP                     (CATCH_UP_STATE_CATCH_UP+28) // ï¿½Ú·ï¿½ï¿½Ø²ï¿½ï¿½ï¿½ï¿½Ä¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¹ï¿½ï¿½ï¿½Ñ¹ï¿½ë£¬ï¿½Úºï¿½ï¿½ï¿½Î»ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×·ï¿½ï¿½
+
+//-----------------------------------------------------------------------------
+// 300 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½Í¬ï¿½ï¿½
+//-----------------------------------------------------------------------------
+#define CATCH_UP_STATE_SYNCH                                               (300) // ï¿½ã½ºÍ·ï¿½Í¹ï¿½ï¿½ï¿½Í¬ï¿½ï¿½
+
+#define CATCH_UP_STATE_PROCESS                                             (CATCH_UP_STATE_SYNCH+14) // ï¿½ã½ºÍ·Ö´ï¿½Ð²å²¹ï¿½Ë¶ï¿½
+#define CATCH_UP_STATE_PROCESS_DONE                                        (CATCH_UP_STATE_SYNCH+16) // ï¿½ã½ºÍ·ï¿½å²¹ï¿½ï¿½ï¿½
+
+//-----------------------------------------------------------------------------
+// 400 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½
+//-----------------------------------------------------------------------------
+#define CATCH_UP_STATE_STOP_SYNCH                                          (400) // ï¿½ã½ºÍ·ï¿½ï¿½ï¿½ï¿½Í£Ö¹
+
+#define CATCH_UP_STATE_USER_STOPPING                                       (CATCH_UP_STATE_STOP_SYNCH+10) // ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ã¹ï¿½ï¿½ï¿½Ä£ï¿½ï¿½Í£Ö¹Ö¸ï¿½î£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+#define CATCH_UP_STATE_OUT_OF_RANGE_STOPPING                               (CATCH_UP_STATE_STOP_SYNCH+12) // ï¿½ã½ºÍ·ï¿½ï¿½ï¿½ï¿½Í£Ö¹Î»
+#define CATCH_UP_STATE_ERROR_STOPPING                                      (CATCH_UP_STATE_STOP_SYNCH+13) // cuÄ£ï¿½é´¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹
+
+//-----------------------------------------------------------------------------
+// 500 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½
+//-----------------------------------------------------------------------------
+#define CATCH_UP_STATE_STOP_SYNCH_DONE                                     (500) // ï¿½ã½ºÍ·ï¿½ï¿½ï¿½ï¿½Í£Ö¹
+
+#define CATCH_UP_STATE_USER_STOP_DONE                                      (CATCH_UP_STATE_STOP_SYNCH_DONE+10) // ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ã¹ï¿½ï¿½ï¿½Ä£ï¿½ï¿½Í£Ö¹Ö¸ï¿½î£¬ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½Í£Ö¹ï¿½ï¿½É¡ï¿½ï¿½Ú¸ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½
+#define CATCH_UP_STATE_OUT_OF_RANGE_STOP_DONE                              (CATCH_UP_STATE_STOP_SYNCH_DONE+12) // ï¿½ã½ºÍ·ï¿½ï¿½ï¿½ï¿½Í£Ö¹Î»ï¿½ï¿½Í£ï¿½ï¿½ï¿½
+#define CATCH_UP_STATE_ERROR_STOP_DONE                                     (CATCH_UP_STATE_STOP_SYNCH_DONE+13) // cuÄ£ï¿½é´¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½
+
+
+#define CATCH_UP_RETURN_MODE_FOLLOW                                  (0)
+#define CATCH_UP_RETURN_MODE_TRAP                                    (1)
+
+#define CATCH_UP_FIFO_EMPTY_ACTION_TO_PARKING                        (0)
+#define CATCH_UP_FIFO_EMPTY_ACTION_IDLE                              (1)
+
+#define CATCH_UP_STOP_MODE_DEFAULT                                   (0) // Ä¬ï¿½ï¿½Í£Ö¹Ä£Ê½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½Í£Ö¹CatchUpï¿½ï¿½CatchUpï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½×´Ì¬
+#define CATCH_UP_STOP_MODE_DISABLE                                   (1) // ï¿½Ø±ï¿½Ê¹ï¿½ï¿½Í£Ö¹Ä£Ê½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½Í£Ö¹CatchUpï¿½ó£¬¹Ø±ï¿½CatchUpÊ¹ï¿½ï¿½
+
+#define CATCH_UP_MASTER_MODE_CONTINUOUS                              (0)
+#define CATCH_UP_MASTER_MODE_INTERMITTENT                            (1)
+
+#define CATCH_UP_SLAVE_MODE_DEFAULT                                  (0)
+#define CATCH_UP_SLAVE_MODE_SYNCH_ONLY                               (1)
+
+#define CATCH_UP_OUT_OF_RANGE_ACTION_STOP_MASTER                     (0)
+#define CATCH_UP_OUT_OF_RANGE_ACTION_STOP_SLAVE                      (1)
+#define CATCH_UP_OUT_OF_RANGE_ACTION_STOP_ALL                        (2)
+
+#define CATCH_UP_STOP_INFO_NONE                                      (0)
+#define CATCH_UP_STOP_INFO_STOP_SYNCH                                (1)
+#define CATCH_UP_STOP_INFO_USER_STOP                                 (2)
+#define CATCH_UP_STOP_INFO_OUT_OF_RANGE_STOP                         (3)
+#define CATCH_UP_STOP_INFO_ERROR_STOP                                (4)
+
+#define CATCH_UP_ERROR_CODE_NONE                                                     (0)
+#define CATCH_UP_ERROR_CODE_MASTER_IS_NONE                                           (1)
+#define CATCH_UP_ERROR_CODE_SLAVE_IS_NONE                                            (2)
+#define CATCH_UP_ERROR_CODE_START_MOTION_STATE                                       (3)
+#define CATCH_UP_ERROR_CODE_START_MOTION_MODE                                        (4)
+#define CATCH_UP_ERROR_CODE_START_MOTION_RUN                                         (5)
+#define CATCH_UP_ERROR_CODE_START_MOTION_PROFILE_MODE                                (6)
+#define CATCH_UP_ERROR_CODE_START_MOTION_FOLLOW_CLEAR                                (7)
+#define CATCH_UP_ERROR_CODE_START_MOTION_FOLLOW_DATA                                 (8)
+#define CATCH_UP_ERROR_CODE_START_MOTION_SLAVE_TYPE                                  (9)
+#define CATCH_UP_ERROR_CODE_START_MOTION_FOLLOW_START                                (10)
+#define CATCH_UP_ERROR_CODE_STOP_MOTION_MODE                                         (11)
+#define CATCH_UP_ERROR_CODE_OUT_OF_RANGE_STOP_MOTION_MODE                            (12)
+#define CATCH_UP_ERROR_CODE_START_PROCESS_MODE                                       (13)
+#define CATCH_UP_ERROR_CODE_START_PROCESS_CRD_START                                  (14)
+#define CATCH_UP_ERROR_CODE_STOP_SYNCH_MODE                                          (15)
+#define CATCH_UP_ERROR_CODE_IS_STOP_SYNCH_DONE_STATE                                 (16)
+#define CATCH_UP_ERROR_CODE_IS_PARKING_MOTION_DONE_VIA_FOLLOW_STATE                  (17)
+#define CATCH_UP_ERROR_CODE_IS_CATCH_UP_MOTION_DONE_VIA_FOLLOW_STATE                 (18)
+#define CATCH_UP_ERROR_CODE_IS_RETURN_CATCH_UP_MOTION_DONE_VIA_FOLLOW_STATE          (19)
+#define CATCH_UP_ERROR_CODE_IS_PROCESS_DONE_STATE                                    (20)
+#define CATCH_UP_ERROR_CODE_POP_FIFO_PIECE_COUNT                                     (21)
+#define CATCH_UP_ERROR_CODE_POP_FIFO_PIECE_SET_PRF_POS                               (22)
+#define CATCH_UP_ERROR_CODE_ALLOCATE_MEMORY_POOL                                     (23)
+#define CATCH_UP_ERROR_CODE_STATE_WAIT_MODE                                          (24)
+#define CATCH_UP_ERROR_CODE_START_SLAVE_ADDITION_TRAP_MOTION_SET_POS                 (25)
+#define CATCH_UP_ERROR_CODE_START_SLAVE_ADDITION_TRAP_MOTION_TYPE                    (26)
+#define CATCH_UP_ERROR_CODE_START_SLAVE_ADDITION_TRAP_MOTION_UPDATE                  (27)
+#define CATCH_UP_ERROR_CODE_START_SLAVE_GEAR_MOTION_SET_GEAR_RATIO                   (28)
+#define CATCH_UP_ERROR_CODE_START_SLAVE_GEAR_MOTION_TYPE                             (29)
+#define CATCH_UP_ERROR_CODE_START_SLAVE_GEAR_MOTION_GEAR_START                       (30)
+#define CATCH_UP_ERROR_CODE_START_SLAVE_GEAR_MOTION_SET_GEAR_SLOPE_END               (31)
+#define CATCH_UP_ERROR_CODE_IS_SLOPE_DONE_PROFILE_MODE                               (32)
+#define CATCH_UP_ERROR_CODE_IS_SLAVE_ADDITION_TRAP_MOTION_DONE_PROFILE_MODE          (33)
+#define CATCH_UP_ERROR_CODE_IS_SLAVE_ADDITION_TRAP_MOTION_DONE_POS                   (34)
+#define CATCH_UP_ERROR_CODE_IS_TO_PIECE_VIA_TRAP_MOTION_DONE_STATE                   (35)
+#define CATCH_UP_ERROR_CODE_IS_TO_PIECE_VIA_TRAP_MOTION_DONE_PROFILE_MODE            (36)
+#define CATCH_UP_ERROR_CODE_IS_PARKING_VIA_TRAP_MOTION_DONE_STATE                    (37)
+#define CATCH_UP_ERROR_CODE_GET_GEAR_SLOPE_LEFT_PROFILE_MODE                         (38)
+#define CATCH_UP_ERROR_CODE_CU_STATE                                                 (39)
+#define CATCH_UP_ERROR_CODE_CU_MASTER_MODE                                           (40)
+#define CATCH_UP_ERROR_CODE_START_MOTION_PRF_FOLLOW                                  (41)
+#define CATCH_UP_ERROR_CODE_START_MOTION_SET_FOLLOW_MASTER                           (42)
+#define CATCH_UP_ERROR_CODE_MASTER_VEL_ZERO                                          (43)
+#define CATCH_UP_ERROR_CODE_MASTER_VEL_GREATER_THAN_SLAVE_VEL_MAX                    (44)
+#define CATCH_UP_ERROR_CODE_MASTER_MOVE_DIRECTION                                    (45)
+#define CATCH_UP_ERROR_CODE_START_SLAVE_TRAP_MOTION_PRF_TRAP                         (46)
+#define CATCH_UP_ERROR_CODE_START_SLAVE_TRAP_MOTION_SET_TRAP_PRM                     (47)
+#define CATCH_UP_ERROR_CODE_START_SLAVE_TRAP_MOTION_SET_VEL                          (48)
+#define CATCH_UP_ERROR_CODE_START_SLAVE_TRAP_MOTION_SET_POS                          (49)
+#define CATCH_UP_ERROR_CODE_START_SLAVE_TRAP_MOTION_UPDATE                           (50)
+#define CATCH_UP_ERROR_CODE_START_SLAVE_TRAP_MOTION_SLAVE_TYPE                       (51)
+#define CATCH_UP_ERROR_CODE_IS_SLAVE_TRAP_MOTION_DONE_PROFILE_MODE                   (52)
+#define CATCH_UP_ERROR_CODE_IS_SLAVE_TRAP_MOTION_DONE_POS                            (53)
+#define CATCH_UP_ERROR_CODE_IS_SLAVE_TRAP_STOP_DONE_PROFILE_MODE                     (54)
+
+typedef struct  
+{
+    short masterMode;                  // ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½
+                                       // 1ï¿½ï¿½ï¿½ï¿½Ðªï¿½Ë¶ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òª2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short masterType;                  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½MC_ENCODERï¿½ï¿½MC_AU_ENCODER
+    short masterIndex;                 // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    short slaveMode;                   // ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½Æ´ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ïµ½ï¿½Ù¶ï¿½Í¬ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½Í¬ï¿½ï¿½
+    short slaveType;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½Ä¿Ç°Ö»Ö§ï¿½Ö´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½MC_VIRTUAL_PROFILE
+    short slaveIndex;                  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short slaveAdditionType;           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½Ä¿Ç°Ö»Ö§ï¿½Ö´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½MC_VIRTUAL_PROFILE
+    short slaveAdditionIndex;          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short slaveLink;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½Ó£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á£©
+
+    short outOfRangeAction;            // ï¿½ï¿½ï¿½á³¬ï¿½ï¿½ï¿½Ó¹ï¿½ï¿½ï¿½Î§ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½0ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½á£¬1ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½á£¬2ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½ï¿½Í´ï¿½ï¿½ï¿½
+
+    short trapSmoothTime;              // ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Î»ï¿½Ë¶ï¿½ï¿½ï¿½Æ½ï¿½ï¿½Ê±ï¿½ï¿½,ï¿½ï¿½Î»ï¿½ï¿½ms
+    short followSmoothPercent;         // ï¿½ï¿½ï¿½ï¿½×·ï¿½Ù´ï¿½ï¿½Í´ï¿½Ê±ï¿½ï¿½followï¿½Ë¶ï¿½ï¿½ï¿½Sï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ä°Ù·Ö±È£ï¿½Ä¿Ç°ï¿½ï¿½Ö§ï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0
+
+    double synchOffset;                // Í¬ï¿½ï¿½Î»ï¿½ï¿½Æ«ï¿½Æ£ï¿½mm
+    double detectPos;                  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã£ï¿½mm
+    double parkPos;                    // ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½mm
+    double stopPos;                    // Í£Ö¹Î»ï¿½ï¿½mm
+
+    double slaveVelMax;                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È£ï¿½mm/s
+    double slaveAcc;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È£ï¿½mm/s^2
+
+    double sampleTime;                 // ï¿½Ù¶È²ï¿½ï¿½ï¿½Ê±ï¿½ä£¬ms
+
+    double reserve2[5];
+} TCatchUpPrm;
+
+typedef struct  
+{
+    short mode;                        // ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½FollowÄ£Ê½ï¿½ï¿½ï¿½Ø£ï¿½1ï¿½Ãµï¿½Î»Ä£Ê½ï¿½ï¿½ï¿½ï¿½
+    short fifoEmptyAction;             // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½á·µï¿½Ø²ï¿½ï¿½ï¿½Î»
+                                       // 1ï¿½ï¿½ï¿½È´ï¿½Ñ¹ï¿½ë¹¤ï¿½ï¿½Î»ï¿½ï¿½ï¿½Ôºï¿½ï¿½Ù¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¶ï¿½ï¿½ï¿½
+    short reserve1[2];
+    int32_t reserve2[4];
+    double reserve3[4];
+} TStartCatchUpPrm;
+
+typedef struct  
+{
+    short mode;                        // Í£Ö¹Ä£Ê½
+    short reserve1[3];
+    int32_t reserve2[4];
+    double reserve3[4];
+} TStopCatchUpPrm;
+
+typedef struct  
+{
+    short mode;                        // ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½0Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ñ¹ï¿½ï¿½å²¹ï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½Ö»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½å²¹
+    short crdIndex;                    // ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½
+    short reserve1[2];
+    int32_t reserve2[4];
+    double reserve3[4];
+} TStartCatchUpProcessPrm;
+
+typedef struct  
+{
+    short mode;                        // Í£Ö¹Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½slaveAccï¿½ï¿½Í£
+    short reserve1[3];
+    int32_t reserve2[4];
+    double reserve3[4];
+} TStopCatchUpSynchPrm;
+
+typedef struct  
+{
+    uint32_t id;                  // ï¿½ï¿½ï¿½ï¿½ID
+    int32_t reserve1[3];
+    double pos;                        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+    double reserve2[3];
+} TCatchUpPieceFifo;
+
+typedef struct  
+{
+    short state;                       // ï¿½ï¿½Ç°×´Ì¬
+    short stopInfo;                    // Í£Ö¹Ô­ï¿½ï¿½
+    short errorCode;                   // Ö´ï¿½Ð³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short reserve1[5];
+    uint32_t id;                  // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ID
+    uint32_t pieceCount;          // ï¿½Ó¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int32_t reserve2[6];
+    double synchDistance;              // ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+    double synchTime;                  // ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+    double reserve3[6];
+} TCatchUpStatus;
+
+typedef struct  
+{
+    short state;
+    short stopInfo;                    // Í£Ö¹Ô­ï¿½ï¿½
+    short errorCode;                   // Ö´ï¿½Ð³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short reserve1[5];
+    int32_t reserve2[8];
+    double pieceStartPos;
+    double slaveStartPos;
+    double pieceSynchPos;
+    double slaveSynchPos;
+    double pieceDistanceMin;           // ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ã²»ï¿½ï¿½Ä¹ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½    
+    double reserve3[8];
+} TCatchUpInfo;
+
+GT_API GTN_SetCatchUpPrm(short core,short catchUpIndex,TCatchUpPrm *pPrm);
+GT_API GTN_GetCatchUpPrm(short core,short catchUpIndex,TCatchUpPrm *pPrm);
+GT_API GTN_StartCatchUp(short core,short catchUpIndex,TStartCatchUpPrm *pPrm);
+GT_API GTN_StopCatchUp(short core,short catchUpIndex,TStopCatchUpPrm *pPrm);
+GT_API GTN_StartCatchUpProcess(short core,short catchUpIndex,TStartCatchUpProcessPrm *pPrm);
+GT_API GTN_StopCatchUpSynch(short core,short catchUpIndex,TStopCatchUpSynchPrm *pPrm);
+GT_API GTN_PushCatchUpPieceFifo(short core,short catchUpIndex,TCatchUpPieceFifo *pFifo);
+GT_API GTN_GetCatchUpStatus(short core,short catchUpIndex,TCatchUpStatus *pStatus);
+GT_API GTN_GetCatchUpInfo(short core,short catchUpIndex,TCatchUpInfo *pInfo);
+GT_API GTN_ClearCatchUpStatus(short core,short catchUpIndex);
+
+
+#define DI_STOP_VALUE_LOW_LEVEL                            (0)  // Diï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§Öµ0
+#define DI_STOP_VALUE_HIG_LEVEL                            (1)  // Diï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§Öµ1
+#define DI_STOP_VALUE_FALLING_EDGE                         (2)  // Diï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½Ø´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â½ï¿½ï¿½ï¿½
+#define DI_STOP_VALUE_RISING_EDGE                          (3)  // Diï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½Ø´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+#define DI_STOP_AXSI_STOP_TYPE_NONE                        (-1)                                  // Diï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ²ï¿½ï¿½ï¿½
+#define DI_STOP_AXIS_STOP_TYPE_ABRUPT                      (0)                                   // Diï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹
+#define DI_STOP_AXIS_STOP_TYPE_SMOOTH                      (1)                                   // Diï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½Í£Ö¹
+#define DI_STOP_AXIS_STOP_TYPE_ABRUPT_THEN_AXIS_OFF        (DI_STOP_AXIS_STOP_TYPE_ABRUPT + 10)  // Diï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
+#define DI_STOP_AXIS_STOP_TYPE_SMOOTH_THEN_AXIS_OFF        (DI_STOP_AXIS_STOP_TYPE_SMOOTH + 10)  // Diï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½ï¿½diï¿½ï¿½ï¿½ï¿½Í£Ö¹ï¿½ï¿½
+// coreï¿½ï¿½ï¿½Ëºï¿½
+// diTypeï¿½ï¿½diï¿½ï¿½ï¿½ï¿½
+// diIndexï¿½ï¿½diï¿½ï¿½ï¿½ï¿½
+// diValueï¿½ï¿½diï¿½ï¿½ï¿½ï¿½Öµ,0ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§Öµ0ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§Öµ1ï¿½ï¿½2ï¿½ï¿½ï¿½Ø´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â½ï¿½ï¿½Ø£ï¿½3ï¿½ï¿½ï¿½Ø´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// stopTypeï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½Í¡ï¿½-1ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ü£ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹ï¿½ï¿½1ï¿½ï¿½Æ½ï¿½ï¿½Í£Ö¹ï¿½ï¿½10ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ü£ï¿½11ï¿½ï¿½Æ½ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
+// pLinkAxisMaskï¿½ï¿½diï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÒªÍ£Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
+// axisMaskCountï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_SetStopIoLinkAxes(short core,short diType,short diIndex,short diValue,short stopType,uint32_t *pLinkAxisMask,short axisMaskCount=1);
+GT_API GTN_GetStopIoLinkAxes(short core,short diType,short diIndex,short *pDiValue,short *pStopType,uint32_t *pLinkAxisMask,short *pAxisMaskCount);
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½ï¿½diï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+// coreï¿½ï¿½ï¿½Ëºï¿½
+// diTypeï¿½ï¿½diï¿½ï¿½ï¿½ï¿½
+// diIndexï¿½ï¿½diï¿½ï¿½ï¿½ï¿½
+// diValueï¿½ï¿½diï¿½ï¿½ï¿½ï¿½Öµ,0ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§Öµ0ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§Öµ1ï¿½ï¿½2ï¿½ï¿½ï¿½Ø´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â½ï¿½ï¿½Ø£ï¿½3ï¿½ï¿½ï¿½Ø´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// doTypeï¿½ï¿½diï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½doï¿½ï¿½ï¿½Í£ï¿½MC_NONEï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// pDoMaskï¿½ï¿½diï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½doï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
+// pDoValueï¿½ï¿½diï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½doÖµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
+// doMaskCountï¿½ï¿½doï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_SetStopIoLinkDo(short core,short diType,short diIndex,short diValue,short doType,uint32_t *pDoMask,uint32_t *pDoValue,short doMaskCount=1);
+GT_API GTN_GetStopIoLinkDo(short core,short diType,short diIndex,short *pDiValue,short *pDoType,uint32_t *pDoMask,uint32_t *pDoValue,short *pDoMaskCount);
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½Ã¹æ»®ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½Æ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½åµ¥Î»
+// coreï¿½ï¿½ï¿½Ëºï¿½
+// profileï¿½ï¿½ï¿½æ»®ï¿½ï¿½ï¿½ï¿½
+// velMaxï¿½ï¿½ï¿½æ»®ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½Æ£ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/ms
+// accMaxï¿½ï¿½ï¿½æ»®ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½Æ£ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/ms^2
+// ×¢ï¿½â£º
+// ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½æ»®ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ£ï¿½ï¿½ï¿½æ»®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹
+// ï¿½ï¿½2ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½velMaxï¿½ï¿½ï¿½ï¿½accMaxï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Îª0ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾È¡ï¿½ï¿½ï¿½æ»®ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¼ï¿½ï¿½
+// ï¿½ï¿½3ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½GTN_SetAxisMotionConstraintï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Îªï¿½ï¿½ï¿½åµ¥Î»ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¶ï¿½ï¿½ï¿½Ð§
+//-------------------------------------------------------------------------------------------------------
+GT_API GTN_SetProfileMotionConstraint(short core, short profile, double velMax, double accMax);
+GT_API GTN_GetProfileMotionConstraint(short core, short profile, double *pVelMax, double *pAccMax);
+
+//ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã±È½ï¿½ï¿½ï¿½ï¿½ï¿½È½ï¿½Ô´ï¿½Ç·ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½
+GT_API GTN_PosCompareBufCmdEnable(short core,short posCompareIndex, short enable);
+typedef struct
+{
+    uint32_t segmentNumber;
+    short xAxisEnable;
+    short yAxisEnable;
+    short zAxisEnable;
+    short reserve[5];
+}TPosCompareBufSourceEnable;
+GT_API GTN_PosCompareBufSourceEnable(short core,short posCompareIndex, TPosCompareBufSourceEnable *pSourceEnable);
+typedef struct
+{
+    short bufCmdEnable;
+    short xAxisEnable;
+    short yAxisEnable;
+    short zAxisEnable;
+    short reserve[4];
+}TPosCompareBufEnableInfo;
+GT_API GTN_GetPosCompareBufEnableInfo(short core,short posCompareIndex, TPosCompareBufEnableInfo *pEnableInfo);
+
+
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½Ï¹ï¿½ï¿½Ü¹ï¿½ï¿½ßºï¿½ï¿½ï¿½
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ã¡¢ï¿½Õµã¡¢ï¿½Ð¼ï¿½ã£¬ï¿½Ô¼ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½PVTï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+#define MP_POINT_MAX                        (16)        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½8ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ã¹»ï¿½ï¿½2ï¿½ï¿½ï¿½ï¿½12ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ã¹»
+
+#define MP_ERROR_NONE                       (0)
+#define MP_ERROR_VEL                        (700)
+#define MP_ERROR_ACC                        (701)
+#define MP_ERROR_DEC                        (702)
+#define MP_ERROR_POS_END                    (703)
+#define MP_ERROR_POS_OUT_OF_RANGE           (704)
+#define MP_ERROR_PERCENT                    (705)
+#define MP_ERROR_ROOT                       (706)
+#define MP_ERROR_SQRT                       (707)
+#define MP_ERROR_SEGMENT_TYPE               (708)
+#define MP_ERROR_TIME_NOT_FIND              (709)
+
+#define MP_SEGMENT_ASCEND_1                 (1)
+#define MP_SEGMENT_ASCEND_TRAP              (2)
+#define MP_SEGMENT_ASCEND_3                 (3)
+#define MP_SEGMENT_EVEN                     (4)
+#define MP_SEGMENT_DESCEND_5                (5)
+#define MP_SEGMENT_DESCEND_TRAP             (6)
+#define MP_SEGMENT_DESCEND_7                (7)
+#define MP_SEGMENT_END                      (8)
+
+struct TMpParameter
+{
+    double posBegin;
+    double posEnd;
+    double acc;                             // ï¿½ï¿½ï¿½Ù¶ï¿½
+    double dec;                             // ï¿½ï¿½ï¿½Ù¶ï¿½
+    double percentAcc;                      // ï¿½ï¿½ï¿½Ù¶Î°Ù·Ö±ï¿½
+    double percentDec;                      // ï¿½ï¿½ï¿½Ù¶Î°Ù·Ö±ï¿½
+
+    double vel;                             // ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+};
+
+struct TMp2Parameter
+{
+    double posBegin;
+    double posEnd;
+    double acc;                             // ï¿½ï¿½ï¿½Ù¶ï¿½
+    double dec;                             // ï¿½ï¿½ï¿½Ù¶ï¿½
+    double percentAcc;                      // ï¿½ï¿½ï¿½Ù¶Î°Ù·Ö±ï¿½
+    double percentDec;                      // ï¿½ï¿½ï¿½Ù¶Î°Ù·Ö±ï¿½
+
+    double vel1;                            // vel1ï¿½ï¿½Ò»ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double vel2;                            // vel2ï¿½Ú¶ï¿½ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½vel1=vel2Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ù¼ï¿½ï¿½ï¿½
+    double posMiddle;                       // posMiddleï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½Ð»ï¿½Ê±ï¿½ï¿½Î»ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ãºï¿½ï¿½Õµï¿½Î»ï¿½ï¿½Ö®ï¿½ï¿½
+};
+
+struct TMpPoint
+{
+    double time;                            // ï¿½ï¿½Ç°ï¿½Îµï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+    double vel;                             // ï¿½ï¿½Ç°ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double pos;                             // ï¿½ï¿½Ç°ï¿½Îµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+
+    double accDir;                          // ï¿½ï¿½Ç°ï¿½ÎµÄ¼ï¿½ï¿½Ù¶È·ï¿½ï¿½ï¿½
+    double am;                              // ï¿½ï¿½Ç°ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double jerk;                            // ï¿½ï¿½Ç°ï¿½ÎµÄ¼Ó¼ï¿½ï¿½Ù¶ï¿½
+    unsigned short segmentType;             // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½1-7
+};
+
+struct TMpResult
+{
+    short dir;                              // 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½-1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½
+    unsigned short pad[2];
+    unsigned short knotCount;               // ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½
+    TMpPoint knot[MP_POINT_MAX];            // Sï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð½Úµï¿½ï¿½Î»ï¿½Ã¡ï¿½ï¿½Ù¶È¡ï¿½Ê±ï¿½ï¿½
+};
+
+typedef struct
+{
+    short type;
+    short pad1[3];
+
+    double pos;                             // ï¿½Õµï¿½Î»ï¿½ï¿½
+    double time;                            // ï¿½Ë¶ï¿½Ê±ï¿½ï¿½
+
+    double vel;                             // ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double acc;                             // ï¿½ï¿½ï¿½Ù¶ï¿½
+    double dec;                             // ï¿½ï¿½ï¿½Ù¶ï¿½
+
+    double percentAcc;                      // ï¿½ï¿½ï¿½Ù¶ï¿½Sï¿½ï¿½ï¿½ß°Ù·Ö±ï¿½
+    double percentDec;                      // ï¿½ï¿½ï¿½Ù¶ï¿½Sï¿½ï¿½ï¿½ß°Ù·Ö±ï¿½
+
+    double pad2[4];
+} TMpPtParameter;
+
+typedef struct
+{
+    short errorPosition;                    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short errorIndex;                       // ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+    short pad1[2];
+
+    int32_t commandIndex;                      // ï¿½ï¿½ï¿½Ö´ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+} TMpError;
+
+/**
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½ß¸ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½Î»ï¿½Ã¡ï¿½ï¿½Ù¶Èºï¿½Ê±ï¿½ï¿½
+ * @param mpp ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param mpr ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½ß¸ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½Î»ï¿½Ã¡ï¿½ï¿½Ù¶Èºï¿½Ê±ï¿½ï¿½
+ * @return ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+*/
+GT_API GTN_UTL_MovePercentShape(const TMpParameter* pMp, TMpResult* pMpr);
+
+/**
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½ß¸ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½Î»ï¿½Ã¡ï¿½ï¿½Ù¶Èºï¿½Ê±ï¿½ï¿½
+ * @param mpp ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param mpr ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½ß¸ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½Î»ï¿½Ã¡ï¿½ï¿½Ù¶Èºï¿½Ê±ï¿½ï¿½
+ * @return ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+*/
+GT_API GTN_UTL_MovePercent2Shape(const TMp2Parameter* pMp2, TMpResult* pMpr);
+
+/**
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½Ö¹ï¿½ï¿½Î»ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ã²»Í¬ï¿½Ð¼ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+ * @param mpr ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½ß¸ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½Î»ï¿½Ã¡ï¿½ï¿½Ù¶Èºï¿½Ê±ï¿½ï¿½
+ * @param posBegin ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+ * @param posEnd ï¿½Õµï¿½Î»ï¿½ï¿½
+ * @param posMiddle ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½ß¸ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½Î»ï¿½Ã¡ï¿½ï¿½Ù¶Èºï¿½Ê±ï¿½ï¿½
+ * @param pPoint ï¿½Ð¼ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½Ï¢
+ * @return ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+*/
+GT_API GTN_UTL_MovePercentTime(const TMpResult* pMpr, double posBegin, double posEnd, double posMiddle, TMpPoint* pPoint);
+
+GT_API GTN_UTL_MovePercentPt(double posBegin, double timeBegin, const TMpPtParameter* pPtArray, int32_t ptArrayCount,
+    TMpPoint* pPointArray, int32_t pointArraySize, int32_t* pPointArrayCount, TMpError* pError);
+
+GT_API GTN_UTL_QueryMovePercentPointAccordingTime(double time, const TMpPoint* pPointArray, int32_t pointArrayCount, TMpPoint* pResult);
+
+GT_API GTN_UTL_QueryMovePercentPointAccordingPos(double pos, const TMpPoint* pPointArray, int32_t pointArrayCount, TMpPoint* pResult);
+
+//-----------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½ÃºÍ¶ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½
+//-----------------------------------------------------------------------------------
+GT_API GTN_RN_GetGlink2OutputResolution(short cardIndex, short stationPhyId, short axis, uint32_t  *pValue);
+GT_API GTN_RN_SetGlink2OutputResolution(short cardIndex, short stationPhyId, short axis, uint32_t  value);
+//-------------------------------------------------------------------------------------------------------
+// ï¿½ï¿½ï¿½ï¿½XMLï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------------
+typedef struct
+{
+    short stationId;
+    unsigned short stationType;
+    unsigned short subType;
+    short reserve1;
+    short reserve2;
+    short reserve3;
+    short reserve4;
+    short reserve5;
+}TOnlineStationType;
+GT_API GTN_RN_RingNetRecoverEx(short cardIndex,short stationPhyId,short mode,short *pParam);
+GT_API GTN_RN_GetOnlineDeviceNum(short cardIndex,short *pOnlineDeviceNum);
+GT_API GTN_RN_GetOnlineStationType(short cardIndex,TOnlineStationType *pOnlineStationType,short stationNums,short *pResNums);
+GT_API GTN_InsertCallbackEvent(short core,short motionMode,short index,short eventNumber,TListInfo *pListInfo);
+// ï¿½ï¿½PCï¿½à¿ª
+short GT_TcpServerPortInit(char *hostIp,unsigned short hostPort); 
+short GT_TcpServerPortDeInit(void);
+short GT_TcpClientPortInit(char *hostIp,unsigned short hostPort);
+short GT_TcpClientPortDeInit(void);
+
+//-------------------------------------------------------------------------------------------------
+// ï¿½ï¿½Â·ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------
+typedef struct
+{
+    short enable;                      // Ê¹ï¿½Ü»ï¿½ï¿½ß½ï¿½ï¿½Ã»ï¿½Â·ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½,0: ï¿½ï¿½ï¿½Ã»ï¿½Â·ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½,1: ï¿½ï¿½ï¿½Ã»ï¿½Â·ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½
+    short mode;                        // ï¿½Ð»ï¿½Ä£Ê½,0: ï¿½É±Õ»ï¿½ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,1: ï¿½É¿ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½ï¿½ï¿½Õ»ï¿½
+
+    int32_t dir;                          // ï¿½Õ»ï¿½ï¿½Ð¿ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Öµï¿½ï¿½ï¿½Ð¶Ï·ï¿½ï¿½ï¿½,0: Ð¡ï¿½ï¿½ï¿½ï¿½ÖµÊ±ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½,1: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÖµÊ±ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½
+    int32_t threshold;                    // ï¿½ï¿½Â·ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½Öµ,Î»ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½î³¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÖµÊ±ï¿½Ð»ï¿½ï¿½ï¿½Â·,ï¿½ï¿½Î»: ï¿½ï¿½ï¿½ï¿½
+    int32_t openLoopDac;                  // ï¿½Ó±Õ»ï¿½ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½ï¿½dacï¿½ï¿½ï¿½Öµ,ï¿½ï¿½Î»: dacï¿½ï¿½bitÎ»
+    double overTime;                   // ï¿½ï¿½Â·ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½î³¬Ê±Ê±ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½î³¬ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½
+
+    int32_t posOffset;                    // ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½Õ»ï¿½Ê±ï¿½ï¿½ï¿½æ»®Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú±ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ãµï¿½Æ«ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½Î»: ï¿½ï¿½ï¿½ï¿½
+    short reserve[2];                  // ï¿½ï¿½ï¿½ï¿½
+}TSwitchLoopParameter;
+
+//-------------------------------------------------------------------------------------------------
+// ï¿½Ý²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½
+//-------------------------------------------------------------------------------------------------
+typedef struct
+{
+    int32_t loopFlag;                     // ï¿½Ç·ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½Ã¿È¦Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½Í¬ï¿½Ä²ï¿½ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,0: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,1: Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int32_t tableMax;                     // ï¿½Ý²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½
+
+    double startPos;                   // ï¿½ï¿½ï¿½Ð³Ý²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼Î»ï¿½ï¿½Öµ(ï¿½ï¿½ï¿½ï¿½ï¿½indexÎ»ï¿½ï¿½),ï¿½ï¿½Î»: ï¿½ï¿½ï¿½ï¿½
+    double length;                     // ï¿½ï¿½ï¿½Ð³Ý²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½,ï¿½ï¿½Î»: ï¿½ï¿½ï¿½ï¿½
+    double refPos;                     // ï¿½Î¿ï¿½Î»ï¿½ï¿½Öµ,ï¿½ï¿½ï¿½ï¿½Ç°Î»ï¿½ï¿½ÏµÍ³ï¿½ï¿½indexï¿½ÅºÅµï¿½Î»ï¿½ï¿½Öµ,ï¿½ï¿½Î»: ï¿½ï¿½ï¿½ï¿½
+
+    double positiveOffset;             // ï¿½ï¿½ï¿½ò²¹³ï¿½Ê±,ï¿½ï¿½ï¿½ï¿½ÖµÆ«ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½Î»: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»,ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½Ä¦ï¿½ï¿½ï¿½ï¿½
+    double positiveScale;              // ï¿½ï¿½ï¿½ò²¹³ï¿½Ê±,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½Ã±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ,ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    double negativeOffset;             // ï¿½ï¿½ï¿½ò²¹³ï¿½Ê±,ï¿½ï¿½ï¿½ï¿½ÖµÆ«ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½Î»: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»,ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½Ä¦ï¿½ï¿½ï¿½ï¿½
+    double negativeScale;              // ï¿½ï¿½ï¿½ò²¹³ï¿½Ê±,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½Ã±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ,ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+}TTorqueForceCompensatePara;
+GT_API GTN_SetVelLoopPid(short core,short control,short index,TPid *pPid);
+GT_API GTN_GetVelLoopPid(short core,short control,short index,TPid *pPid);
+GT_API GTN_SetVelLoopLowpassPara(short core,short control,short index,short enableFlag,double freq,double damping);
+GT_API GTN_GetVelLoopLowpassPara(short core,short control,short index,short *pEnableFlag,double *pFreq,double *pDamping);
+GT_API GTN_SetVelLoopNotchPara(short core,short control,short index,short enableFlag,double centerFreq,double bandWidth,double notchDepth);
+GT_API GTN_GetVelLoopNotchPara(short core,short control,short index,short *pEnableFlag,double *pCenterFreq,double *pBandWidth,double *pNotchDepth);
+GT_API GTN_SetVelLoopKjff(short core,short control,short index,double kjff);
+GT_API GTN_GetVelLoopKjff(short core,short control,short index,double *pKjff);
+GT_API GTN_SetSwitchLoopParameter(short core,short control,TSwitchLoopParameter *pSwitchLoopPara);
+GT_API GTN_GetSwitchLoopParameter(short core,short control,TSwitchLoopParameter *pSwitchLoopPara);
+GT_API GTN_SetForceValue(short core,short control,short index,double forceValue);
+GT_API GTN_GetForceValue(short core,short control,short index,double *pForceValue);
+GT_API GTN_SetLoopOutputProtect(short core,short control,double outputValueMax,int32_t overTime);
+GT_API GTN_GetLoopOutputProtect(short core,short control,double *pOutputValueMax,int32_t *pOverTime,short *pStatus);
+GT_API GTN_SwitchControlLoopMode(short core,short control,short index,short loopMode,double loopOutput,short switchMode);
+GT_API GTN_SetFeedForwordValueLimit(short core,short control,double velMax,double accMax,double jerkMax);
+GT_API GTN_GetFeedForwordValueLimit(short core,short control,double *pVelMax,double *pAccMax,double *pJerkMax);
+GT_API GTN_GetControlLoopMode(short core,short control,short index,short *loopMode);
+
+GT_API GTN_SetSpringCompensatePara(short core,short control,short enable,int32_t refPos,double k,double b,double limit);
+GT_API GTN_GetSpringCompensatePara(short core,short control,short *pEnable,int32_t *pRefPos,double *pK,double *pB,double *pLimit);
+GT_API GTN_SetVelLoopCrossCompPara(short core,short control,short enable,short sourceType,short sourceIndex,double k);
+GT_API GTN_GetVelLoopCrossCompPara(short core,short control,short *pEnable,short *pSourceType,short *pSourceIndex,double *pK);
+GT_API GTN_SetTorqueForceComp(short core,short control,TTorqueForceCompensatePara *pPara,double *pPositiveComp,double *pNegativeComp);
+GT_API GTN_EnableTorqueForceComp(short core,short control,short mode);
+
+#define FILTER_LOCATION_FEEDBACK_POS                 (0)
+#define FILTER_LOCATION_VEL_LOOP_ERROR               (1)
+#define FILTER_LOCATION_VEL_LOOP_OUTPUT              (2)
+#define FILTER_LOCATION_FEEDBACK_VEL                 (3)
+#define FILTER_LOCATION_FORCE_CONTROL_OUTPUT         (4)
+GT_API GTN_SetLowpassFilter(short core,short control,short index,short filterLocation,short filterIndex,short enableFlag,double freq,double damping);
+GT_API GTN_GetLowpassFilter(short core,short control,short index,short filterLocation,short filterIndex,short *pEnableFlag,double *pFreq,double *pDamping);
+GT_API GTN_SetLowpassFilterFirstOrder(short core,short control,short index,short filterLocation,short filterIndex,short enableFlag,double freq);
+GT_API GTN_GetLowpassFilterFirstOrder(short core,short control,short index,short filterLocation,short filterIndex,short *pEnableFlag,double *pFreq);
+GT_API GTN_SetLowpassFilterSecondOrder(short core,short control,short index,short filterLocation,short filterIndex,short enableFlag,double freq,double damping);
+GT_API GTN_GetLowpassFilterSecondOrder(short core,short control,short index,short filterLocation,short filterIndex,short *pEnableFlag,double *pFreq,double *pDamping);
+GT_API GTN_SetNotchFilter(short core,short control,short index,short filterLocation,short filterIndex,short enableFlag,double centerFreq,double bandWidth,double notchDepth);
+GT_API GTN_GetNotchFilter(short core,short control,short index,short filterLocation,short filterIndex,short *pEnableFlag,double *pCenterFreq,double *pBandWidth,double *pNotchDepth);
+
+
+typedef struct
+{
+    short masterIndex;                  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short slaveIndex[2];                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short pad1;                         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+
+    double stopDec;                     // X1ï¿½ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½Ù¶ï¿½
+    double stopJerk;                    // X1ï¿½ï¿½ï¿½Í£Ö¹jerk
+
+    double borderPositive[2];           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½
+    double borderNegative[2];           // ï¿½ï¿½ï¿½á¸ºï¿½ï¿½ß½ï¿½
+}TDualAxisParameter;
+
+typedef struct 
+{
+    short enable;
+    short errorId;
+    short pad1[2];
+
+    short state[2];
+    short border[2];
+
+    double pad2[6];
+}TDualAxisStatus;
+GT_API GTN_SetDualAxisParameter(short core,short index,TDualAxisParameter *pPrm);
+GT_API GTN_GetDualAxisParameter(short core,short index,TDualAxisParameter *pPrm);
+GT_API GTN_EnableDualAxis(short core,short index,short enable);
+GT_API GTN_GetDualAxisStatus(short core,short index,TDualAxisStatus *pSts);
+GT_API GTN_ResetDualAxis(short core,short index);
+
+typedef struct
+{
+    double pos;                        // Ä¿ï¿½ï¿½Î»ï¿½ï¿½
+    double vel;                        // ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double acc;                        // ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double dec;                        // ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double jerkAcc;                    // ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½jerk
+    double jerkDec;                    // ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½jerk
+
+	double velEvenTime;                // ï¿½ï¿½Î´Êµï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    double accEvenTime;                // ï¿½ï¿½Î´Êµï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    double decEvenTime;                // ï¿½ï¿½Î´Êµï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+
+	unsigned short bufferMode;         // ï¿½ï¿½Î´Êµï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+	unsigned short pad1;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+	unsigned short pad2;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+	unsigned short pad3;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+
+    double reserve1;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+	double reserve2;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+	double reserve3;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+	double reserve4;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+}TMoveAbsoluteSineParameter;
+
+GT_API GTN_MoveAbsoluteSine(short core,short profile,TMoveAbsoluteSineParameter *pPrm,TListInfo *pListInfo=NULL,short group=0);
+GT_API GTN_GetMoveAbsoluteSineParameter(short core,short profile,TMoveAbsoluteSineParameter *pPrm);
+
+typedef struct
+{
+    double pos;                        // Ä¿ï¿½ï¿½Î»ï¿½ï¿½
+    double vel;                        // ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double acc;                        // ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double dec;                        // ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double jerkAcc;                    // ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½jerk
+    double jerkDec;                    // ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½jerk
+
+	double velEvenTime;                // ï¿½ï¿½Î´Êµï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    double accEvenTime;                // ï¿½ï¿½Î´Êµï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    double decEvenTime;                // ï¿½ï¿½Î´Êµï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+
+	unsigned short bufferMode;         // ï¿½ï¿½Î´Êµï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+	unsigned short pad1;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+	unsigned short pad2;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+	unsigned short pad3;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+
+    double reserve1;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+	double reserve2;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+	double reserve3;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+	double reserve4;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+}TMoveAbsoluteJerkParameter;
+
+typedef struct
+{
+   	unsigned short motionDone;         // ï¿½Ë¶ï¿½ï¿½ï¿½É±ï¿½Ö¾ï¿½ï¿½1ï¿½ï¿½Ê¾ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½
+	unsigned short pad1[3];            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+	double timeElapse;                 // ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+	double timeLeft;                   // Ê£ï¿½ï¿½Ê±ï¿½ï¿½
+
+    double aimPos;                     // Ä¿ï¿½ï¿½Î»ï¿½ï¿½
+    double prfPos;                     // ï¿½ï¿½Ç°ï¿½æ»®Î»ï¿½ï¿½
+    double prfVel;                     // ï¿½ï¿½Ç°ï¿½æ»®ï¿½Ù¶ï¿½
+    double prfAcc;                     // ï¿½ï¿½Ç°ï¿½æ»®ï¿½ï¿½ï¿½Ù¶ï¿½
+
+    double reserve1[4];                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+}TMoveAbsoluteJerkStatus;
+GT_API GTN_MoveAbsoluteJerk(short core,short profile,TMoveAbsoluteJerkParameter *pPrm,TListInfo *pListInfo=NULL,short group=0);
+GT_API GTN_GetMoveAbsoluteJerkParameter(short core,short profile,TMoveAbsoluteJerkParameter *pPrm);
+GT_API GTN_GetMoveAbsoluteJerkStatus(short core,short profile,TMoveAbsoluteJerkStatus *pStatus);
+GT_API GTN_MultiMoveAbsoluteJerk(short core,short *pProfileArray,TMoveAbsoluteJerkParameter *pPrmArray,short count,short mode,TListInfo *pListInfo=NULL,short group=0);
+GT_API GTN_GetMultiMoveAbsoluteJerkTime(short core,short *pProfileArray,TMoveAbsoluteJerkParameter *pPrmArray,short count,short mode,double *pTimeArray);
+GT_API GTN_QueryMoveAbsoluteJerkStatusAccordingTime(short core,short profile,TMoveAbsoluteJerkParameter* pPrm,short count,double posBegin,double time,TMoveAbsoluteJerkStatus *pStatus);
+GT_API GTN_QueryMoveAbsoluteJerkStatusAccordingPos(short core,short profile,TMoveAbsoluteJerkParameter* pPrm,short count,double posBegin,double pos,TMoveAbsoluteJerkStatus *pStatus);
+
+typedef struct  
+{
+    short enable;           // 1ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½Î¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½Ø±ï¿½ï¿½ï¿½Î¬ï¿½ï¿½ï¿½ï¿½
+    short tableIndex;       // ï¿½ï¿½Î¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short axisType[3];      // ï¿½ï¿½Î¬ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short axisIndex[3];     // ï¿½ï¿½Î¬ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short reserve1[4];      // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+} TCompensate3D;
+
+typedef struct
+{
+    int32_t count[3];          // count[0]ï¿½ï¿½Xï¿½á·½ï¿½ò²¹³ï¿½ï¿½ï¿½ï¿½ï¿½
+                            // count[1]ï¿½ï¿½Yï¿½á·½ï¿½ò²¹³ï¿½ï¿½ï¿½ï¿½ï¿½
+                            // count[2]ï¿½ï¿½Zï¿½á·½ï¿½ò²¹³ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    int32_t pad1[5];           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+
+    double posBegin[3];     // posBegin[0]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Xï¿½ï¿½ï¿½ï¿½ï¿½
+                            // posBegin[1]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Yï¿½ï¿½ï¿½ï¿½ï¿½
+                            // posBegin[2]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Zï¿½ï¿½ï¿½ï¿½ï¿½
+
+    double step[3];         // step[0]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Xï¿½á·½ï¿½ò²¹³ï¿½ï¿½ï¿½ï¿½ï¿½
+                            // step[1]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Yï¿½á·½ï¿½ò²¹³ï¿½ï¿½ï¿½ï¿½ï¿½
+                            // step[2]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Zï¿½á·½ï¿½ò²¹³ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    double reserve1[4];     // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+} TCompensate3DTable;
+
+typedef struct
+{
+    int32_t pointIndex[3];     // pointIndex[0]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Xï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                            // pointIndex[1]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Yï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                            // pointIndex[2]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Zï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    int32_t pad1;              // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    double pointValue;      // ï¿½ï¿½ï¿½ï¿½Öµ
+} TCompensate3DPoint;
+
+typedef struct
+{
+    int32_t rangeIndex[3];     // rangeIndex[0]ï¿½ï¿½Xï¿½á·½ï¿½ï¿½Ø¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                            // rangeIndex[1]ï¿½ï¿½Yï¿½á·½ï¿½ï¿½Ø¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                            // rangeIndex[2]ï¿½ï¿½Zï¿½á·½ï¿½ï¿½Ø¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    int32_t rangeCount[3];     // rangeCount[0]ï¿½ï¿½Xï¿½á·½ï¿½ï¿½Ø¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                            // rangeCount[1]ï¿½ï¿½Yï¿½á·½ï¿½ï¿½Ø¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                            // rangeCount[2]ï¿½ï¿½Zï¿½á·½ï¿½ï¿½Ø¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+} TCompensate3DPointRange;
+
+GT_API GTN_SetCompensate3D(short core, short axis, TCompensate3D* pCompensate3D);
+GT_API GTN_GetCompensate3D(short core, short axis, TCompensate3D* pCompensate3D);
+GT_API GTN_SetCompensate3DTable(short core, short tableIndex, TCompensate3DTable* pTable,TCompensate3DPoint *pPointArray,int32_t pointCount,short extend);
+GT_API GTN_GetCompensate3DTable(short core, short tableIndex, TCompensate3DTable* pTable,TCompensate3DPoint *pPointArray,TCompensate3DPointRange* pPointRange,short *pExtend);
+GT_API GTN_GetCompensate3DValue(short core, short axis, double *pValue);
+
+typedef struct
+{
+    uint16_t mode;                      // ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½ß£ï¿½1ï¿½ï¿½Sï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½ï¿½
+    uint16_t pad1[3];                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+
+    double sampleTime;                 // ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ä£¬ï¿½ï¿½Î»msï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¹æ»®ï¿½ï¿½ï¿½Úµï¿½2ï¿½ï¿½
+
+    double smoothCoef;                 // Æ½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½[0,1),0ï¿½ï¿½Ê¾ï¿½Ø±ï¿½Æ½ï¿½ï¿½
+
+    double reserve1[4];                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+}TTrackParameter;
+
+GT_API GTN_PrfTrack(int16_t core,int16_t profile,TTrackParameter *pPrm);
+GT_API GTN_SetTrackParameter(int16_t core, int16_t profile, TTrackParameter* pPrm);
+GT_API GTN_GetTrackParameter(int16_t core,int16_t profile,TTrackParameter *pPrm);
+GT_API GTN_SetTrackPosition(int16_t core,int16_t profile,double pos);
+
+
+typedef struct
+{
+	short enable;             // ×¼Í£ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ü±ï¿½Ö¾ï¿½ï¿½Ö»ï¿½ï¿½Îª0ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½
+	short reserve1[3]; 		  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+	double stopPos;			  // ×¼Í£Î»ï¿½Ã£ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½
+	double reserve2[8]; 	  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+}TExactStopPrm;
+
+GT_API GTN_SetAxisExactStopPrm(short core,short axis,short mode,TExactStopPrm *pPrm,TListInfo *pListInfo=NULL);
+GT_API GTN_GetAxisExactStopPrm(short core,short axis,short *pMode,TExactStopPrm *pPrm);
+
+typedef struct
+{
+	unsigned short cfgSize; 
+	unsigned short pduWrEn;
+	unsigned short pduWrSize;
+	unsigned short pduRdEn;
+	unsigned short pduRdSize;
+	unsigned short cmdEn;
+	unsigned short fifoWrEn;
+	unsigned short fifoRdEn;
+}StRnMailSlaveDeviceCfg;
+
+typedef struct
+{
+	unsigned short cfgSize; 
+	unsigned short pduWrEn;
+	unsigned short pduRdEn;
+	unsigned short cmdEn;
+	unsigned short fifoWrEn;
+	unsigned short fifoRdEn;
+}StRnMailSlaveDeviceUpDateParam;
+
+/**
+ * @brief  Í¨Ñ¶ï¿½ï¿½ï¿½Ã¡ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param pParam ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_MailSlaveDeviceCfg(short cardIndex,short stationPhyId,unsigned short *pParam);
+/**
+ * @brief  ï¿½ï¿½ï¿½ï¿½Í¨Ñ¶ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param pParam ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½NULLï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¨Ñ¶ï¿½ï¿½Ê½ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_MailSlaveDeviceUpdate(short cardIndex,short stationPhyId,unsigned short *pParam);
+
+/**
+ * @brief  Ð´ï¿½ï¿½ï¿½ï¿½ï¿½Ý¡ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param pData Ð´ï¿½ï¿½ï¿½ï¿½ï¿½Ý¡ï¿½
+ * @param wordOffset ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·ï¿½ï¿½Æ«ï¿½Æ¡ï¿½
+ * @param wordNum ÒªÐ´ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param pWordNumValid Êµï¿½ï¿½Ð´ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_MailSlaveDeviceWrSeg(short cardIndex, short stationPhyId, unsigned short *pData, unsigned short wordOffset, unsigned short wordNum, unsigned short* pWordNumValid);
+/**
+ * @brief  ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¡ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param pData ï¿½ï¿½ï¿½ï¿½ï¿½Ä¶ï¿½ï¿½ï¿½ï¿½Ý¡ï¿½
+ * @param wordOffset ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·ï¿½ï¿½Æ«ï¿½Æ¡ï¿½
+ * @param wordNum Òªï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param pWordNumValid Êµï¿½Ê¶ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_MailSlaveDeviceRdSeg(short cardIndex, short stationPhyId, unsigned short *pData, unsigned short wordOffset, unsigned short wordNum, unsigned short* pWordNumValid);
+/**
+ * @brief  Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¡ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param pData Ð´ï¿½ï¿½ï¿½ï¿½ï¿½Ý¡ï¿½
+ * @param wordNum ÒªÐ´ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param pWordNumValid Êµï¿½ï¿½Ð´ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_MailSlaveDeviceWrCmd(short cardIndex, short stationPhyId, unsigned short *pData, unsigned short wordNum,unsigned short* pWordNumValid);
+/**
+ * @brief  ï¿½ï¿½È¡Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½Ý¡ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param pData ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¡ï¿½
+ * @param wordNum Òªï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param pWordNumValid Êµï¿½Ê¶ï¿½ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param pCmdRtn Ó¦ï¿½ï¿½Ä£Ê½ï¿½Ä·ï¿½ï¿½ï¿½Öµï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_MailSlaveDeviceRdCmd(short cardIndex, short stationPhyId, unsigned short *pData, unsigned short wordNum,unsigned short* pWordNumValid, unsigned short* pCmdRtn);
+/**
+ * @brief  Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¡ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param pData Ð´ï¿½ï¿½ï¿½ï¿½ï¿½Ý¡ï¿½
+ * @param wordNum ÒªÐ´ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param pWordNumValid Êµï¿½ï¿½Ð´ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_MailSlaveDeviceWrBlock(short cardIndex, short stationPhyId, unsigned short *pData, unsigned short wordNum, unsigned short* pWordNumValid);
+/**
+ * @brief  ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¡ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param pData ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¡ï¿½
+ * @param wordNum Òªï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param pWordNumValid Êµï¿½Ê¶ï¿½ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return
+*/
+GT_API  GTN_RN_MailSlaveDeviceRdBlock(short cardIndex, short stationPhyId, unsigned short *pData, unsigned short wordNum, unsigned short* pWordNumValid);
+/**
+ * @brief  ï¿½ï¿½È¡Ð´ï¿½Ä¿ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param pValidWordNum Ð´ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½Ð§(Î´ï¿½Â·ï¿½)ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param pRemainsWordSpase Ð´ï¿½Ä¿ï¿½ï¿½ï¿½Ê£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_MailSlaveDeviceGetWrBlockStatus(short cardIndex, short stationPhyId,  unsigned short* pValidWordNum, unsigned short* pRemainsWordSpase);
+/**
+ * @brief  ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param pValidWordNum ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½Ð§(Î´ï¿½Â·ï¿½)ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param pRemainsWordSpase ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½Ê£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_MailSlaveDeviceGetRdBlockStatus(short cardIndex, short stationPhyId,  unsigned short* pValidWordNum, unsigned short* pRemainsWordSpase);
+
+/**
+ * @brief  ï¿½ï¿½È¡Ó¦ï¿½ï¿½Ä£Ê½×´Ì¬ï¿½ï¿½ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param pCmdStatus Ó¦ï¿½ï¿½Ä£Ê½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½
+ * @param pCmdRtn Ó¦ï¿½ï¿½Ä£Ê½ï¿½Ä·ï¿½ï¿½ï¿½Öµï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_MailSlaveDeviceGetCmdStatus(short cardIndex, short stationPhyId,  unsigned short* pCmdStatus, unsigned short* pCmdRtn);
+
+/**
+ * @brief  ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½IOï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¡ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param axis ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼ï¿½ï¿½
+ * @param inputIndex ï¿½ï¿½ï¿½ï¿½IOï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§[0,15]ï¿½ï¿½
+ * @param pFuncIndex IOï¿½ï¿½ï¿½Ü¶ï¿½ï¿½å£º
+					 0ï¿½ï¿½ OUTPUT_FUNC_NULL,
+					 1ï¿½ï¿½ OUTPUT_FUNC_ALARM,
+					 2ï¿½ï¿½ OUTPUT_FUNC_MOVING,
+					 3ï¿½ï¿½ OUTPUT_FUNC_HOME_FINISH,
+					 4ï¿½ï¿½ OUTPUT_FUNC_VEL_ACHIEVE,
+					 5ï¿½ï¿½ OUTPUT_FUNC_PHASE_SEARCH_FINISH,
+					 6ï¿½ï¿½ OUTPUT_FUNC_SERVO_READY,
+					 7ï¿½ï¿½ OUTPUT_FUNC_INDEX_SEARCHED,
+					 8ï¿½ï¿½ OUTPUT_FUNC_RESERVED,
+					 9ï¿½ï¿½ OUTPUT_FUNC_CURRENT_OVER_LIMIT,
+					 10ï¿½ï¿½OUTPUT_FUNC_BRAKE,
+					 11ï¿½ï¿½OUTPUT_FUNC_POS_FIXED,
+					 12ï¿½ï¿½OUTPUT_FUNC_IO_POS_0,
+					 13ï¿½ï¿½OUTPUT_FUNC_IO_POS_1,
+					 14ï¿½ï¿½OUTPUT_FUNC_IO_POS_2,
+					 15ï¿½ï¿½OUTPUT_FUNC_IO_POS_3,
+					 16ï¿½ï¿½OUTPUT_FUNC_IO_POS_4,
+					 17ï¿½ï¿½OUTPUT_FUNC_IO_POS_5,
+					 18ï¿½ï¿½OUTPUT_FUNC_CURRENT_LEVEL,
+					 19ï¿½ï¿½OUTPUT_FUNC_LIMIT_WARNING
+ * @param pReverse ï¿½ï¿½IOï¿½Ç·ï¿½È¡ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Î´È¡ï¿½ï¿½,1ï¿½ï¿½È¡ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_GetOutputFunc(short cardIndex,short stationPhyId,short axis,short outputIndex,short *pFuncIndex,bool *pReverse);
+/**
+ * @brief  ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½IOï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¡ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param axis ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼ï¿½ï¿½
+ * @param inputIndex ï¿½ï¿½ï¿½ï¿½IOï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§[0,15]ï¿½ï¿½
+ * @param pFuncIndex IOï¿½ï¿½ï¿½Ü¶ï¿½ï¿½å¡£
+					 0ï¿½ï¿½ INPUT_FUNC_NULL,
+					 1ï¿½ï¿½ INPUT_FUNC_SERVO_ON,
+					 2ï¿½ï¿½ INPUT_FUNC_STOP,
+					 3ï¿½ï¿½ INPUT_FUNC_CLR_ALARM,
+					 4ï¿½ï¿½ INPUT_FUNC_MODE_SWITCH,
+					 5ï¿½ï¿½ INPUT_FUNC_FIX_POS,
+					 6ï¿½ï¿½ INPUT_FUNC_HOME,
+					 7ï¿½ï¿½ INPUT_FUNC_POSITIVE_LIMIT,
+					 8ï¿½ï¿½ INPUT_FUNC_NEGATIVE_LIMIT,
+					 9ï¿½ï¿½ INPUT_FUNC_HOME_SWITCH,
+					 10ï¿½ï¿½INPUT_FUNC_IO_POS_MOTION_0,
+					 11ï¿½ï¿½INPUT_FUNC_IO_POS_MOTION_1,
+					 12ï¿½ï¿½INPUT_FUNC_IO_POS_MOTION_2,
+					 13ï¿½ï¿½INPUT_FUNC_IO_POS_MOTION_3,
+					 14ï¿½ï¿½INPUT_FUNC_IO_POS_MOTION_4,
+					 15ï¿½ï¿½INPUT_FUNC_IO_POS_MOTION_5,
+					 16ï¿½ï¿½INPUT_FUNC_IO_START_POS_MOTION,
+					 17ï¿½ï¿½INPUT_FUNC_IO_TASK_0,
+					 18ï¿½ï¿½INPUT_FUNC_IO_TASK_1,
+					 19ï¿½ï¿½INPUT_FUNC_IO_TASK_2,
+					 20ï¿½ï¿½INPUT_FUNC_IO_TASK_3,
+					 21ï¿½ï¿½INPUT_FUNC_IO_MOTION_PAUSE_OR_RESUME,
+					 22ï¿½ï¿½INPUT_FUNC_PID_SWITCH
+ * @param pReverse ï¿½ï¿½IOï¿½Ç·ï¿½È¡ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Î´È¡ï¿½ï¿½,1ï¿½ï¿½È¡ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_GetInputFunc(short cardIndex, short stationPhyId,short axis, short inputIndex, short *pFuncIndex, bool *pReverse);
+/**
+ * @brief  ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½Ê¡ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param axis ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼ï¿½ï¿½
+ * @param pValue ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½Ê¡ï¿½
+ * @return
+*/
+GT_API GTN_RN_GetGlink2InputResolution(short cardIndex,short stationPhyId,short axis,uint32_t *pValue);
+/**
+ * @brief  ï¿½ï¿½ï¿½Ã±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½Ê¡ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param axis ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¼ï¿½ï¿½
+ * @param value ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½Ê¡ï¿½
+ * @return
+*/
+GT_API GTN_RN_SetGlink2InputResolution(short cardIndex, short stationPhyId,short axis,uint32_t value);
+/**
+ * @brief  ï¿½ï¿½ï¿½Ã±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param core ï¿½ËºÅ¡ï¿½
+ * @param type ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¡ï¿½
+ * @param encoder ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param filterTime ï¿½Ë²ï¿½Ê±ï¿½ä£¬usï¿½ï¿½
+ * @return
+*/
+GT_API GTN_SetTerminalEncoderFilterTime(short core,short type,short encoder, double filterTime);
+/**
+ * @brief ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param core ï¿½ËºÅ¡ï¿½
+ * @param station ï¿½ß¼ï¿½Õ¾ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÒªmailBoxï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ß¼ï¿½Õ¾ï¿½Å¡ï¿½
+ * @param type ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¡ï¿½
+ * @param encoder ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param filterTime ï¿½Ë²ï¿½Ê±ï¿½ä£¬usï¿½ï¿½
+ * @return
+*/
+GT_API GTN_GetTerminalEncoderFilterTime(short core,short type,short encoder, double *pFilterTime);
+/**
+ * @brief  ï¿½ï¿½È¡ï¿½ï¿½Í¨ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ÖµÎªï¿½ï¿½ï¿½ï¿½Öµ)ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param varIdndex ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½1ï¿½ï¿½Ê¼ï¿½ï¿½È¡Öµï¿½ï¿½GTN_RN_SamplingAddVarÖ¸ï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½)ï¿½ï¿½
+ * @param pBuffer ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ý´ï¿½Åµï¿½ï¿½ï¿½ï¿½é¡£
+ * @param bufSize ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ý¸ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param pReadCount Êµï¿½Ê·ï¿½ï¿½ØµÄ¶ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_SamplingReadDataEx(short cardIndex,short stationPhyId, short varIdndex, double *pBuffer,uint32_t bufSize, uint32_t *pReadCount);
+/**
+ * @brief  ï¿½ï¿½Ó¡ï¿½ï¿½ï¿½Ð²É¼ï¿½ï¿½ï¿½ï¿½Ýµï¿½ï¿½Ä¼ï¿½(ï¿½ï¿½Ó¡Ç°ï¿½ï¿½Ø±Õ²É¼ï¿½, ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ÖµÎªï¿½ï¿½ï¿½ï¿½Öµ)ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾IDï¿½ï¿½
+ * @param pFileName ï¿½ï¿½Ó¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½Â·ï¿½ï¿½ï¿½ï¿½
+ * @param startIndex ï¿½ï¿½Ó¡ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·ï¿½ï¿½È¡Öµï¿½ï¿½Î§>=0ï¿½ï¿½
+ * @param printCount ï¿½ï¿½Òªï¿½ï¿½Ó¡ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§>0ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_SamplingPrintDataEx(short cardIndex, short stationPhyId, const char* pFileName, uint32_t startIndex, uint32_t printCount);
+/**
+ * @brief ï¿½ï¿½Í¨ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param group ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§:1ï¿½ï¿½ï¿½ï¿½samplMode=0Ê±ï¿½ï¿½groupÈ¡Öµ[1,2]
+                2ï¿½ï¿½ï¿½ï¿½samplMode=1Ê±ï¿½ï¿½groupÈ¡Öµ[1,n](ï¿½ï¿½Î´Êµï¿½ï¿½)ï¿½ï¿½
+ * @param samplMode ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½(ï¿½ï¿½Î´Êµï¿½ï¿½)
+ * @return
+*/
+GT_API GTN_RN_MultiSamplingInit(short cardIndex, short group, short samplMode);
+/**
+ * @brief ï¿½ï¿½Ê¼ï¿½É¼ï¿½ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param group ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§:1ï¿½ï¿½ï¿½ï¿½samplMode=0Ê±ï¿½ï¿½groupÈ¡Öµ[1,2]
+                2ï¿½ï¿½ï¿½ï¿½samplMode=1Ê±ï¿½ï¿½groupÈ¡Öµ[1,n](ï¿½ï¿½Î´Êµï¿½ï¿½)ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_MultiSamplingOn(short cardIndex, short group);
+/**
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param group ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§:1ï¿½ï¿½ï¿½ï¿½samplMode=0Ê±ï¿½ï¿½groupÈ¡Öµ[1,2]
+                2ï¿½ï¿½ï¿½ï¿½samplMode=1Ê±ï¿½ï¿½groupÈ¡Öµ[1,n](ï¿½ï¿½Î´Êµï¿½ï¿½)ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_MultiSamplingOff(short cardIndex, short group);
+/**
+ * @brief ï¿½ï¿½Ó¡ï¿½É¼ï¿½ï¿½ï¿½ï¿½Ýµï¿½ï¿½Ä¼ï¿½(ï¿½ï¿½Ó¡Ç°ï¿½ï¿½Ø±Õ²É¼ï¿½, ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ÖµÎªï¿½Ä´ï¿½ï¿½ï¿½Ô­Ê¼Öµ)ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param group ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§:1ï¿½ï¿½ï¿½ï¿½samplMode=0Ê±ï¿½ï¿½groupÈ¡Öµ[1,2]
+                2ï¿½ï¿½ï¿½ï¿½samplMode=1Ê±ï¿½ï¿½groupÈ¡Öµ[1,n](ï¿½ï¿½Î´Êµï¿½ï¿½)ï¿½ï¿½
+ * @param pFileName ï¿½ï¿½Ó¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½Â·ï¿½ï¿½ï¿½ï¿½
+ * @param startIndex ï¿½ï¿½Ó¡ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·ï¿½ï¿½È¡Öµï¿½ï¿½Î§>=0ï¿½ï¿½
+ * @param printCount ï¿½ï¿½Òªï¿½ï¿½Ó¡ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§>0ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_MultiSamplingPrint(short cardIndex, short group, const char* pFileName, uint32_t startIndex, uint32_t printCount);
+/**
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý²É¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param group ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§:1ï¿½ï¿½ï¿½ï¿½samplMode=0Ê±ï¿½ï¿½groupÈ¡Öµ[1,2]
+                2ï¿½ï¿½ï¿½ï¿½samplMode=1Ê±ï¿½ï¿½groupÈ¡Öµ[1,n](ï¿½ï¿½Î´Êµï¿½ï¿½)ï¿½ï¿½
+ * @param stVar ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¡ï¿½
+ * @return
+*/
+GT_API GTN_RN_MultiSamplingAddVar(short cardIndex, short group, StSamplingVar stVar);
+/**
+ * @brief ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ÖµÎªï¿½Ä´ï¿½ï¿½ï¿½Ô­Ê¼Öµ)ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param group ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§:1ï¿½ï¿½ï¿½ï¿½samplMode=0Ê±ï¿½ï¿½groupÈ¡Öµ[1,2]
+                2ï¿½ï¿½ï¿½ï¿½samplMode=1Ê±ï¿½ï¿½groupÈ¡Öµ[1,n](ï¿½ï¿½Î´Êµï¿½ï¿½)ï¿½ï¿½
+ * @param varIdndex ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½1ï¿½ï¿½Ê¼ï¿½ï¿½È¡Öµï¿½ï¿½GTN_RN_MultiSamplingAddVarÖ¸ï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½)ï¿½ï¿½
+ * @param pBuffer ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ý´ï¿½Åµï¿½ï¿½ï¿½ï¿½é¡£
+ * @param bufSize ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ý¸ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param pReadCount Êµï¿½Ê·ï¿½ï¿½ØµÄ¶ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_MultiSamplingRead(short cardIndex, short group, short varIdndex, double* pBuffer, uint32_t bufSize, uint32_t* pReadCount);
+/**
+ * @brief ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param group ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§:1ï¿½ï¿½ï¿½ï¿½samplMode=0Ê±ï¿½ï¿½groupÈ¡Öµ[1,2]
+                2ï¿½ï¿½ï¿½ï¿½samplMode=1Ê±ï¿½ï¿½groupÈ¡Öµ[1,n](ï¿½ï¿½Î´Êµï¿½ï¿½)ï¿½ï¿½
+ * @param mode È¡Öµï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½GTN_RN_MultiSamplingAddVarï¿½ï¿½ï¿½ÓµÄ²É¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+ * @return
+*/
+GT_API GTN_RN_MultiSamplingClear(short cardIndex, short group, short mode);
+/**
+ * @brief ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ÖµÎªï¿½ï¿½ï¿½ï¿½Öµ)ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param group ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§:1ï¿½ï¿½ï¿½ï¿½samplMode=0Ê±ï¿½ï¿½groupÈ¡Öµ[1,2]
+                2ï¿½ï¿½ï¿½ï¿½samplMode=1Ê±ï¿½ï¿½groupÈ¡Öµ[1,n](ï¿½ï¿½Î´Êµï¿½ï¿½)ï¿½ï¿½
+ * @param varIdndex ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½1ï¿½ï¿½Ê¼ï¿½ï¿½È¡Öµï¿½ï¿½GTN_RN_MultiSamplingAddVarÖ¸ï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½)ï¿½ï¿½
+ * @param pBuffer ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ý´ï¿½Åµï¿½ï¿½ï¿½ï¿½é¡£
+ * @param bufSize ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ý¸ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param pReadCount Êµï¿½Ê·ï¿½ï¿½ØµÄ¶ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_MultiSamplingReadEx(short cardIndex, short group, short varIdndex, double* pBuffer, uint32_t bufSize, uint32_t* pReadCount);
+/**
+ * @brief ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ÖµÎªï¿½ï¿½ï¿½ï¿½Öµ)ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param group ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§:1ï¿½ï¿½ï¿½ï¿½samplMode=0Ê±ï¿½ï¿½groupÈ¡Öµ[1,2]
+                2ï¿½ï¿½ï¿½ï¿½samplMode=1Ê±ï¿½ï¿½groupÈ¡Öµ[1,n](ï¿½ï¿½Î´Êµï¿½ï¿½)ï¿½ï¿½
+ * @param varIdndex ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½1ï¿½ï¿½Ê¼ï¿½ï¿½È¡Öµï¿½ï¿½GTN_RN_MultiSamplingAddVarÖ¸ï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½)ï¿½ï¿½
+ * @param pBuffer ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ý´ï¿½Åµï¿½ï¿½ï¿½ï¿½é¡£
+ * @param bufSize ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ý¸ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param pReadCount Êµï¿½Ê·ï¿½ï¿½ØµÄ¶ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_MultiSamplingPrintEx(short cardIndex, short group, const char* pFileName, uint32_t startIndex, uint32_t printCount);
+/**
+ * @brief ï¿½ï¿½È¡ï¿½É¼ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param group ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§:1ï¿½ï¿½ï¿½ï¿½samplMode=0Ê±ï¿½ï¿½groupÈ¡Öµ[1,2]
+                2ï¿½ï¿½ï¿½ï¿½samplMode=1Ê±ï¿½ï¿½groupÈ¡Öµ[1,n](ï¿½ï¿½Î´Êµï¿½ï¿½)ï¿½ï¿½
+ * @param infoType ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½Í£ï¿½
+                   0: ï¿½É¼ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½Ï¢
+                   1ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½
+                   2ï¿½ï¿½ï¿½É¼ï¿½ï¿½ï¿½ï¿½Äµï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                   3ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                   4ï¿½ï¿½ï¿½ï¿½È¡FIFOï¿½ï¿½ï¿½×´Ì¬
+ * @param pInfo ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½
+ * @return
+*/
+GT_API  GTN_RN_MultiSamplingGetInfo(short cardIndex, short group, short infoType, uint32_t *pInfo);
+/**
+ * @brief  ï¿½ï¿½ï¿½Ãµï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½GTN_RN_HighSpeedSamplingOnAllÖ¸ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Ã£ï¿½ï¿½ï¿½
+ * @param core ï¿½ËºÅ¡ï¿½
+ * @param encoder ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param pos ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã¡ï¿½
+ * @return
+*/
+GT_API GTN_SamplingSetEncPos(short core,short encoder,double pos);
+/**
+ * @brief  ï¿½ï¿½ï¿½Ã±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ò£¨µï¿½ï¿½ï¿½GTN_RN_HighSpeedSamplingOnAllÖ¸ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Ã£ï¿½ï¿½ï¿½
+ * @param core ï¿½ËºÅ¡ï¿½
+ * @param encoder ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param dir Ð´ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½×ª1ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½
+ * @return
+*/
+GT_API GTN_SamplingSetEncDir(short core,short encoder,short dir);
+
+/**
+ * @brief  ï¿½ï¿½ï¿½Ãµï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½GTN_RN_HighSpeedSamplingOnAllÖ¸ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Ã£ï¿½ï¿½ï¿½
+ * @param core ï¿½ËºÅ¡ï¿½
+ * @param auEncoderType ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¡ï¿½
+ * @param auEncoder ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param pValue ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã¡ï¿½
+ * @return
+*/
+GT_API GTN_SamplingSetAuEncPos(short core,short auEncoderType,short auEncoder,double pos);
+/**
+ * @brief  ï¿½ï¿½ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ò£¨µï¿½ï¿½ï¿½GTN_RN_HighSpeedSamplingOnAllÖ¸ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Ã£ï¿½ï¿½ï¿½
+ * @param core ï¿½ËºÅ¡ï¿½
+ * @param auEncoderType ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¡ï¿½
+ * @param encoder ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å¡ï¿½
+ * @param dir ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_SamplingSetAuEncDir(short core,short auEncoderType,short auEncoder,short dir);
+/**
+ * @brief  ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å·ï¿½×´Ì¬Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÅºÅ£ï¿½ï¿½ï¿½ 
+ * @param core ï¿½ËºÅ¡ï¿½
+ * @param axis ï¿½ï¿½Ê¼ï¿½ï¿½Å¡ï¿½
+ * @param pSts ï¿½Å·ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½bit0ï¿½ï¿½ï¿½Å·ï¿½×¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÅºÅ£ï¿½Ó²ï¿½ï¿½ÎªGTMï¿½ï¿½ï¿½Ó°ï¿½ï¿½Â°ï¿½ï¿½ï¿½ï¿½Ó²ï¿½ï¿½ï¿½ï¿½PIN-21ï¿½ï¿½
+                          bit1ï¿½ï¿½ï¿½Å·ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÅºÅ£ï¿½Ó²ï¿½ï¿½ÎªGTMï¿½ï¿½ï¿½Ó°ï¿½ï¿½Â°ï¿½ï¿½ï¿½ï¿½Ó²ï¿½ï¿½ï¿½ï¿½PIN-3ï¿½ï¿½ï¿½ï¿½Ó²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½Ê±ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½
+ * @param count ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param pClock ï¿½ï¿½È¡ï¿½Ä¿ï¿½ï¿½Æ¿ï¿½Ê±ï¿½Ó¡ï¿½
+ * @return
+*/
+GT_API GTN_GetServoStatus(short core,short axis,int32_t *pSts,short count,uint32_t *pClock);
+/**
+ * @brief   ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½GT_GetStsï¿½ï¿½bit9ï¿½ï¿½Ê¾Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½×´Ì¬
+ * @param core ï¿½Ëºï¿½ 
+ * @param axis ï¿½ï¿½Å´ï¿½1ï¿½ï¿½Ê¼ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Ã¹ï¿½ï¿½Üµï¿½ï¿½ï¿½
+ * @param diType Diï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½
+ * @param diIndex Diï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @return Ö¸ï¿½î·µï¿½ï¿½Öµï¿½Ð±ï¿½ 7:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Diï¿½ï¿½ï¿½ï¿½Ô½ï¿½ï¿½
+ */
+GT_API GTN_ServoReadyOn(short core,short axis,short diType,short diIndex);
+/**
+ * @brief   ï¿½Ø±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½×´Ì¬ï¿½ï¿½GT_GetStsï¿½ï¿½bit9ï¿½ï¿½Ê¾GT_AxisEnableï¿½ï¿½Ö¸ï¿½ï¿½×´Ì¬
+ * @param core ï¿½Ëºï¿½ 
+ * @param axis ï¿½ï¿½Å´ï¿½1ï¿½ï¿½Ê¼ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Ã¹ï¿½ï¿½Üµï¿½ï¿½ï¿½
+ * @return Ö¸ï¿½î·µï¿½ï¿½Öµï¿½Ð±ï¿½ 7:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô½ï¿½ï¿½
+ */
+GT_API GTN_ServoReadyOff(short core,short axis);
+
+/**
+ * @brief ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½Ö»ï¿½ï¿½È¡ï¿½ï¿½È¦Öµ
+ * @param cardNum ï¿½ï¿½ï¿½ï¿½
+ * @param stationId ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ * @param encoder ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§[1..4]
+ * @param pValue ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½Öµï¿½ï¿½32Î»ï¿½ï¿½ï¿½ï¿½
+ * @return
+*/
+GT_API GTN_RN_GetCommAuEncPos(short cardIndex, short stationPhyId, short encoder, int32_t* pValue);
+
+//-------------------------------------------------------------------
+// Waveformï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½
+//-------------------------------------------------------------------
+// ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½Ä£Ê½
+#define WAVEFORM_WORK_MODE_DEFAULT                         (0)       // Ä¬ï¿½ï¿½Ä£Ê½ï¿½ï¿½Ò»Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Üºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define WAVEFORM_WORK_MODE_LINK_POS_COMPARE                (1)       // ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã±È½ï¿½Ä£Ê½ï¿½ï¿½Ò»Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°Õ¾ï¿½Ïµï¿½Ò»Â·Î»ï¿½Ã±È½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+typedef struct
+ {
+     double time;                      // ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½á£¬ï¿½ï¿½Î»ï¿½ï¿½msï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½Ê¹ï¿½Üµï¿½Ê±ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½
+     double value;                     // ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¡ï¿½
+                                       // Ä¿Ç°ï¿½ï¿½Ö§ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[-10,10]V
+ }TWaveformParameter;                  // ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ²ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½
+
+typedef struct
+{
+    short type;                        // ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½Ä¿Ç°ï¿½ï¿½Ö§ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                                       // MC_DAC(20)ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½
+                                       // MC_AU_DAC(19)ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½
+                                       // MC_LASER_AO(72)ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½
+    short index;                       // ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+    short laserOn;                     // ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½Æ¼ï¿½ï¿½â¿ªï¿½Ø¹â£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½â¿ªï¿½ï¿½ï¿½ÅºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø±Õ¼ï¿½ï¿½â¿ªï¿½ï¿½ï¿½Åºï¿½
+    short pad;                         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã³ï¿½0
+}TWaveformOutput;                      // ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½
+
+ typedef struct
+ {
+     short enable;                     // ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½×´Ì¬ï¿½ï¿½0ï¿½ï¿½ï¿½Ø±Õ£ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½
+     short outputType;                 // ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½Ä¿Ç°ï¿½ï¿½Ö§ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                                       // MC_DAC(20)ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½
+                                       // MC_AU_DAC(19)ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½
+                                       // MC_LASER_AO(72)ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½
+     short outputIndex;                // ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¶ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§È¡ï¿½ï¿½ï¿½Ú¶ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+     short laserOn;                    // ï¿½ï¿½ï¿½â¿ªï¿½Ø¹ï¿½ï¿½Åºï¿½
+     short loopCount;                  // ï¿½Ñ¾ï¿½Ñ­ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½
+     short pad[3];                     // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+     double outputValue;               // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+ }TWaveformStatus;                     // ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½
+ 
+/**
+ * @brief ï¿½ï¿½ï¿½Ø²ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param index ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pPrm ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý½á¹¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param count ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¸ï¿½ï¿½ï¿½
+ * @param loopCount ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return 17051ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½countï¿½ï¿½ï¿½Þ£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,50]
+ *         17053ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17055ï¿½ï¿½ï¿½ËºÅ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Ç°Ã¿ï¿½Å¿ï¿½Ö»ï¿½Ðµï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ö§ï¿½Ö²ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½
+ *         17061ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17501ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½
+ *         17502ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªÄ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½V
+ *         11059ï¿½ï¿½ï¿½ï¿½ï¿½Î¹ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         11087ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Fifoï¿½Ñ¾ï¿½Ñ¹ï¿½ï¿½ï¿½Ë£ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ýµï¿½ï¿½ï¿½ï¿½ï¿½
+*/
+GT_API GTN_LoadWaveformParameter(short core,short index,TWaveformParameter *pPrm,short count,short loopCount);
+
+/**
+ * @brief Ê¹ï¿½Ü²ï¿½ï¿½Î¿ï¿½ï¿½Æ¿ï¿½ï¿½ï¿½
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param index ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pOutput ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param enable ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½Ê¹ï¿½Ü£ï¿½0ï¿½ï¿½ï¿½Ø±Õ£ï¿½1-ï¿½ï¿½
+ * @return 17053ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17054ï¿½ï¿½Ê¹ï¿½Ü²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1]
+ *         17055ï¿½ï¿½ï¿½ËºÅ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Ç°Ã¿ï¿½Å¿ï¿½Ö»ï¿½Ðµï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ö§ï¿½Ö²ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½
+ *         17100ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½TWaveformOutputï¿½ï¿½padï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ó£¬±ï¿½ï¿½ï¿½Îª0
+ *         17503ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½TWaveformOutputï¿½ï¿½typeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17504ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½TWaveformOutputï¿½ï¿½indexï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17505ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½TWaveformOutputï¿½ï¿½laserOnï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         11050ï¿½ï¿½ï¿½ï¿½ï¿½Î¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íºï¿½ï¿½ï¿½ï¿½ï¿½
+ *         11055ï¿½ï¿½ï¿½ï¿½ï¿½Î¹ï¿½ï¿½Ü¹ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½Ô£ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½Waveformï¿½ï¿½WaveformPairÖ¸ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½
+ *         11059ï¿½ï¿½ï¿½ï¿½ï¿½Î¹ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íºï¿½ï¿½ï¿½ï¿½ï¿½
+ *         11091ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ð½Ó´ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ÜµÄ´ï¿½Õ¾
+ *         11501ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ü²ï¿½ï¿½Î¿ï¿½ï¿½ï¿½
+ *         11502ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ã»ï¿½ï¿½Ó³ï¿½ï¿½
+ *         11503ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½Í¬Ò»ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ *         11504ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ü²ï¿½ï¿½Î¿ï¿½ï¿½ï¿½
+*/
+GT_API GTN_EnableWaveform(short core,short index,TWaveformOutput *pOutput,short enable);
+
+/**
+ * @brief ï¿½ï¿½È¡ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½×´Ì¬
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param index ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pStatus ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½×´Ì¬ï¿½á¹¹ï¿½ï¿½Ö¸ï¿½ï¿½
+ * @return 17053ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17055ï¿½ï¿½ï¿½ËºÅ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Ç°Ã¿ï¿½Å¿ï¿½Ö»ï¿½Ðµï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ö§ï¿½Ö²ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½
+*/
+GT_API GTN_GetWaveformStatus(short core,short index,TWaveformStatus *pStatus);
+
+/**
+ * @brief ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¿ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param crd ï¿½ï¿½ï¿½ï¿½Ïµï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param index ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pOutput ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÅºÅ²ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½Ö¸ï¿½ï¿½
+ * @param enable ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ÅºÅ£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1]
+ * @param modal Ä£Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1]
+ * @param fifo ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1]
+ * @return 
+*/
+GT_API GTN_BufEnableWaveform(short core,short crd,short index,TWaveformOutput *pOutput,short enable,short modal,short fifo);
+
+/**
+ * @brief ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¿ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param crd ï¿½ï¿½ï¿½ï¿½Ïµï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param index ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pOutput ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÅºÅ²ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½Ö¸ï¿½ï¿½
+ * @param enable ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ÅºÅ£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1]
+ * @param modal Ä£Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1]
+ * @param fifo ï¿½å²¹ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1]
+ * @return 
+*/
+GT_API GTN_BufEnableWaveformEx(short core,short crd,short index,TWaveformOutput *pOutput,short enable,short modal,short fifo);
+
+/**
+ * @brief ï¿½ï¿½ï¿½Ã²ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½Ä£Ê½
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param index ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pOutput ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param enable ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½Ê¹ï¿½Ü£ï¿½0ï¿½ï¿½ï¿½Ø±Õ£ï¿½1-ï¿½ï¿½
+ * @return 17053ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17055ï¿½ï¿½ï¿½ËºÅ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Ç°Ã¿ï¿½Å¿ï¿½Ö»ï¿½Ðµï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ö§ï¿½Ö²ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½
+ *         17056ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         11059ï¿½ï¿½ï¿½ï¿½ï¿½Î¹ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+ *         4ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Æ¿ï¿½ï¿½Ì¼ï¿½ï¿½ÍºÅ²ï¿½Ö§ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½É¸ï¿½ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ÜµÄ¿ï¿½ï¿½Ì¼ï¿½
+*/
+GT_API GTN_SetWaveformMode(short core,short index,short mode);
+
+/**
+ * @brief ï¿½ï¿½È¡ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½Ä£Ê½
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param index ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pOutput ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param enable ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½Ê¹ï¿½Ü£ï¿½0ï¿½ï¿½ï¿½Ø±Õ£ï¿½1-ï¿½ï¿½
+ * @return 17053ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17055ï¿½ï¿½ï¿½ËºÅ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Ç°Ã¿ï¿½Å¿ï¿½Ö»ï¿½Ðµï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ö§ï¿½Ö²ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½
+*/
+GT_API GTN_GetWaveformMode(short core,short index,short *pMode);
+
+
+//-------------------------------------------------------------------
+// WaveformPairï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½Ò»Â·ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Öµï¿½ï¿½ï¿½Íµï¿½Æ½Ê±ï¿½ï¿½Í¸ßµï¿½Æ½Ê±ï¿½ï¿½
+// ï¿½ï¿½2ï¿½ï¿½ï¿½Ú¶ï¿½Â·ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½â²¨ï¿½Î£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Öµï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½Ø¶ï¿½Ó¦
+// ï¿½ï¿½3ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä³Ò»Â·ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½È¨ï¿½ï¿½ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½ï¿½Ç·ñ°´²ï¿½ï¿½Î¿ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½
+//-------------------------------------------------------------------
+
+#define RECTANGLE_WAVE_START_MODE_LOW_LEVEL          (0)   // ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ßµï¿½Æ½
+#define RECTANGLE_WAVE_START_MODE_HIGH_LEVEL         (1)   // ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ßµï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½Æ½
+
+typedef struct
+{
+    short startMode;                   // ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½
+                                       // 0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ßµï¿½Æ½
+                                       // 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ßµï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½Æ½
+    short pad[3];                      // ï¿½ï¿½ï¿½ï¿½
+    double voltage;                    // ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ßµï¿½Æ½ï¿½ï¿½Ó¦ï¿½Äµï¿½Ñ¹Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½(0,10]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½V
+    double highLevelTime;              // ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ßµï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ÖµÎªvoltageï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ä£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ms
+    double lowLevelTime;               // ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ÖµÎª0Vï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ä£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ms
+}TRectangleWavePrm;                    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½
+
+typedef struct
+{
+    short startMode;                   // ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½
+                                       // 0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ßµï¿½Æ½
+                                       // 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ßµï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½Æ½
+    short pad[3];                      // ï¿½ï¿½ï¿½ï¿½
+    double voltage;                    // ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ßµï¿½Æ½ï¿½ï¿½Ó¦ï¿½Äµï¿½Ñ¹Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½(0,10]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½V
+    double frequency;                  // ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½Æµï¿½Ê£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½(0,100)ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½kHz
+    double dutyRatio;                  // ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½Õ±È£ï¿½ï¿½ï¿½ï¿½Íµï¿½Æ½Ê±ï¿½ï¿½Õ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½(0,100)ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½%
+}TRectangleWaveDutyMode;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½Õ¼ï¿½Õ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½
+
+typedef struct
+{
+    short stepCount;                   // Ì¨ï¿½×²ï¿½ï¿½ï¿½ï¿½Ì¨ï¿½×¸ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,4000]
+    short pad[3];                      // ï¿½ï¿½ï¿½ï¿½
+    double voltageStart;               // Ì¨ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ñ¹Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½(0,10]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½V
+    double voltageEnd;                 // Ì¨ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½ï¿½Ñ¹Öµï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½(0,10]ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½V
+    double aheadTime;                  // Ì¨ï¿½×²ï¿½ï¿½ïµ½Ä¿ï¿½ï¿½Ì¨ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½Ç°Ê±ï¿½ä£¬È¡Öµï¿½ï¿½Î§ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø£ï¿½ï¿½ï¿½Î»ï¿½ï¿½ms
+}TStageWavePrm;                        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¨ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½
+
+typedef struct
+{
+    short enable;                      // ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½×´Ì¬ï¿½ï¿½0ï¿½ï¿½ï¿½Ø±Õ£ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½
+    short laserOn;                     // ï¿½ï¿½ï¿½â¿ªï¿½Ø¹ï¿½ï¿½Åºï¿½
+    short loopCount;                   // ï¿½Ñ¾ï¿½Ñ­ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½
+    short rectOutputType;              // ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short rectOutputIndex;             // ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½ï¿½
+    short rectOutputValid;             // ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§×´Ì¬
+    short outputType;                  // ï¿½Ú¶ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    short outputIndex;                 // ï¿½Ú¶ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½ï¿½
+    short outputValid;                 // ï¿½Ú¶ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§×´Ì¬
+    short pad[3];                      // ï¿½ï¿½ï¿½ï¿½
+    double rectVoltage;                // ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹Öµ
+    double outputVoltage;              // ï¿½Ú¶ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹Öµ
+}TWaveformPairStatus;                  // ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½×´Ì¬ï¿½á¹¹ï¿½ï¿½
+
+/**
+ * @brief ï¿½ï¿½ï¿½Ã²ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param index ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pRectWave ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½Ö¸ï¿½ï¿½
+ * @param pVoltageData ï¿½Ú¶ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½é£¬ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ÎªdataCountï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ä°´Ë³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â½ï¿½ï¿½Ø¶ï¿½ï¿½ï¿½
+ * @param dataCount ï¿½Ú¶ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡
+ * @param loopCount Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return 17051ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½dataCountï¿½ï¿½ï¿½Þ£ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,50]
+ *         17053ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17055ï¿½ï¿½ï¿½ËºÅ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Ç°Ã¿ï¿½Å¿ï¿½Ö»ï¿½Ðµï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ö§ï¿½Ö²ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½
+ *         17061ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17100ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½á¹¹ï¿½ï¿½TRectangleWavePrmï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½padï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ó£¬±ï¿½ï¿½ï¿½Îª0
+ *         17502ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÖµpVoltageDataï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17510ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½á¹¹ï¿½ï¿½TRectangleWavePrmï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½startModeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17511ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½á¹¹ï¿½ï¿½TRectangleWavePrmï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½voltageï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17512ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½á¹¹ï¿½ï¿½TRectangleWavePrmï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½highLevelTimeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17513ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½á¹¹ï¿½ï¿½TRectangleWavePrmï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½lowLevelTimeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         11059ï¿½ï¿½ï¿½ï¿½ï¿½Î¹ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         11087ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Fifoï¿½Ñ¾ï¿½Ñ¹ï¿½ï¿½ï¿½Ë£ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ýµï¿½ï¿½ï¿½ï¿½ï¿½
+*/
+GT_API GTN_SetWaveformPairPrm(short core,short index,TRectangleWavePrm *pRectWave,double *pVoltageData,short dataCount,short loopCount);
+
+/**
+ * @brief ï¿½ï¿½ï¿½Ã²ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½Ç°Ä£Ê½ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param index ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pRectWave ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½Õ±ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½Ö¸ï¿½ï¿½
+ * @param pStageWave Ì¨ï¿½×²ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½Ö¸ï¿½ï¿½
+ * @param loopCount Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return 17053ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17055ï¿½ï¿½ï¿½ËºÅ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Ç°Ã¿ï¿½Å¿ï¿½Ö»ï¿½Ðµï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ö§ï¿½Ö²ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½
+ *         17061ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17100ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½á¹¹ï¿½ï¿½TRectangleWaveDutyModeï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½padï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ó£¬±ï¿½ï¿½ï¿½Îª0
+ *         17100ï¿½ï¿½Ì¨ï¿½×²ï¿½ï¿½á¹¹ï¿½ï¿½TStageWavePrmï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½padï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ó£¬±ï¿½ï¿½ï¿½Îª0
+ *         17510ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½á¹¹ï¿½ï¿½TRectangleWaveDutyModeï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½startModeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17511ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½á¹¹ï¿½ï¿½TRectangleWaveDutyModeï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½voltageï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17515ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½á¹¹ï¿½ï¿½TRectangleWaveDutyModeï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½frequencyï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17516ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½á¹¹ï¿½ï¿½TRectangleWaveDutyModeï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½dutyRatioï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17517ï¿½ï¿½Ì¨ï¿½×²ï¿½ï¿½á¹¹ï¿½ï¿½TStageWavePrmï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½stepCountï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17518ï¿½ï¿½Ì¨ï¿½×²ï¿½ï¿½á¹¹ï¿½ï¿½TStageWavePrmï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½voltageStartï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17519ï¿½ï¿½Ì¨ï¿½×²ï¿½ï¿½á¹¹ï¿½ï¿½TStageWavePrmï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½voltageEndï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17520ï¿½ï¿½Ì¨ï¿½×²ï¿½ï¿½á¹¹ï¿½ï¿½TStageWavePrmï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½aheadTimeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17521ï¿½ï¿½Ì¨ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½Ì¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0.0003V
+ *         17522ï¿½ï¿½Ì¨ï¿½×²ï¿½ï¿½ï¿½Ì¨ï¿½ï¿½Ê±ï¿½ï¿½Ð¡ï¿½ï¿½10us
+ *         11059ï¿½ï¿½ï¿½ï¿½ï¿½Î¹ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+*/
+GT_API GTN_SetWaveformPairAhead(short core,short index,TRectangleWaveDutyMode *pRectWave,TStageWavePrm *pStageWave,short loopCount);
+/**
+ * @brief Ê¹ï¿½Ü²ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param index ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pRectOutput ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½Ö¸ï¿½ï¿½
+ * @param pOutput2 ï¿½Ú¶ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½Ö¸ï¿½ï¿½
+ * @param enable ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½Ê¹ï¿½Ü£ï¿½0ï¿½ï¿½ï¿½Ø±Õ£ï¿½1-ï¿½ï¿½
+ * @return 17053ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17054ï¿½ï¿½Ê¹ï¿½Ü²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1]
+ *         17055ï¿½ï¿½ï¿½ËºÅ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Ç°Ã¿ï¿½Å¿ï¿½Ö»ï¿½Ðµï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ö§ï¿½Ö²ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½
+ *         17100ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½TWaveformOutputï¿½ï¿½padï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ó£¬±ï¿½ï¿½ï¿½Îª0
+ *         17503ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ÆµÚ¶ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½TWaveformOutputï¿½ï¿½typeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17504ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ÆµÚ¶ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½TWaveformOutputï¿½ï¿½indexï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17505ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ÆµÚ¶ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½TWaveformOutputï¿½ï¿½laserOnï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17507ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¾ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½TWaveformOutputï¿½ï¿½typeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17508ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¾ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½TWaveformOutputï¿½ï¿½indexï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17509ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¾ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½TWaveformOutputï¿½ï¿½laserOnï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         11050ï¿½ï¿½ï¿½ï¿½ï¿½Î¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
+ *         11055ï¿½ï¿½ï¿½ï¿½ï¿½Î¹ï¿½ï¿½Ü¹ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½Ô£ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½Waveformï¿½ï¿½WaveformPairÖ¸ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½
+ *         11059ï¿½ï¿½ï¿½ï¿½ï¿½Î¹ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íºï¿½ï¿½ï¿½ï¿½ï¿½
+ *         11087ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Fifoï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½Ë£ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ý¹ï¿½ï¿½ï¿½
+ *         11091ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ð½Ó´ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ÜµÄ´ï¿½Õ¾
+ *         11502ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ÆµÚ¶ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ã»ï¿½ï¿½Ó³ï¿½ï¿½
+ *         11503ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ÍµÚ¶ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½Í¬Ò»ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ *         11504ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ü²ï¿½ï¿½Î¿ï¿½ï¿½ï¿½
+ *         11506ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¾ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´Ã»ï¿½ï¿½Ó³ï¿½ï¿½
+ *         11507ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½Í¾ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½Í¬Ò»ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ *         11508ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ê§ï¿½Ü£ï¿½ï¿½Ú²ï¿½Ö´ï¿½Ð´ï¿½ï¿½ï¿½
+*/
+GT_API GTN_EnableWaveformPair(short core,short index,TWaveformOutput *pRectOutput,TWaveformOutput *pOutput,short enable);
+
+/**
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½Ð§/ï¿½ï¿½Ð§
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param index ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pOutput ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½Ö¸ï¿½ï¿½
+ * @param valid ï¿½ï¿½Ó¦ï¿½ï¿½Ó²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¿ï¿½ï¿½ï¿½È¨Îªï¿½ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½Ö¾
+ *              0ï¿½ï¿½Ê¾ï¿½ï¿½Ó²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú²ï¿½ï¿½ï¿½ï¿½Õ²ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *              1ï¿½ï¿½Ê¾ï¿½ï¿½Ó²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú°ï¿½ï¿½Õ²ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return 17053ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17055ï¿½ï¿½ï¿½ËºÅ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Ç°Ã¿ï¿½Å¿ï¿½Ö»ï¿½Ðµï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ö§ï¿½Ö²ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½
+ *         17514ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½Ö¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[0,1]
+ *         11055ï¿½ï¿½ï¿½ï¿½ï¿½Î¹ï¿½ï¿½Ü¹ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½Ô£ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½Waveformï¿½ï¿½WaveformPairÖ¸ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½
+ *         11091ï¿½ï¿½Ã»ï¿½Ðµï¿½ï¿½ï¿½Ö¸ï¿½ï¿½GTN_EnableWaveformPairÊ¹ï¿½Ü²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         11505ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í²ï¿½ï¿½Ú²ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½ï¿½ï¿½
+*/
+GT_API GTN_SetWaveformPairOutputValid(short core,short index,TWaveformOutput *pOutput,short valid);
+
+/**
+ * @brief ï¿½ï¿½È¡ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
+ * @param core ï¿½ËºÅ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param index ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ê¼
+ * @param pStatus ï¿½ï¿½ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½á¹¹ï¿½ï¿½Ö¸ï¿½ï¿½
+ * @return 17053ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ *         17055ï¿½ï¿½ï¿½ËºÅ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Ç°Ã¿ï¿½Å¿ï¿½Ö»ï¿½Ðµï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ö§ï¿½Ö²ï¿½ï¿½Î¿ï¿½ï¿½Æ¹ï¿½ï¿½ï¿½
+*/
+GT_API GTN_GetWaveformPairStatus(short core,short index,TWaveformPairStatus *pStatus);
+typedef struct
+{
+    unsigned short enable;             // Ê¹ï¿½Ü¶ï¿½Ì¬ï¿½ï¿½î²¹ï¿½ï¿½
+
+    unsigned short dimension;          // Ä¿Ç°Ö»ï¿½ï¿½Îª2
+    unsigned short moveAxis1;          // ï¿½Ë¶ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½
+    unsigned short moveAxis2;          // ï¿½Ë¶ï¿½ï¿½ï¿½2ï¿½ï¿½ï¿½ï¿½
+    unsigned short source;             // 31:ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½Ä¹æ»®Î»ï¿½Ã¼ï¿½ï¿½ã²¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½23ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã¼ï¿½ï¿½ã²¹ï¿½ï¿½ï¿½ï¿½
+
+    unsigned short compensateAxis;     // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    unsigned short mode;               // ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+                                       // 0ï¿½ï¿½ï¿½ã½ºÍ·ï¿½ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+
+    unsigned short pad1;               // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+
+    double reserve1;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    double reserve2;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    double reserve3;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    double reserve4;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+}TDynamicCompensateParameter;
+
+typedef struct
+{
+    unsigned short pointType;         // ï¿½ï¿½ï¿½Ýµï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    unsigned short pad1;              // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    unsigned short pad2;              // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    unsigned short pad3;              // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+
+    double compensateValue;            // ï¿½ï¿½ï¿½ï¿½Öµ
+    double compensateDistance;         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ä³¤ï¿½ï¿½
+
+    double reserve1;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    double reserve2;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    double reserve3;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+    double reserve4;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0
+}TDynamicCompensatePoint;
+
+typedef struct
+{
+    unsigned short enable;               // ï¿½ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½×´Ì¬
+    unsigned short execute;              // ï¿½ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    unsigned short pad1;                 // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    unsigned short pad2;                 // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    uint32_t pointReceive;         // ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    uint32_t pointUse;             // ï¿½Ã¹ï¿½ï¿½Ä²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    TDynamicCompensatePoint point;      // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ÃµÄ²ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    double pos1;                       // ï¿½ï¿½Ç°Î»ï¿½ï¿½1
+    double pos2;                       // ï¿½ï¿½Ç°Î»ï¿½ï¿½2
+    double travelDistance;             // ï¿½ï¿½Ç°ï¿½ß¹ï¿½ï¿½ÄºÏ³ï¿½Î»ï¿½Æ£ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ã£©
+    double compensateValue;            // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½Öµ
+
+    double reserve1;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double reserve2;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double reserve3;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    double reserve4;                   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+}TDynamicCompensateStatus;
+
+GT_API GTN_SetDynamicCompensateParameter(short core, short dcIndex, TDynamicCompensateParameter* pPrm);
+GT_API GTN_GetDynamicCompensateParameter(short core, short dcIndex, TDynamicCompensateParameter* pPrm);
+GT_API GTN_SetDynamicCompensatePoint(short core, short dcIndex, TDynamicCompensatePoint* pPoint);
+GT_API GTN_GetDynamicCompensateStatus(short core, short dcIndex, TDynamicCompensateStatus* pStatus);
+
+GT_API GT_RN_GetEcatEncPosEx(short axis, int32_t* pEncPos);
+
+GT_API GTN_GetDiPhysicCustom(short core, short stationId, short diType, short diIndex, short* pValue, short count);
+GT_API GTN_GetDoPhysicCustom(short core, short stationId, short doType, short doIndex, short* pValue, short count);
+
+// ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü²ï¿½ï¿½ï¿½
+typedef struct
+{
+    short enable;			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ü±ï¿½Ö¾
+    short mode;				// ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Ç°Ö»ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½æ»®ï¿½Ù¶È´ï¿½ï¿½ï¿½ï¿½è¶¨ï¿½ï¿½ÖµprfVelThreadï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶Èµï¿½Æ«ï¿½ï¿½ï¿½ï¿½ï¿½encVelDeltaÊ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹ï¿½ï¿½
+    short filterTime;		// ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä·ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½Ë²ï¿½Ê±ï¿½ä¡£ï¿½ï¿½Î»msï¿½ï¿½
+    short reserve1[5];		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½
+    double prfVelThread;	// ï¿½ï¿½ï¿½ï¿½æ»®ï¿½Ù¶ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/msï¿½ï¿½ï¿½ï¿½ï¿½ï¿½æ»®ï¿½Ù¶È´ï¿½ï¿½Ú¸ï¿½ÖµÊ±ï¿½ï¿½ï¿½Å¼ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶Èµï¿½Æ«ï¿½ï¿½encVelDeltaï¿½ï¿½
+    double encVelDelta;		// Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶Èµï¿½Æ«ï¿½î¡£ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/msï¿½ï¿½
+    short errorKeepTimeMax;	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½errorKeepTimeMaxÊ±ï¿½ï¿½ó£¬»ï¿½ï¿½Ç´ï¿½ï¿½Ú´ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ò±¨¾ï¿½ï¿½ï¿½ï¿½ï¿½Í£Ö¹ï¿½Ë¶ï¿½ï¿½ï¿½Ä¿Ç°Ö»ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½
+    short reserve2[7];		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½
+    double reserve3[8];
+} TGantrySynchCtlFeedbackProtect;
+
+GT_API GTN_SetGantrySynchCtlFeedbackProtectPrm(short core, short gantryGroup, TGantrySynchCtlFeedbackProtect* pPrm);
+GT_API GTN_GetGantrySynchCtlFeedbackProtectPrm(short core, short gantryGroup, TGantrySynchCtlFeedbackProtect* pPrm);
+GT_API GTN_SetGantrySynErrCmp2DTable(short core, short tableIndex, TCompensate2DTable* pTable, int32_t* pData, short extend);
+GT_API GTN_GetGantrySynErrCmp2D(short core, short group, TCompensate2D* pComp2d);
+GT_API GTN_SetGantrySynErrCmp2D(short core, short group, TCompensate2D* pComp2d);
+
+// Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½î£¬Ò²ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½î¡£
+typedef struct
+{
+    int16_t masterType;		// Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½î£¬Ò²ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½î¡£
+    int16_t masterIndex;	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int16_t slaveType;		// Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½î£¬Ò²ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½î¡£
+    int16_t slaveIndex;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+} TGantrySyncCtlSrcPrm;
+GT_API GTN_SetGantrySynchCtlSrcPrm(short core, short group, TGantrySyncCtlSrcPrm* pGantrySyncCtlSrcPrm);
+GT_API GTN_GetGantrySynchCtlSrcPrm(short core, short group, TGantrySyncCtlSrcPrm* pGantrySyncCtlSrcPrm);
+
+GT_API GTN_GetGantrySynErrCmp2DValue(short core, short group, double* pValue);
+
+#define PVT_TABLE_MOVE_ABSOLUTE_COUNT_MAX			7
+#define PVT_MOVE_ABSOLUTE_MULTI_SEGMENT_MAX			4
+#define PVT_MOVE_ABSOLUTE_MULTI_SEGMENT_AXIS_MAX	6	
+#define PVT_MOVE_RELATIVE_SET_PRM_COUNT_MAX			29				   // ï¿½ï¿½ï¿½Ã¶ï¿½ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½Ö§ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define PVT_MOVE_RELATIVE_SEGMENT_MAX				1                  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½Ö§ï¿½Öµï¿½ï¿½Ë¶ï¿½ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define PVT_MOVE_RELATIVE_COUNT_MAX					119				   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½Ë¶ï¿½Ö§ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+typedef struct
+{
+    double pos[PVT_MOVE_ABSOLUTE_MULTI_SEGMENT_MAX];       // Ã¿ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½Õµï¿½Î»ï¿½ï¿½
+    double velMax[PVT_MOVE_ABSOLUTE_MULTI_SEGMENT_MAX];    // Ã¿ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    double vel[PVT_MOVE_ABSOLUTE_MULTI_SEGMENT_MAX];       // Ã¿ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½Ä¶Ëµï¿½ï¿½Ù¶ï¿½
+    double acc;                                            // ï¿½ï¿½ï¿½ÃµÄ¼ï¿½ï¿½Ù¶ï¿½
+    double percentAcc;                                     // ï¿½ï¿½ï¿½ÃµÄ¼ï¿½ï¿½Ù¶Îµï¿½Sï¿½ï¿½ï¿½ß°Ù·Ö±ï¿½
+    double dec;                                            // ï¿½ï¿½ï¿½ÃµÄ¼ï¿½ï¿½Ù¶ï¿½
+    double percentDec;                                     // ï¿½ï¿½ï¿½ÃµÄ¼ï¿½ï¿½Ù¶Îµï¿½Sï¿½ï¿½ï¿½ß°Ù·Ö±ï¿½     
+}TPvtMoveAbsoluteMultiSegmentPrm;
+
+GT_API GTN_PvtMoveAbsoluteMultiSegment(short core, short segment, TPvtMoveAbsoluteMultiSegmentPrm* pMultiSegmentPrm, uint32_t mask);
+GT_API GTN_SetDoPhysicCustom(short core, short stationId, short doType, short doIndex, short* pValue, short count);
+GT_API GTN_SetPrfRefSafetyZone(short core, short profile, short enable, TProfileReferenceSafetyZone* pPrm);
+GT_API GTN_SetEncoderDeltaLimit(short core, short encType, short encIndex, int32_t deltaLimit);
+
+
+GT_API GTN_RN_ReadMotorTemperatureEx(short cardIndex, short stationPhyId, short phyAxis, double* pRes);
+
+/**
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹Ä£ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ * @param moduleId ï¿½ï¿½Õ¹Ä£ï¿½ï¿½IDï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..63]
+ * @param mode
+ ILINK_CFG_AO_RANGE(1): ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ILINK_CFG_AI_RANGE(2): ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param pParam
+ * #define  USER_ILINK_NUM_AO_CHANNL_V1    (32) //USER_ï¿½ï¿½Í·ï¿½ê¶¨ï¿½å²»ï¿½É¸ï¿½ï¿½ï¿½
+//Ilink Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î§
+#define EXT_RANGE_0V_5V                  0
+#define EXT_RANGE_N5V_P5V                1  // -5V ~ +5V
+#define EXT_RANGE_0V_10V                 2
+#define EXT_RANGE_N10V_P10V              3 // -10V ~ +10V
+#define EXT_RANGE_0MA_20MA               4
+#define EXT_RANGE_4MA_20MA               5
+ï¿½ï¿½ï¿½ï¿½ï¿½
+typedef struct
+{
+    int AO_Range;
+    int AO_Offset;
+    int AO_Scaling;
+    int ErrMode;ï¿½ï¿½ï¿½ßºï¿½ï¿½Í¨ï¿½ï¿½×´Ì¬
+    int RrrVal;
+    int revsd0;
+    int default_value;
+    int revsd1;
+}IdLinkAoChannle;
+typedef struct
+{
+    IdLinkAoChannle iLink_AO_Channl[USER_ILINK_NUM_AO_CHANNL_V1];
+}IdLinkAoCfgVer1;
+ï¿½ï¿½ï¿½ë£º
+typedef struct
+{
+    int AI_Range;
+    int AI_Offset;//16
+    int AI_Scaling;//16
+    int revsd0;//
+    int revsd1;//
+}IdLinkAiChannle;
+typedef struct
+{
+    IdLinkAiChannle		iLink_AI_Channl[USER_ILINK_NUM_AI_CHANNL_V1];
+}IdLinkAiCfgVer1;
+ * @return
+*/
+GT_API GTN_RN_IlinkRangeCfg(short cardIndex, short stationPhyId, short moduleId, short mode, void* pParam);
+
+/**
+ * @brief profinetÍ¨Ñ¶Ð´
+ * @param cardIndex ï¿½ï¿½ï¿½ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ * @param slotIndex ï¿½ï¿½ï¿½ÛºÅ£ï¿½È¡Öµï¿½ï¿½Î§[1..14]
+ * @param pData Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param byteNum Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ÝµÄ³ï¿½ï¿½È£ï¿½ï¿½ï¿½Î»byteï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..64]
+ * @return
+*/
+GT_API GTN_RN_WritePNData(short cardIndex, short stationPhyId, short slotIndex, unsigned char* pData, unsigned short byteNum);
+
+/**
+ * @brief profinetÍ¨Ñ¶ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ * @param slotIndex ï¿½ï¿½ï¿½ÛºÅ£ï¿½È¡Öµï¿½ï¿½Î§[1..14]
+ * @param pData ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param byteNum ï¿½ï¿½È¡ï¿½ï¿½ï¿½ÝµÄ³ï¿½ï¿½È£ï¿½ï¿½ï¿½Î»byteï¿½ï¿½È¡Öµï¿½ï¿½Î§[0..64]
+ * @return
+*/
+GT_API GTN_RN_ReadPNData(short cardIndex, short stationPhyId, short slotIndex, unsigned char* pData, unsigned short byteNum);
+
+#define USER_MAX_STATION_NUM_V1          (256)
+
+typedef struct RingInfVer1
+{
+    unsigned char m_master_flag;
+    unsigned char m_port_link_up_a;
+    unsigned char m_port_link_up_b;
+    unsigned char m_id_auto_set;
+
+    unsigned char m_sync_status;
+    unsigned char m_dc_status;
+
+    unsigned char m_device_num;
+    unsigned char m_device_id;
+
+    unsigned short m_sync_cycle;
+    unsigned short rsvd0;
+
+    unsigned char m_station_id_list[USER_MAX_STATION_NUM_V1];
+    unsigned char m_station_ready[USER_MAX_STATION_NUM_V1];
+    //add by luo.mj
+    uint32_t m_crc_ok_cnt_a;
+    uint32_t m_crc_err_cn_a;
+    uint32_t m_crc_ok_cn_b;
+    uint32_t m_crc_err_cn_b;
+}StRingInfVer1;
+
+/**
+ * @brief ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½Õ¾ï¿½ï¿½Ï¢,Ö§ï¿½ï¿½256ï¿½ï¿½ï¿½ï¿½Õ¾
+ * @param cardIndex ï¿½ï¿½ï¿½ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ * @param StRingInfVer1 ï¿½ï¿½Õ¾ï¿½ï¿½Ï¢ï¿½á¹¹ï¿½ï¿½Ö¸ï¿½ï¿½
+ * @return 0ï¿½ï¿½Ê¾ï¿½É¹ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¾Ê§ï¿½ï¿½
+*/
+GT_API GTN_RN_GetRemoteInfVer1(short cardIndex,short stationPhyId,StRingInfVer1* pInf);
+
+#define RN_LWR                         (0x0)
+#define RN_AWR                         (0x1)     // ï¿½ï¿½ï¿½ï¿½Ñ°Ö·Ð´ï¿½ï¿½ï¿½ï¿½
+#define RN_LMWR                        (0x2)
+#define RN_TCWR                        (0x3)
+#define RN_LRD                         (0x4)
+#define RN_ARD                         (0x5)     // ï¿½ï¿½ï¿½ï¿½Ñ°Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define RN_LMRD                        (0x6)
+#define RN_TCRD                        (0x7)
+
+typedef struct
+{
+    uint16_t fineCnt                   :9;       // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¸ï¿½ï¿½ï¿½
+    uint16_t fineRdFull                :1;       // ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½
+    uint16_t rvsd                      :3;       // ï¿½ï¿½ï¿½ï¿½
+    uint16_t ehmiEnMask                :1;       // 1:ï¿½ï¿½Ê¾ehminEnï¿½ï¿½ï¿½Þ¸ï¿½
+    uint16_t ehmiEn                    :1;       // 1:ï¿½ï¿½Ê¾ï¿½ï¿½Ç°ï¿½è±¸Îªehmiï¿½è±¸
+    uint16_t fineRdErr                 :1;       // fifoï¿½Ñ¿Õ£ï¿½ï¿½Ô¶ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ó¡£¸Ã±ï¿½Ö¾Î»ï¿½ï¿½ï¿½ï¿½ï¿½
+    uint16_t roundRdCnt                :10;      // ï¿½ï¿½Ç°ï¿½Ö²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¸ï¿½ï¿½ï¿½
+    uint16_t roundRdFull               :1;       // ï¿½ï¿½Ç°ï¿½Ö²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½
+    uint16_t roundRemoteRdEnMask       :1;       // ï¿½ï¿½Ç°ÖµÎªÊ±ï¿½ï¿½roundRemoteRdEnï¿½Å»á±»ï¿½Þ¸ï¿½
+    uint16_t roundRemoteRdEn           :1;       // 1:ï¿½Ö²ï¿½ï¿½ï¿½Ô¶ï¿½Ë¶ï¿½Ê¹ï¿½ï¿½
+    uint16_t roundWrSrcMask            :1;       // ï¿½ï¿½Ç°ÖµÎªÊ±ï¿½ï¿½roundWrSrcï¿½Å»á±»ï¿½Þ¸ï¿½
+    uint16_t roundWrSrc                :1;       // 0:ï¿½ï¿½ï¿½æ±¾ï¿½Ø´Ö²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    uint16_t roundRdErr                :1;       // fifoï¿½Ñ¿Õ£ï¿½ï¿½Ô¶ï¿½È¡ï¿½Ö²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ó¡£¸Ã±ï¿½Ö¾Î»ï¿½ï¿½ï¿½ï¿½ï¿½
+}TKsSampleStatus;
+
+/**
+ * @brief ï¿½ï¿½ï¿½ç±¨ï¿½Ä·ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+ * @param cardIndex ï¿½ï¿½ï¿½ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ * @param byteAddr ï¿½ï¿½ï¿½ÍµÄµï¿½Ö·ï¿½ï¿½byteï¿½ï¿½Ö·
+ * @param pData ï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í·Ö¸ï¿½ï¿½
+ * @param dataNum ï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½word
+ * @param cmd Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½
+ *            ï¿½ï¿½1ï¿½ï¿½RN_AWR(0x1)ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ°Ö·Ð´
+ *            ï¿½ï¿½2ï¿½ï¿½RN_ARD(0x1)ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ°Ö·ï¿½ï¿½
+ * @param addMode ï¿½ï¿½Ö·Ä£Ê½ï¿½ï¿½
+ *                ï¿½ï¿½1ï¿½ï¿½0ï¿½ï¿½Ã¿ï¿½Î·ï¿½ï¿½ï¿½Í¬Ò»ï¿½ï¿½ï¿½ï¿½Ö·
+ *                ï¿½ï¿½2ï¿½ï¿½1ï¿½ï¿½Ã¿ï¿½Î·ï¿½ï¿½Êµï¿½Ö·ï¿½Ô¶ï¿½ï¿½ï¿½1
+ * @param fastEn ï¿½ï¿½ï¿½Ù·ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
+ *               ï¿½ï¿½1ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½
+ *               ï¿½ï¿½2ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½Ù·ï¿½ï¿½ï¿½
+ * @return 
+*/
+GT_API GTN_RN_TxNetPacket(int16_t cardIndex,int16_t stationPhyId,uint16_t byteAddr,uint16_t *pData,uint16_t dataNum,uint8_t cmd,uint8_t addMode,uint8_t fastEn);
+
+/**
+ * @brief ï¿½ï¿½ï¿½ç±¨ï¿½Ä½ï¿½ï¿½Õ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
+ * @param cardIndex ï¿½ï¿½ï¿½ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ * @param byteAddr ï¿½ï¿½ï¿½ÕµÄµï¿½Ö·ï¿½ï¿½byteï¿½ï¿½Ö·
+ * @param pData ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í·Ö¸ï¿½ï¿½
+ * @param dataNum ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½word
+ * @param cmd Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½
+ *            ï¿½ï¿½1ï¿½ï¿½RN_AWR(0x1)ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ°Ö·Ð´
+ *            ï¿½ï¿½2ï¿½ï¿½RN_ARD(0x1)ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ°Ö·ï¿½ï¿½
+ * @param addMode ï¿½ï¿½Ö·Ä£Ê½ï¿½ï¿½
+ *                ï¿½ï¿½1ï¿½ï¿½0ï¿½ï¿½Ã¿ï¿½Î·ï¿½ï¿½ï¿½Í¬Ò»ï¿½ï¿½ï¿½ï¿½Ö·
+ *                ï¿½ï¿½2ï¿½ï¿½1ï¿½ï¿½Ã¿ï¿½Î·ï¿½ï¿½Êµï¿½Ö·ï¿½Ô¶ï¿½ï¿½ï¿½1
+ * @param fastEn ï¿½ï¿½ï¿½Ù½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
+ *               ï¿½ï¿½1ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½
+ *               ï¿½ï¿½2ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½Ù½ï¿½ï¿½ï¿½
+ * @return 0ï¿½ï¿½Ê¾Ö´ï¿½Ð³É¹ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¾Ö´ï¿½ï¿½Ê§ï¿½ï¿½
+*/
+GT_API GTN_RN_RxNetPacket(int16_t cardIndex,int16_t stationPhyId,uint16_t byteAddr,uint16_t *pData,uint16_t dataNum,uint8_t cmd,uint8_t addMode,uint8_t fastEn);
+
+/**
+ * @brief ï¿½ï¿½ï¿½Ã²ï¿½ï¿½ï¿½×´Ì¬
+ * @param cardIndex ï¿½ï¿½ï¿½ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ * @param pStatus ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½Ö½á¹¹ï¿½ï¿½Ö¸ï¿½ë£¬ï¿½ï¿½ï¿½åº¬ï¿½ï¿½Î¿ï¿½Í·ï¿½Ä¼ï¿½ï¿½á¹¹ï¿½ï¿½ï¿½ï¿½Ï¸Ëµï¿½ï¿½
+ * @return 0ï¿½ï¿½Ê¾Ö´ï¿½Ð³É¹ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¾Ö´ï¿½ï¿½Ê§ï¿½ï¿½
+*/
+GT_API GTN_RN_SetKsSampleStatus(int16_t cardIndex,int16_t stationPhyId,TKsSampleStatus *pStatus);
+
+/**
+ * @brief ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½×´Ì¬
+ * @param cardIndex ï¿½ï¿½ï¿½ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ * @param pStatus ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½Ö½á¹¹ï¿½ï¿½Ö¸ï¿½ë£¬ï¿½ï¿½ï¿½åº¬ï¿½ï¿½Î¿ï¿½Í·ï¿½Ä¼ï¿½ï¿½á¹¹ï¿½ï¿½ï¿½ï¿½Ï¸Ëµï¿½ï¿½
+ * @return 0ï¿½ï¿½Ê¾Ö´ï¿½Ð³É¹ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¾Ö´ï¿½ï¿½Ê§ï¿½ï¿½
+*/
+GT_API GTN_RN_GetKsSampleStatus(int16_t cardIndex,int16_t stationPhyId,TKsSampleStatus *pStatus);
+
+/**
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
+ * @param cardIndex ï¿½ï¿½ï¿½ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ * @return 0ï¿½ï¿½Ê¾Ö´ï¿½Ð³É¹ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¾Ö´ï¿½ï¿½Ê§ï¿½ï¿½
+*/
+GT_API GTN_RN_SetKsSampleClear(int16_t cardIndex,int16_t stationPhyId);
+
+/**
+ * @brief ï¿½ï¿½ï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ * @param mask ï¿½ï¿½ï¿½ï¿½
+ * @return 0ï¿½ï¿½Ê¾Ö´ï¿½Ð³É¹ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¾Ö´ï¿½ï¿½Ê§ï¿½ï¿½
+*/
+GT_API GTN_RN_SetKsSampleMask(int16_t cardIndex,int16_t stationPhyId,uint32_t mask);
+
+/**
+ * @brief ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ * @param pMask ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @return 0ï¿½ï¿½Ê¾Ö´ï¿½Ð³É¹ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¾Ö´ï¿½ï¿½Ê§ï¿½ï¿½
+*/
+GT_API GTN_RN_GetKsSampleMask(int16_t cardIndex,int16_t stationPhyId,uint32_t *pMask);
+
+/**
+ * @brief ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½æ±¾
+ * @param cardIndex ï¿½ï¿½ï¿½ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ * @param pVersion ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½ï¿½æ±¾
+ * @return 0ï¿½ï¿½Ê¾Ö´ï¿½Ð³É¹ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¾Ö´ï¿½ï¿½Ê§ï¿½ï¿½
+*/
+GT_API GTN_RN_GetKsSampleVersion(int16_t cardIndex,int16_t stationPhyId,uint32_t *pVersion);
+
+/**
+ * @brief ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ * @param pData ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í·Ö¸ï¿½ï¿½
+ * @param dWordNums ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ý¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½dWordï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,508]
+ * @return 0ï¿½ï¿½Ê¾Ö´ï¿½Ð³É¹ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¾Ö´ï¿½ï¿½Ê§ï¿½ï¿½
+*/
+GT_API GTN_RN_GetKsSampleFineData(int16_t cardIndex,int16_t stationPhyId,uint32_t *pData,uint16_t dWordNums);
+
+/**
+ * @brief ï¿½ï¿½È¡ï¿½Ö²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * @param cardIndex ï¿½ï¿½ï¿½ï¿½
+ * @param stationPhyId ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½
+ * @param pData ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í·Ö¸ï¿½ï¿½
+ * @param dWordNums ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ý¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½dWordï¿½ï¿½È¡Öµï¿½ï¿½Î§ï¿½ï¿½[1,508]
+ * @return 0ï¿½ï¿½Ê¾Ö´ï¿½Ð³É¹ï¿½ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½Ê¾Ö´ï¿½ï¿½Ê§ï¿½ï¿½
+*/
+GT_API GTN_RN_GetKsSampleRoundData(int16_t cardIndex,int16_t stationPhyId,uint32_t *pData,uint16_t dWordNums);
