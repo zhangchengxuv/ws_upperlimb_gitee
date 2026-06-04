@@ -28,6 +28,42 @@
 
 using namespace std::chrono_literals;
 
+
+// ===================== GTN 底层库调用串行化 =====================
+//
+// Linux 版 GTN/EtherCAT 库在状态采集线程和控制线程中被同时调用时，
+// 容易出现轴模式读数异常、PT 下发失败、同步失败等问题。
+// 下面这些宏会把所有 GTN_* 调用统一转到 RobotControlNode::callGtn()，
+// 由同一把 gtn_mutex_ 保护，保证任意时刻只有一个线程访问底层库。
+//
+#define GTN_Open(...) callGtn([&]() { return ::GTN_Open(__VA_ARGS__); })
+#define GTN_Close(...) callGtn([&]() { return ::GTN_Close(__VA_ARGS__); })
+#define GTN_LoadConfig(...) callGtn([&]() { return ::GTN_LoadConfig(__VA_ARGS__); })
+#define GTN_ClrSts(...) callGtn([&]() { return ::GTN_ClrSts(__VA_ARGS__); })
+#define GTN_InitEcatComm(...) callGtn([&]() { return ::GTN_InitEcatComm(__VA_ARGS__); })
+#define GTN_IsEcatReady(...) callGtn([&]() { return ::GTN_IsEcatReady(__VA_ARGS__); })
+#define GTN_StartEcatComm(...) callGtn([&]() { return ::GTN_StartEcatComm(__VA_ARGS__); })
+#define GTN_TerminateEcatComm(...) callGtn([&]() { return ::GTN_TerminateEcatComm(__VA_ARGS__); })
+#define GTN_AxisOn(...) callGtn([&]() { return ::GTN_AxisOn(__VA_ARGS__); })
+#define GTN_AxisOff(...) callGtn([&]() { return ::GTN_AxisOff(__VA_ARGS__); })
+#define GTN_GetSts(...) callGtn([&]() { return ::GTN_GetSts(__VA_ARGS__); })
+#define GTN_GetEcatEncPos(...) callGtn([&]() { return ::GTN_GetEcatEncPos(__VA_ARGS__); })
+#define GTN_SetPrfPos(...) callGtn([&]() { return ::GTN_SetPrfPos(__VA_ARGS__); })
+#define GTN_SetEncPos(...) callGtn([&]() { return ::GTN_SetEncPos(__VA_ARGS__); })
+#define GTN_SynchAxisPos(...) callGtn([&]() { return ::GTN_SynchAxisPos(__VA_ARGS__); })
+#define GTN_GetEcatRawData(...) callGtn([&]() { return ::GTN_GetEcatRawData(__VA_ARGS__); })
+#define GTN_GetEcatAxisAtlTorque(...) callGtn([&]() { return ::GTN_GetEcatAxisAtlTorque(__VA_ARGS__); })
+#define GTN_GetEncVel(...) callGtn([&]() { return ::GTN_GetEncVel(__VA_ARGS__); })
+#define GTN_Stop(...) callGtn([&]() { return ::GTN_Stop(__VA_ARGS__); })
+#define GTN_SetEcatAxisPT(...) callGtn([&]() { return ::GTN_SetEcatAxisPT(__VA_ARGS__); })
+#define GTN_SetEcatAxisMode(...) callGtn([&]() { return ::GTN_SetEcatAxisMode(__VA_ARGS__); })
+#define GTN_GetEcatAxisMode(...) callGtn([&]() { return ::GTN_GetEcatAxisMode(__VA_ARGS__); })
+#define GTN_PrfTrap(...) callGtn([&]() { return ::GTN_PrfTrap(__VA_ARGS__); })
+#define GTN_SetTrapPrm(...) callGtn([&]() { return ::GTN_SetTrapPrm(__VA_ARGS__); })
+#define GTN_SetVel(...) callGtn([&]() { return ::GTN_SetVel(__VA_ARGS__); })
+#define GTN_SetPos(...) callGtn([&]() { return ::GTN_SetPos(__VA_ARGS__); })
+#define GTN_Update(...) callGtn([&]() { return ::GTN_Update(__VA_ARGS__); })
+
 class RobotControlNode : public rclcpp::Node
 {
 public:
@@ -158,6 +194,19 @@ public:
   }
 
 private:
+  // ===================== GTN 调用互斥封装 =====================
+  //
+  // 所有 GTN_* 底层库函数都通过宏转到这里。
+  // 目的不是提高性能，而是先验证 Linux 版 GTN 库在多线程访问下是否会出现
+  // 非法模式值、PT 失败、同步失败等异常。
+  //
+  template <typename Fn>
+  auto callGtn(Fn &&fn) -> decltype(fn())
+  {
+    std::lock_guard<std::mutex> lock(gtn_mutex_);
+    return fn();
+  }
+
   // ===================== 控制命令回调 =====================
   //
   // 这里仅记录“请求模式”。
@@ -309,14 +358,25 @@ private:
 
     case upperlimb_robot::MODE_BILATERAL_ZERO_FORCE:
     {
-      const bool ok = captureForceSensorBias();
-      if (ok)
+      const bool bias_ok = captureForceSensorBias();
+      const bool torque_ok = enterDualArmTorqueModeOnce();
+
+      if (bias_ok && torque_ok)
       {
-        RCLCPP_INFO(this->get_logger(), "进入双臂零力模式，已记录六维力零偏");
+        RCLCPP_INFO(this->get_logger(), "进入双臂零力模式：已记录六维力零偏，14 个主动轴已一次性切到扭矩模式");
       }
       else
       {
-        RCLCPP_WARN(this->get_logger(), "进入双臂零力模式失败：当前传感器数据无效，未记录零偏");
+        RCLCPP_WARN(
+            this->get_logger(),
+            "进入双臂零力模式失败：bias_ok=%d, torque_ok=%d；退回 Idle，避免控制循环内反复切轴模式",
+            static_cast<int>(bias_ok),
+            static_cast<int>(torque_ok));
+
+        clearDualArmTorqueCommandsNoModeSwitch();
+        stopAllAxesMotionOnly();
+        restoreAllAxesToPositionMode();
+        current_mode_.store(upperlimb_robot::MODE_IDLE);
       }
       break;
     }
@@ -484,7 +544,7 @@ private:
 
   // ===================== 双臂扭矩模式辅助函数 =====================
   //
-  // 双侧主动 / 主动弹簧模式同时控制 14 个主动关节。
+  // 双臂零力 / 双侧主动 / 主动弹簧模式同时控制 14 个主动关节。
   // 这类模式不建议在 90 Hz 控制循环内反复执行
   // “位置模式 <-> 扭矩模式”切换。
   //
@@ -496,7 +556,8 @@ private:
   //
   bool isDualArmTorqueMode(int mode) const
   {
-    return mode == upperlimb_robot::MODE_BILATERAL_ACTIVE ||
+    return mode == upperlimb_robot::MODE_BILATERAL_ZERO_FORCE ||
+           mode == upperlimb_robot::MODE_BILATERAL_ACTIVE ||
            mode == upperlimb_robot::MODE_ACTIVE_SPRING;
   }
 
@@ -1060,7 +1121,7 @@ private:
       {
         if (isDualArmTorqueMode(applied_mode_))
         {
-          // 双侧主动 / 主动弹簧模式下，算法单帧无效时只清零 PT。
+          // 双臂零力 / 双侧主动 / 主动弹簧模式下，算法单帧无效时只清零 PT。
           // 不在控制循环中频繁切回位置模式，避免下一帧又切回扭矩模式导致底层报错。
           clearDualArmTorqueCommandsNoModeSwitch();
         }
@@ -1447,7 +1508,7 @@ private:
 
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
     {
-      // 双侧主动 / 主动弹簧模式下，算法层只输出 14 个主动轴扭矩。
+      // 双臂零力 / 双侧主动 / 主动弹簧模式下，算法层只输出 14 个主动轴扭矩。
       // 末端 fixed 轴 8~10 / 18~20 不在控制循环内做位置保持、模式读取或 PT 清理，
       // 避免继续触发 SetPos / SetTrapPrm / SetVel / SyncAxisPos 类错误。
       if (dual_arm_torque_mode && output.use_torque[i])
@@ -1656,7 +1717,7 @@ private:
 
     for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
     {
-      // 双侧主动 / 主动弹簧模式下，非 14 个主动扭矩轴完全跳过。
+      // 双臂零力 / 双侧主动 / 主动弹簧模式下，非 14 个主动扭矩轴完全跳过。
       // 不读模式、不清 PT、不切位置模式，避免轴8~10/18~20继续干扰主控制。
       if (dual_arm_torque_mode && !output.use_torque[i])
       {
@@ -1899,8 +1960,8 @@ private:
   std::atomic<int> current_mode_{upperlimb_robot::MODE_IDLE};
   int applied_mode_{upperlimb_robot::MODE_IDLE};
 
-  std::atomic<int> state_hz_{150};
-  std::atomic<int> control_hz_{90};
+  std::atomic<int> state_hz_{50};
+  std::atomic<int> control_hz_{50};
 
   int status_read_divider_ = 20;
   int status_read_divider_count_ = 0;
@@ -1910,6 +1971,9 @@ private:
 
   std::mutex sensor_mutex_;
   upperlimb_robot::SensorStateCache latest_sensor_state_;
+
+  // GTN/EtherCAT 底层库互斥锁：状态采集线程和控制线程必须串行访问控制卡库。
+  std::mutex gtn_mutex_;
 
   int publish_divider_ = 10;
   int publish_divider_count_ = 0;

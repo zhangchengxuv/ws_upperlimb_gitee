@@ -735,7 +735,7 @@ namespace upperlimb_robot
     // 数值积分：
     // ddq_adm -> dq_adm -> q_adm
     //
-    const double dt = 1.0 / 90.0; // 当前控制线程频率约为 90 Hz
+    const double dt = 1.0 / 50.0; // 当前控制线程频率约为 90 Hz
 
     Eigen::VectorXd M_a = Eigen::VectorXd::Zero(model.nv);
     Eigen::VectorXd D_a = Eigen::VectorXd::Zero(model.nv);
@@ -1243,7 +1243,7 @@ namespace upperlimb_robot
     }
 
     // ===================== 导纳模型 =====================
-    const double dt = 1.0 / 90.0;
+    const double dt = 1.0 / 50.0;
     const double admittance_input_gain = 1.5;
 
     const std::array<double, 7> M_value = {
@@ -4957,7 +4957,7 @@ namespace upperlimb_robot
     }
 
     constexpr double DEG2RAD = M_PI / 180.0;
-    constexpr double dt = 1.0 / 90.0;
+    constexpr double dt = 1.0 / 50.0;
 
     // ===================== 控制层索引 =====================
     // 右臂 joint11~joint17 -> 控制层索引 0~6
@@ -6126,7 +6126,7 @@ namespace upperlimb_robot
     }
 
     constexpr double DEG2RAD = M_PI / 180.0;
-    constexpr double dt = 1.0 / 90.0;
+    constexpr double dt = 1.0 / 50.0;
 
     // ===================== 控制层索引 =====================
     // 右臂 joint11~joint17 -> 控制层索引 0~6
