@@ -6731,7 +6731,7 @@ namespace upperlimb_robot
     // 因为弹簧力后面还要经过 J^T F 和导纳模型，参数需要比直接扭矩叠加更大。
     const double Kx = 70.0;      // N/m，约 7 N / 10 cm，弹簧感明显
     const double Bx = 2.5;       // N/(m/s)，提供拉开/靠近时的阻尼感
-    const double F_limit = 18.0; // N，限制注入传感器通道的最大虚拟力
+    const double F_limit = 70.0; // N，限制注入传感器通道的最大虚拟力
 
     // d = x_left - x_right
     // e > 0：左大臂相对右大臂在 world +X 方向距离变大。
