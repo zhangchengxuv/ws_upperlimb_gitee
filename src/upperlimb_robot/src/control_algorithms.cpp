@@ -2671,7 +2671,7 @@ namespace upperlimb_robot
     Eigen::VectorXd damping = Eigen::VectorXd::Zero(model.nv);
 
     const std::array<double, 7> damping_value = {
-        0.15, 0.15, 0.12, 0.10, 0.08, 0.06, 0.05};
+        -0.4, -0.4, -0.4, -0.4, -0.4, -0.4, -0.4};
 
     for (std::size_t i = 0; i < 7; ++i)
     {
@@ -2679,16 +2679,13 @@ namespace upperlimb_robot
       damping(right_v_id[i]) = damping_value[i];
     }
 
-    // ===================== 重力补偿系数 =====================
-    const double gravity_gain = 1.12;
-
     Eigen::VectorXd tau_damping = -(damping.asDiagonal() * v);
 
     // ===================== 最终关节扭矩 =====================
     //
     // tau 是双臂整体模型下的 14 维关节力矩。
     //
-    Eigen::VectorXd tau = gravity_gain * g + tau_ext + tau_damping;
+    Eigen::VectorXd tau = g + tau_ext + tau_damping;
 
     const std::array<double, 7> torque_limit = {
         30.0, 30.0, 30.0, 30.0, 18.0, 18.0, 18.0};
@@ -2782,7 +2779,6 @@ namespace upperlimb_robot
 
     output = ControlOutputCache{};
     output.valid = true;
-    
 
     // ===================== 左臂 物理轴11 -> 控制层索引10 =====================
     output.use_position[10] = true;
@@ -5521,9 +5517,7 @@ namespace upperlimb_robot
       return;
     }
 
-    // 导纳输入仍然只使用 tau_ext。
-    // 注意：此时 tau_ext 已经包含真实传感器力 + 注入后的虚拟弹簧力，
-    // 仍保持原本的“合成交互力 -> J^T F -> 主动导纳”链路。
+    // 导纳输入只来自真实传感器映射得到的 tau_ext。
     Eigen::VectorXd tau_input = tau_ext;
 
     // ===================== 关节空间导纳参数 =====================
@@ -5566,7 +5560,7 @@ namespace upperlimb_robot
     Eigen::VectorXd ddq_adm = Eigen::VectorXd::Zero(model.nv);
 
     const std::array<double, 7> ddq_limit_value = {
-        5.0, 5.0, 5.0, 8.0, 8.0, 8.0, 8.0};
+        3.0, 3.0, 3.0, 5.0, 5.0, 5.0, 5.0};
 
     for (int i = 0; i < model.nv; ++i)
     {
@@ -5637,13 +5631,13 @@ namespace upperlimb_robot
         120.0 * DEG2RAD};
 
     const std::array<double, 7> dq_limit_value = {
-        1.2,
-        1.2,
-        1.2,
-        2.0,
-        2.0,
-        2.0,
-        2.0};
+        1.0,
+        1.0,
+        1.0,
+        1.5,
+        1.5,
+        1.5,
+        1.5};
 
     for (std::size_t i = 0; i < 7; ++i)
     {
@@ -6050,6 +6044,11 @@ namespace upperlimb_robot
     bool active_spring_initialized = false;
     double active_spring_d0 = 0.0;
     double active_spring_gain = 0.0;
+
+    // 弹簧虚拟力低通状态。
+    // 作用：允许提高 F_limit，同时避免弹簧力阶跃引起双臂抖动。
+    double active_spring_F_left_world_x_filt = 0.0;
+
     int active_spring_debug_counter = 0;
 
     // 最近一次可信的弹簧距离，用于过滤 FK/编码器异常跳变。
@@ -6067,6 +6066,7 @@ namespace upperlimb_robot
     active_spring_initialized = false;
     active_spring_d0 = 0.0;
     active_spring_gain = 0.0;
+    active_spring_F_left_world_x_filt = 0.0;
     active_spring_debug_counter = 0;
 
     active_spring_last_d_valid = false;
@@ -6413,6 +6413,7 @@ namespace upperlimb_robot
     Eigen::VectorXd q_abs_limit =
         Eigen::VectorXd::Constant(model.nq, q_abs_hard_limit_default);
 
+    // 调试阶段：从日志看 bad_q_index 经常集中在 right joint11。
     // 这里只放宽 right joint11 的硬限幅，用来区分“URDF 零位基准偏移”和“真实坏帧”。
     // 如果放宽后系统稳定，下一步应改 right_urdf_offset_rad[0]，而不是修改编码器标定。
     if (right_q_id[0] >= 0 && right_q_id[0] < model.nq)
@@ -6666,9 +6667,9 @@ namespace upperlimb_robot
     // 1. d_jump_limit：相邻控制周期大臂传感器 X 向距离变化过大时，本轮不注入弹簧。
     // 2. e_limit：形变量限幅，避免异常姿态把弹簧力瞬间打到很大。
     // 3. d_dot_limit：相对速度限幅，避免速度反馈尖峰进入阻尼项。
-    const double d_jump_limit = 0.08; // m/cycle，允许较明显的横向移动，但仍过滤 FK 突跳
-    const double e_limit = 0.16;      // m，允许 16 cm 等效形变量参与弹簧计算，增强弹簧感
-    const double d_dot_limit = 1.2;   // m/s，放宽相对速度限幅，保留一定阻尼手感
+    const double d_jump_limit = 0.05; // m/cycle，90 Hz 下 5 cm/周期已经非常激进
+    const double e_limit = 0.12;      // m，第一版只允许 12 cm 等效形变量参与弹簧计算
+    const double d_dot_limit = 0.8;   // m/s
 
     bool spring_valid = true;
     double d_jump = 0.0;
@@ -6713,7 +6714,7 @@ namespace upperlimb_robot
     double e = e_raw;
 
     // 形变量死区只作用于 e，不作用于真实传感器力。
-    const double spring_deadband = 0.001; // 1 mm，减小弹簧死区，轻微拉开也能感到弹簧
+    const double spring_deadband = 0.001; // 1 mm，减小弹簧死区，轻微拉开也能产生回弹
     if (std::abs(e) < spring_deadband)
     {
       e = 0.0;
@@ -6730,21 +6731,33 @@ namespace upperlimb_robot
       d_dot_used = 0.0;
     }
 
-    // 体验优先参数：仍按“虚拟弹簧力注入传感器”的原本思路实现。
-    // 因为弹簧力后面还要经过 J^T F 和导纳模型，参数需要比直接扭矩叠加更大。
-    const double Kx = 200.0;     // N/m
-    const double Bx = 2.5;       // N/(m/s)，提供拉开/靠近时的阻尼感
-    const double F_limit = 18.0; // N，限制注入传感器通道的最大虚拟力
+    // 人上机体验版参数。
+    // 注意：在传感器注入方案中，虚拟力还要经过 J^T F 和导纳模型，
+    // F_limit 过小会导致空载能回弹、人上机体感很弱。
+    // 当前优先增强静态弹簧感，同时降低 Bx，避免速度噪声放大成抖动。
+    const double Kx = 200.0;     // N/m，弹簧刚度
+    const double Bx = 0.8;       // N/(m/s)，速度阻尼；抖动时优先降低它
+    const double F_limit = 35.0; // N，虚拟力上限；若仍没感觉可逐步试 45 N
 
     // d = x_left - x_right
     // e > 0：左大臂相对右大臂在 world +X 方向距离变大。
     // 为了拉回，左侧应受到 world -X，右侧受到 world +X。
-    double F_left_world_x = -Kx * e - Bx * d_dot_used;
-    F_left_world_x = clamp_abs(F_left_world_x, F_limit);
+    double F_left_world_x_raw = -Kx * e - Bx * d_dot_used;
+    F_left_world_x_raw = clamp_abs(F_left_world_x_raw, F_limit);
 
-    // 0.4 秒渐入，避免进入模式瞬间突变，同时更快进入明显弹簧手感。
+    // 0.4 秒渐入，避免进入模式瞬间突变，同时较快建立弹簧手感。
     active_spring_gain = std::min(1.0, active_spring_gain + dt / 0.4);
-    F_left_world_x *= active_spring_gain;
+    F_left_world_x_raw *= active_spring_gain;
+
+    // 弹簧力低通滤波。
+    // alpha 越大越平滑，越小响应越快。0.75 适合先做安全增强。
+    // 如果仍然抖，可提高到 0.85；如果感觉滞后，可降到 0.65。
+    const double spring_force_alpha = 0.75;
+    active_spring_F_left_world_x_filt =
+        spring_force_alpha * active_spring_F_left_world_x_filt +
+        (1.0 - spring_force_alpha) * F_left_world_x_raw;
+
+    double F_left_world_x = active_spring_F_left_world_x_filt;
 
     const double F_right_world_x = -F_left_world_x;
 
@@ -6852,52 +6865,49 @@ namespace upperlimb_robot
       return;
     }
 
-    // 导纳输入来自合成后的传感器力：真实六维力 + 虚拟弹簧注入力。
+    // 导纳输入只来自真实传感器映射得到的 tau_ext。
     Eigen::VectorXd tau_input = tau_ext;
 
-    // ===================== 左右臂独立导纳参数 =====================
-    // 左臂目前手感正常，先保持原来的主动弹簧参数。
-    // 右臂当前有抖动趋势，因此右臂单独调得更“钝”：
-    // 1. 增大 M_a，降低同样交互力下的导纳加速度；
-    // 2. 增大 D_a，提高阻尼；
-    // 3. 降低输入增益，避免弹簧注入力和传感器噪声被放大；
-    // 4. 降低右臂第 7 轴 Kp/Kv，避免肘部/末端附近高增益诱发抖动。
+    // ===================== 关节空间导纳参数 =====================
     Eigen::VectorXd M_a = Eigen::VectorXd::Zero(model.nv);
     Eigen::VectorXd D_a = Eigen::VectorXd::Zero(model.nv);
     Eigen::VectorXd K_a = Eigen::VectorXd::Zero(model.nv);
 
+    // 左右臂独立导纳参数。
+    // 左臂保持相对灵敏，右臂更重、更阻尼，减少抖动。
     const std::array<double, 7> M_left_value = {
-        2.4, 2.4, 2.0, 1.2, 1.2, 1.0, 0.85};
+        2.8, 2.8, 2.2, 1.4, 1.4, 1.1, 0.9};
 
     const std::array<double, 7> D_left_value = {
-        26.0, 26.0, 20.0, 14.0, 14.0, 11.0, 9.0};
+        30.0, 30.0, 24.0, 16.0, 16.0, 13.0, 10.0};
 
     const std::array<double, 7> K_left_value = {
         1.0, 1.0, 0.8, 0.45, 0.45, 0.35, 0.25};
 
     const std::array<double, 7> M_right_value = {
-        2.4, 2.4, 2.0, 1.2, 1.2, 1.0, 0.85};
+        3.2, 3.2, 2.5, 1.6, 1.6, 1.3, 1.0};
 
     const std::array<double, 7> D_right_value = {
-        26.0, 26.0, 20.0, 14.0, 14.0, 11.0, 9.0};
+        36.0, 36.0, 28.0, 20.0, 20.0, 16.0, 12.0};
 
     const std::array<double, 7> K_right_value = {
         1.0, 1.0, 0.8, 0.45, 0.45, 0.35, 0.25};
 
     const std::array<double, 7> Kp_left_value = {
-        10.0, 10.0, 8.0, 8.0, 8.0, 8.0, 8.0};
+        10.0, 10.0, 8.0, 8.0, 8.0, 8.0, 7.0};
 
     const std::array<double, 7> Kv_left_value = {
-        1.5, 1.5, 1.2, 1.0, 1.0, 0.8, 1.2};
+        1.8, 1.8, 1.4, 1.2, 1.2, 1.0, 1.3};
 
     const std::array<double, 7> Kp_right_value = {
-        10.0, 10.0, 8.0, 8.0, 8.0, 8.0, 8.0};
+        9.0, 9.0, 7.0, 7.0, 7.0, 7.0, 6.0};
 
     const std::array<double, 7> Kv_right_value = {
-        1.5, 1.5, 1.2, 1.0, 1.0, 0.8, 1.2};
+        2.2, 2.2, 1.7, 1.5, 1.5, 1.2, 1.5};
 
-    const double left_admittance_input_gain = 1;
-    const double right_admittance_input_gain = 1;
+    // 人上机感觉弱时，优先逐步提高输入增益；抖动时先降低右臂增益。
+    const double left_admittance_input_gain = 1.5;
+    const double right_admittance_input_gain = 1.2;
 
     Eigen::VectorXd tau_input_scaled = Eigen::VectorXd::Zero(model.nv);
 
@@ -6987,7 +6997,8 @@ namespace upperlimb_robot
 
     // ===================== 导纳参考限位 =====================
     const std::array<double, 7> q_min_value = {
-        -30.0 * DEG2RAD, 5.0 - 30.0 * DEG2RAD,
+        -30.0 * DEG2RAD,
+        -30.0 * DEG2RAD,
         -30.0 * DEG2RAD,
         -60.0 * DEG2RAD,
         -60.0 * DEG2RAD,
@@ -7084,7 +7095,7 @@ namespace upperlimb_robot
 
     // ===================== 最终扭矩限幅与输出 =====================
     const std::array<double, 7> torque_limit = {
-        60, 60.0, 60.0, 60.0, 60.0, 60.0, 8.0};
+        24.0, 20.0, 16.0, 12.0, 12.0, 12.0, 8.0};
 
     auto write_torque = [&](std::size_t ctrl_id,
                             int v_id,
