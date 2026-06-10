@@ -982,9 +982,9 @@ namespace upperlimb_robot
     constexpr std::size_t IDX_J15 = 4;
     constexpr std::size_t IDX_J16 = 5;
     constexpr std::size_t IDX_J17 = 6;
-    constexpr std::size_t IDX_J18 = 7;
-    constexpr std::size_t IDX_J19 = 8;
-    constexpr std::size_t IDX_J20 = 9;
+    // constexpr std::size_t IDX_J18 = 7;
+    // constexpr std::size_t IDX_J19 = 8;
+    // constexpr std::size_t IDX_J20 = 9;
 
     // ===================== Pinocchio 懒加载上下文 =====================
     static bool pin_initialized = false;
@@ -2671,7 +2671,7 @@ namespace upperlimb_robot
     Eigen::VectorXd damping = Eigen::VectorXd::Zero(model.nv);
 
     const std::array<double, 7> damping_value = {
-        -0.4, -0.4, -0.4, -0.4, -0.4, -0.4, -0.4};
+        0.15, 0.15, 0.12, 0.10, 0.08, 0.06, 0.05};
 
     for (std::size_t i = 0; i < 7; ++i)
     {
@@ -2679,13 +2679,16 @@ namespace upperlimb_robot
       damping(right_v_id[i]) = damping_value[i];
     }
 
+    // ===================== 重力补偿系数 =====================
+    const double gravity_gain = 1.12;
+
     Eigen::VectorXd tau_damping = -(damping.asDiagonal() * v);
 
     // ===================== 最终关节扭矩 =====================
     //
     // tau 是双臂整体模型下的 14 维关节力矩。
     //
-    Eigen::VectorXd tau = g + tau_ext + tau_damping;
+    Eigen::VectorXd tau = gravity_gain * g + tau_ext + tau_damping;
 
     const std::array<double, 7> torque_limit = {
         30.0, 30.0, 30.0, 30.0, 18.0, 18.0, 18.0};
@@ -2779,6 +2782,7 @@ namespace upperlimb_robot
 
     output = ControlOutputCache{};
     output.valid = true;
+    
 
     // ===================== 左臂 物理轴11 -> 控制层索引10 =====================
     output.use_position[10] = true;
@@ -6409,7 +6413,6 @@ namespace upperlimb_robot
     Eigen::VectorXd q_abs_limit =
         Eigen::VectorXd::Constant(model.nq, q_abs_hard_limit_default);
 
-    // 调试阶段：从日志看 bad_q_index 经常集中在 right joint11。
     // 这里只放宽 right joint11 的硬限幅，用来区分“URDF 零位基准偏移”和“真实坏帧”。
     // 如果放宽后系统稳定，下一步应改 right_urdf_offset_rad[0]，而不是修改编码器标定。
     if (right_q_id[0] >= 0 && right_q_id[0] < model.nq)
@@ -6729,7 +6732,7 @@ namespace upperlimb_robot
 
     // 体验优先参数：仍按“虚拟弹簧力注入传感器”的原本思路实现。
     // 因为弹簧力后面还要经过 J^T F 和导纳模型，参数需要比直接扭矩叠加更大。
-    const double Kx = 70.0;      // N/m，约 7 N / 10 cm，弹簧感明显
+    const double Kx = 200.0;     // N/m
     const double Bx = 2.5;       // N/(m/s)，提供拉开/靠近时的阻尼感
     const double F_limit = 18.0; // N，限制注入传感器通道的最大虚拟力
 
@@ -6864,37 +6867,37 @@ namespace upperlimb_robot
     Eigen::VectorXd K_a = Eigen::VectorXd::Zero(model.nv);
 
     const std::array<double, 7> M_left_value = {
-        1.2, 1.2, 1.0, 0.55, 0.55, 0.45, 0.40};
+        2.4, 2.4, 2.0, 1.2, 1.2, 1.0, 0.85};
 
     const std::array<double, 7> D_left_value = {
-        10.0, 10.0, 8.0, 5.0, 5.0, 4.0, 3.5};
+        26.0, 26.0, 20.0, 14.0, 14.0, 11.0, 9.0};
 
     const std::array<double, 7> K_left_value = {
-        1.2, 1.2, 1.0, 0.5, 0.5, 0.35, 0.25};
-
-    const std::array<double, 7> Kp_left_value = {
-        20.0, 20.0, 16.0, 18.0, 18.0, 18.0, 40.0};
-
-    const std::array<double, 7> Kv_left_value = {
-        4.0, 4.0, 3.0, 2.5, 2.5, 2.0, 10.5};
+        1.0, 1.0, 0.8, 0.45, 0.45, 0.35, 0.25};
 
     const std::array<double, 7> M_right_value = {
-        1.8, 1.8, 1.5, 0.85, 0.85, 0.70, 0.60};
+        2.4, 2.4, 2.0, 1.2, 1.2, 1.0, 0.85};
 
     const std::array<double, 7> D_right_value = {
-        18.0, 18.0, 14.0, 9.0, 9.0, 7.0, 6.0};
+        26.0, 26.0, 20.0, 14.0, 14.0, 11.0, 9.0};
 
     const std::array<double, 7> K_right_value = {
-        1.5, 1.5, 1.2, 0.7, 0.7, 0.5, 0.35};
+        1.0, 1.0, 0.8, 0.45, 0.45, 0.35, 0.25};
+
+    const std::array<double, 7> Kp_left_value = {
+        10.0, 10.0, 8.0, 8.0, 8.0, 8.0, 8.0};
+
+    const std::array<double, 7> Kv_left_value = {
+        1.5, 1.5, 1.2, 1.0, 1.0, 0.8, 1.2};
 
     const std::array<double, 7> Kp_right_value = {
-        16.0, 16.0, 12.0, 12.0, 12.0, 12.0, 18.0};
+        10.0, 10.0, 8.0, 8.0, 8.0, 8.0, 8.0};
 
     const std::array<double, 7> Kv_right_value = {
-        3.0, 3.0, 2.2, 1.8, 1.8, 1.5, 4.0};
+        1.5, 1.5, 1.2, 1.0, 1.0, 0.8, 1.2};
 
-    const double left_admittance_input_gain = 3.0;
-    const double right_admittance_input_gain = 1.5;
+    const double left_admittance_input_gain = 1;
+    const double right_admittance_input_gain = 1;
 
     Eigen::VectorXd tau_input_scaled = Eigen::VectorXd::Zero(model.nv);
 
@@ -7081,7 +7084,7 @@ namespace upperlimb_robot
 
     // ===================== 最终扭矩限幅与输出 =====================
     const std::array<double, 7> torque_limit = {
-        24.0, 20.0, 16.0, 12.0, 12.0, 12.0, 8.0};
+        60, 60.0, 60.0, 60.0, 60.0, 60.0, 8.0};
 
     auto write_torque = [&](std::size_t ctrl_id,
                             int v_id,
