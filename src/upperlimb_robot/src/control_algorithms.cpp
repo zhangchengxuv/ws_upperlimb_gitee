@@ -6731,7 +6731,7 @@ namespace upperlimb_robot
     // 因为弹簧力后面还要经过 J^T F 和导纳模型，参数需要比直接扭矩叠加更大。
     const double Kx = 70.0;      // N/m，约 7 N / 10 cm，弹簧感明显
     const double Bx = 2.5;       // N/(m/s)，提供拉开/靠近时的阻尼感
-    const double F_limit = 70.0; // N，限制注入传感器通道的最大虚拟力
+    const double F_limit = 18.0; // N，限制注入传感器通道的最大虚拟力
 
     // d = x_left - x_right
     // e > 0：左大臂相对右大臂在 world +X 方向距离变大。
@@ -6849,45 +6849,76 @@ namespace upperlimb_robot
       return;
     }
 
-    // 导纳输入只来自真实传感器映射得到的 tau_ext。
+    // 导纳输入来自合成后的传感器力：真实六维力 + 虚拟弹簧注入力。
     Eigen::VectorXd tau_input = tau_ext;
 
-    // ===================== 关节空间导纳参数 =====================
+    // ===================== 左右臂独立导纳参数 =====================
+    // 左臂目前手感正常，先保持原来的主动弹簧参数。
+    // 右臂当前有抖动趋势，因此右臂单独调得更“钝”：
+    // 1. 增大 M_a，降低同样交互力下的导纳加速度；
+    // 2. 增大 D_a，提高阻尼；
+    // 3. 降低输入增益，避免弹簧注入力和传感器噪声被放大；
+    // 4. 降低右臂第 7 轴 Kp/Kv，避免肘部/末端附近高增益诱发抖动。
     Eigen::VectorXd M_a = Eigen::VectorXd::Zero(model.nv);
     Eigen::VectorXd D_a = Eigen::VectorXd::Zero(model.nv);
     Eigen::VectorXd K_a = Eigen::VectorXd::Zero(model.nv);
 
-    const std::array<double, 7> M_value = {
+    const std::array<double, 7> M_left_value = {
         1.2, 1.2, 1.0, 0.55, 0.55, 0.45, 0.40};
 
-    const std::array<double, 7> D_value = {
+    const std::array<double, 7> D_left_value = {
         10.0, 10.0, 8.0, 5.0, 5.0, 4.0, 3.5};
 
-    const std::array<double, 7> K_value = {
+    const std::array<double, 7> K_left_value = {
         1.2, 1.2, 1.0, 0.5, 0.5, 0.35, 0.25};
 
-    const std::array<double, 7> Kp_value = {
+    const std::array<double, 7> Kp_left_value = {
         20.0, 20.0, 16.0, 18.0, 18.0, 18.0, 40.0};
 
-    const std::array<double, 7> Kv_value = {
+    const std::array<double, 7> Kv_left_value = {
         4.0, 4.0, 3.0, 2.5, 2.5, 2.0, 10.5};
 
-    const double admittance_input_gain = 3.0;
+    const std::array<double, 7> M_right_value = {
+        1.8, 1.8, 1.5, 0.85, 0.85, 0.70, 0.60};
+
+    const std::array<double, 7> D_right_value = {
+        18.0, 18.0, 14.0, 9.0, 9.0, 7.0, 6.0};
+
+    const std::array<double, 7> K_right_value = {
+        1.5, 1.5, 1.2, 0.7, 0.7, 0.5, 0.35};
+
+    const std::array<double, 7> Kp_right_value = {
+        16.0, 16.0, 12.0, 12.0, 12.0, 12.0, 18.0};
+
+    const std::array<double, 7> Kv_right_value = {
+        3.0, 3.0, 2.2, 1.8, 1.8, 1.5, 4.0};
+
+    const double left_admittance_input_gain = 3.0;
+    const double right_admittance_input_gain = 1.5;
+
+    Eigen::VectorXd tau_input_scaled = Eigen::VectorXd::Zero(model.nv);
 
     for (std::size_t i = 0; i < 7; ++i)
     {
-      M_a(left_v_id[i]) = M_value[i];
-      D_a(left_v_id[i]) = D_value[i];
-      K_a(left_v_id[i]) = K_value[i];
+      M_a(left_v_id[i]) = M_left_value[i];
+      D_a(left_v_id[i]) = D_left_value[i];
+      K_a(left_v_id[i]) = K_left_value[i];
 
-      M_a(right_v_id[i]) = M_value[i];
-      D_a(right_v_id[i]) = D_value[i];
-      K_a(right_v_id[i]) = K_value[i];
+      M_a(right_v_id[i]) = M_right_value[i];
+      D_a(right_v_id[i]) = D_right_value[i];
+      K_a(right_v_id[i]) = K_right_value[i];
+
+      tau_input_scaled(left_v_id[i]) =
+          left_admittance_input_gain * tau_input(left_v_id[i]);
+
+      tau_input_scaled(right_v_id[i]) =
+          right_admittance_input_gain * tau_input(right_v_id[i]);
     }
 
     if (!vector_finite(active_spring_q_adm) ||
         !vector_finite(active_spring_dq_adm) ||
-        !vector_finite(tau_input))
+        !vector_finite(tau_input) ||
+        !vector_finite(tau_input_scaled))
     {
       active_spring_fault_counter++;
       reset_admittance_to_current(q);
@@ -6911,7 +6942,7 @@ namespace upperlimb_robot
       }
 
       ddq_adm(i) =
-          (admittance_input_gain * tau_input(i) -
+          (tau_input_scaled(i) -
            D_a(i) * active_spring_dq_adm(i) -
            K_a(i) * (active_spring_q_adm(i) - q(i))) /
           M_a(i);
@@ -7024,11 +7055,11 @@ namespace upperlimb_robot
 
     for (std::size_t i = 0; i < 7; ++i)
     {
-      Kp(left_v_id[i]) = Kp_value[i];
-      Kv(left_v_id[i]) = Kv_value[i];
+      Kp(left_v_id[i]) = Kp_left_value[i];
+      Kv(left_v_id[i]) = Kv_left_value[i];
 
-      Kp(right_v_id[i]) = Kp_value[i];
-      Kv(right_v_id[i]) = Kv_value[i];
+      Kp(right_v_id[i]) = Kp_right_value[i];
+      Kv(right_v_id[i]) = Kv_right_value[i];
     }
 
     Eigen::VectorXd tau_active =
