@@ -72,6 +72,9 @@ namespace upperlimb_robot
     // 右臂主动导纳模式
     MODE_RIGHT_ACTIVE = 14,
 
+    // 双手空间虚拟弹簧主动模式
+    MODE_ACTIVE_SPRING_3D = 15,
+
   };
 
   // ===================== 电机状态缓存 =====================
@@ -209,6 +212,25 @@ namespace upperlimb_robot
     // 输出是否有效
     // valid == false 时，执行层应跳过本轮控制输出
     bool valid{false};
+
+    // ===================== 虚拟弹簧调试输出 =====================
+    // 不参与控制执行，只用于 RobotState 发布给 GUI。
+    // spring_debug_mode:
+    // 0 -> 无弹簧
+    // 1 -> X 向一维虚拟弹簧 MODE_ACTIVE_SPRING
+    // 2 -> 空间三维虚拟弹簧 MODE_ACTIVE_SPRING_3D
+    bool spring_debug_valid{false};
+    int spring_debug_mode{0};
+
+    double spring_e_x{0.0};
+    double spring_e_y{0.0};
+    double spring_e_z{0.0};
+    double spring_e_norm{0.0};
+
+    double spring_f_x{0.0};
+    double spring_f_y{0.0};
+    double spring_f_z{0.0};
+    double spring_f_norm{0.0};
   };
 
   // ===================== 单位换算接口 =====================
@@ -236,6 +258,9 @@ namespace upperlimb_robot
 
   // 重置双手虚拟弹簧模式的状态
   void resetActiveSpringMode();
+
+  // 重置双手空间虚拟弹簧模式的状态
+  void resetActiveSpring3DMode();
 
   // 重置双侧主动模式的状态
   void resetBilateralActiveMode();
@@ -282,5 +307,8 @@ namespace upperlimb_robot
   void runBilateralActiveMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
   // 双手虚拟弹簧主动模式
   void runActiveSpringMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
+
+  // 双手空间虚拟弹簧主动模式
+  void runActiveSpring3DMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
 
 } // namespace upperlimb_robot

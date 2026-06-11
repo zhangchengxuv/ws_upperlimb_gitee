@@ -982,9 +982,8 @@ namespace upperlimb_robot
     constexpr std::size_t IDX_J15 = 4;
     constexpr std::size_t IDX_J16 = 5;
     constexpr std::size_t IDX_J17 = 6;
-    // constexpr std::size_t IDX_J18 = 7;
-    // constexpr std::size_t IDX_J19 = 8;
-    // constexpr std::size_t IDX_J20 = 9;
+    // joint18~joint20 当前在执行层作为非控制末端轴过滤，
+    // 本函数内不再持续下发位置保持，因此不定义 IDX_J18~IDX_J20。
 
     // ===================== Pinocchio 懒加载上下文 =====================
     static bool pin_initialized = false;
@@ -1381,27 +1380,6 @@ namespace upperlimb_robot
     output.target_torque[IDX_J16] = tau_cmd(5);
     output.target_torque[IDX_J17] = tau_cmd(6);
 
-    // // ===================== 固定右臂末端 joint18~joint20 =====================
-    // output.use_position[IDX_J18] = true;
-    // output.target_position[IDX_J18] = 0.0;
-    // output.target_velocity[IDX_J18] = pulsePerMsToJointSpeedDegPerSecMagnitude(8, 1500.0);
-    // output.target_acc[IDX_J18] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(8, 5.0);
-    // output.target_dec[IDX_J18] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(8, 0.25);
-    // output.target_smooth_time[IDX_J18] = 25;
-
-    // output.use_position[IDX_J19] = true;
-    // output.target_position[IDX_J19] = 0.0;
-    // output.target_velocity[IDX_J19] = pulsePerMsToJointSpeedDegPerSecMagnitude(9, 1500.0);
-    // output.target_acc[IDX_J19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(9, 5.0);
-    // output.target_dec[IDX_J19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(9, 0.25);
-    // output.target_smooth_time[IDX_J19] = 25;
-
-    // output.use_position[IDX_J20] = true;
-    // output.target_position[IDX_J20] = 0.0;
-    // output.target_velocity[IDX_J20] = pulsePerMsToJointSpeedDegPerSecMagnitude(10, 1500.0);
-    // output.target_acc[IDX_J20] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(10, 5.0);
-    // output.target_dec[IDX_J20] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(10, 0.25);
-    // output.target_smooth_time[IDX_J20] = 25;
 
     static int debug_counter = 0;
     debug_counter++;
@@ -1868,9 +1846,8 @@ namespace upperlimb_robot
     constexpr std::size_t IDX_J15 = 4;
     constexpr std::size_t IDX_J16 = 5;
     constexpr std::size_t IDX_J17 = 6;
-    constexpr std::size_t IDX_J18 = 7;
-    constexpr std::size_t IDX_J19 = 8;
-    constexpr std::size_t IDX_J20 = 9;
+    // joint18~joint20 当前在执行层作为非控制末端轴过滤，
+    // 本函数内不再持续下发位置保持，因此不定义 IDX_J18~IDX_J20。
 
     // ===================== Pinocchio 懒加载上下文 =====================
     //
@@ -2265,30 +2242,7 @@ namespace upperlimb_robot
           << tau(6) << "\n";
     }
 
-    // ===================== 固定末端 joint18~joint20 =====================
-    //
-    // 避免切模式后末端几个轴乱晃。
-    //
-    output.use_position[IDX_J18] = true;
-    output.target_position[IDX_J18] = 0.0;
-    output.target_velocity[IDX_J18] = pulsePerMsToJointSpeedDegPerSecMagnitude(8, 1500.0);
-    output.target_acc[IDX_J18] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(8, 5.0);
-    output.target_dec[IDX_J18] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(8, 0.25);
-    output.target_smooth_time[IDX_J18] = 25;
-
-    output.use_position[IDX_J19] = true;
-    output.target_position[IDX_J19] = 0.0;
-    output.target_velocity[IDX_J19] = pulsePerMsToJointSpeedDegPerSecMagnitude(9, 1500.0);
-    output.target_acc[IDX_J19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(9, 5.0);
-    output.target_dec[IDX_J19] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(9, 0.25);
-    output.target_smooth_time[IDX_J19] = 25;
-
-    output.use_position[IDX_J20] = true;
-    output.target_position[IDX_J20] = 0.0;
-    output.target_velocity[IDX_J20] = pulsePerMsToJointSpeedDegPerSecMagnitude(10, 1500.0);
-    output.target_acc[IDX_J20] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(10, 5.0);
-    output.target_dec[IDX_J20] = pulsePerMs2ToJointAccelDegPerSec2Magnitude(10, 0.25);
-    output.target_smooth_time[IDX_J20] = 25;
+  
 
     // ===================== 输出有效 =====================
     output.valid = true;
@@ -5517,7 +5471,9 @@ namespace upperlimb_robot
       return;
     }
 
-    // 导纳输入只来自真实传感器映射得到的 tau_ext。
+    // 导纳输入仍然只使用 tau_ext。
+    // 注意：此时 tau_ext 已经包含真实传感器力 + 注入后的虚拟弹簧力，
+    // 仍保持原本的“合成交互力 -> J^T F -> 主动导纳”链路。
     Eigen::VectorXd tau_input = tau_ext;
 
     // ===================== 关节空间导纳参数 =====================
@@ -5560,7 +5516,7 @@ namespace upperlimb_robot
     Eigen::VectorXd ddq_adm = Eigen::VectorXd::Zero(model.nv);
 
     const std::array<double, 7> ddq_limit_value = {
-        3.0, 3.0, 3.0, 5.0, 5.0, 5.0, 5.0};
+        5.0, 5.0, 5.0, 8.0, 8.0, 8.0, 8.0};
 
     for (int i = 0; i < model.nv; ++i)
     {
@@ -5631,13 +5587,13 @@ namespace upperlimb_robot
         120.0 * DEG2RAD};
 
     const std::array<double, 7> dq_limit_value = {
-        1.0,
-        1.0,
-        1.0,
-        1.5,
-        1.5,
-        1.5,
-        1.5};
+        1.2,
+        1.2,
+        1.2,
+        2.0,
+        2.0,
+        2.0,
+        2.0};
 
     for (std::size_t i = 0; i < 7; ++i)
     {
@@ -6044,11 +6000,6 @@ namespace upperlimb_robot
     bool active_spring_initialized = false;
     double active_spring_d0 = 0.0;
     double active_spring_gain = 0.0;
-
-    // 弹簧虚拟力低通状态。
-    // 作用：允许提高 F_limit，同时避免弹簧力阶跃引起双臂抖动。
-    double active_spring_F_left_world_x_filt = 0.0;
-
     int active_spring_debug_counter = 0;
 
     // 最近一次可信的弹簧距离，用于过滤 FK/编码器异常跳变。
@@ -6066,7 +6017,6 @@ namespace upperlimb_robot
     active_spring_initialized = false;
     active_spring_d0 = 0.0;
     active_spring_gain = 0.0;
-    active_spring_F_left_world_x_filt = 0.0;
     active_spring_debug_counter = 0;
 
     active_spring_last_d_valid = false;
@@ -6078,6 +6028,42 @@ namespace upperlimb_robot
     active_spring_dq_adm.resize(0);
 
     std::cout << "[resetActiveSpringMode] 主动弹簧模式状态已重置" << std::endl;
+  }
+
+
+  // ===================== 空间主动弹簧模式状态 =====================
+  namespace
+  {
+    bool active_spring_3d_initialized = false;
+    Eigen::Vector3d active_spring_3d_delta0 = Eigen::Vector3d::Zero();
+    double active_spring_3d_gain = 0.0;
+    int active_spring_3d_debug_counter = 0;
+
+    bool active_spring_3d_last_delta_valid = false;
+    Eigen::Vector3d active_spring_3d_last_delta = Eigen::Vector3d::Zero();
+    int active_spring_3d_fault_counter = 0;
+
+    bool active_spring_3d_admittance_initialized = false;
+    Eigen::VectorXd active_spring_3d_q_adm;
+    Eigen::VectorXd active_spring_3d_dq_adm;
+  }
+
+  void resetActiveSpring3DMode()
+  {
+    active_spring_3d_initialized = false;
+    active_spring_3d_delta0.setZero();
+    active_spring_3d_gain = 0.0;
+    active_spring_3d_debug_counter = 0;
+
+    active_spring_3d_last_delta_valid = false;
+    active_spring_3d_last_delta.setZero();
+    active_spring_3d_fault_counter = 0;
+
+    active_spring_3d_admittance_initialized = false;
+    active_spring_3d_q_adm.resize(0);
+    active_spring_3d_dq_adm.resize(0);
+
+    std::cout << "[resetActiveSpring3DMode] 空间主动弹簧模式状态已重置" << std::endl;
   }
 
   // ===================== 双臂主动导纳 + X 向虚拟弹簧模式 =====================
@@ -6667,9 +6653,9 @@ namespace upperlimb_robot
     // 1. d_jump_limit：相邻控制周期大臂传感器 X 向距离变化过大时，本轮不注入弹簧。
     // 2. e_limit：形变量限幅，避免异常姿态把弹簧力瞬间打到很大。
     // 3. d_dot_limit：相对速度限幅，避免速度反馈尖峰进入阻尼项。
-    const double d_jump_limit = 0.05; // m/cycle，90 Hz 下 5 cm/周期已经非常激进
-    const double e_limit = 0.12;      // m，第一版只允许 12 cm 等效形变量参与弹簧计算
-    const double d_dot_limit = 0.8;   // m/s
+    const double d_jump_limit = 0.08; // m/cycle，允许较明显的横向移动，但仍过滤 FK 突跳
+    const double e_limit = 0.16;      // m，允许 16 cm 等效形变量参与弹簧计算，增强弹簧感
+    const double d_dot_limit = 1.2;   // m/s，放宽相对速度限幅，保留一定阻尼手感
 
     bool spring_valid = true;
     double d_jump = 0.0;
@@ -6714,7 +6700,7 @@ namespace upperlimb_robot
     double e = e_raw;
 
     // 形变量死区只作用于 e，不作用于真实传感器力。
-    const double spring_deadband = 0.001; // 1 mm，减小弹簧死区，轻微拉开也能产生回弹
+    const double spring_deadband = 0.001; // 1 mm，减小弹簧死区，轻微拉开也能感到弹簧
     if (std::abs(e) < spring_deadband)
     {
       e = 0.0;
@@ -6731,33 +6717,21 @@ namespace upperlimb_robot
       d_dot_used = 0.0;
     }
 
-    // 人上机体验版参数。
-    // 注意：在传感器注入方案中，虚拟力还要经过 J^T F 和导纳模型，
-    // F_limit 过小会导致空载能回弹、人上机体感很弱。
-    // 当前优先增强静态弹簧感，同时降低 Bx，避免速度噪声放大成抖动。
-    const double Kx = 200.0;     // N/m，弹簧刚度
-    const double Bx = 0.8;       // N/(m/s)，速度阻尼；抖动时优先降低它
-    const double F_limit = 35.0; // N，虚拟力上限；若仍没感觉可逐步试 45 N
+    // 体验优先参数：仍按“虚拟弹簧力注入传感器”的原本思路实现。
+    // 因为弹簧力后面还要经过 J^T F 和导纳模型，参数需要比直接扭矩叠加更大。
+    const double Kx = 70.0;      // N/m，约 7 N / 10 cm，弹簧感明显
+    const double Bx = 2.5;       // N/(m/s)，提供拉开/靠近时的阻尼感
+    const double F_limit = 18.0; // N，限制注入传感器通道的最大虚拟力
 
     // d = x_left - x_right
     // e > 0：左大臂相对右大臂在 world +X 方向距离变大。
     // 为了拉回，左侧应受到 world -X，右侧受到 world +X。
-    double F_left_world_x_raw = -Kx * e - Bx * d_dot_used;
-    F_left_world_x_raw = clamp_abs(F_left_world_x_raw, F_limit);
+    double F_left_world_x = -Kx * e - Bx * d_dot_used;
+    F_left_world_x = clamp_abs(F_left_world_x, F_limit);
 
-    // 0.4 秒渐入，避免进入模式瞬间突变，同时较快建立弹簧手感。
+    // 0.4 秒渐入，避免进入模式瞬间突变，同时更快进入明显弹簧手感。
     active_spring_gain = std::min(1.0, active_spring_gain + dt / 0.4);
-    F_left_world_x_raw *= active_spring_gain;
-
-    // 弹簧力低通滤波。
-    // alpha 越大越平滑，越小响应越快。0.75 适合先做安全增强。
-    // 如果仍然抖，可提高到 0.85；如果感觉滞后，可降到 0.65。
-    const double spring_force_alpha = 0.75;
-    active_spring_F_left_world_x_filt =
-        spring_force_alpha * active_spring_F_left_world_x_filt +
-        (1.0 - spring_force_alpha) * F_left_world_x_raw;
-
-    double F_left_world_x = active_spring_F_left_world_x_filt;
+    F_left_world_x *= active_spring_gain;
 
     const double F_right_world_x = -F_left_world_x;
 
@@ -6784,6 +6758,20 @@ namespace upperlimb_robot
       left_arm.fz += F_left_sensor_z;
       right_arm.fz += F_right_sensor_z;
     }
+
+    // ===================== 给 GUI 的弹簧调试输出（一维 X 向弹簧） =====================
+    output.spring_debug_valid = spring_valid && !debug_disable_spring;
+    output.spring_debug_mode = 1;
+
+    output.spring_e_x = e;
+    output.spring_e_y = 0.0;
+    output.spring_e_z = 0.0;
+    output.spring_e_norm = std::abs(e);
+
+    output.spring_f_x = F_left_world.x();
+    output.spring_f_y = 0.0;
+    output.spring_f_z = 0.0;
+    output.spring_f_norm = std::abs(F_left_world.x());
 
     // 注入后的最终传感器力只做安全限幅，不再做死区。
     left_arm.fx = clamp_abs(left_arm.fx, force_limit);
@@ -6865,49 +6853,52 @@ namespace upperlimb_robot
       return;
     }
 
-    // 导纳输入只来自真实传感器映射得到的 tau_ext。
+    // 导纳输入来自合成后的传感器力：真实六维力 + 虚拟弹簧注入力。
     Eigen::VectorXd tau_input = tau_ext;
 
-    // ===================== 关节空间导纳参数 =====================
+    // ===================== 左右臂独立导纳参数 =====================
+    // 左臂目前手感正常，先保持原来的主动弹簧参数。
+    // 右臂当前有抖动趋势，因此右臂单独调得更“钝”：
+    // 1. 增大 M_a，降低同样交互力下的导纳加速度；
+    // 2. 增大 D_a，提高阻尼；
+    // 3. 降低输入增益，避免弹簧注入力和传感器噪声被放大；
+    // 4. 降低右臂第 7 轴 Kp/Kv，避免肘部/末端附近高增益诱发抖动。
     Eigen::VectorXd M_a = Eigen::VectorXd::Zero(model.nv);
     Eigen::VectorXd D_a = Eigen::VectorXd::Zero(model.nv);
     Eigen::VectorXd K_a = Eigen::VectorXd::Zero(model.nv);
 
-    // 左右臂独立导纳参数。
-    // 左臂保持相对灵敏，右臂更重、更阻尼，减少抖动。
     const std::array<double, 7> M_left_value = {
-        2.8, 2.8, 2.2, 1.4, 1.4, 1.1, 0.9};
+        1.2, 1.2, 1.0, 0.55, 0.55, 0.45, 0.40};
 
     const std::array<double, 7> D_left_value = {
-        30.0, 30.0, 24.0, 16.0, 16.0, 13.0, 10.0};
+        10.0, 10.0, 8.0, 5.0, 5.0, 4.0, 3.5};
 
     const std::array<double, 7> K_left_value = {
-        1.0, 1.0, 0.8, 0.45, 0.45, 0.35, 0.25};
-
-    const std::array<double, 7> M_right_value = {
-        3.2, 3.2, 2.5, 1.6, 1.6, 1.3, 1.0};
-
-    const std::array<double, 7> D_right_value = {
-        36.0, 36.0, 28.0, 20.0, 20.0, 16.0, 12.0};
-
-    const std::array<double, 7> K_right_value = {
-        1.0, 1.0, 0.8, 0.45, 0.45, 0.35, 0.25};
+        1.2, 1.2, 1.0, 0.5, 0.5, 0.35, 0.25};
 
     const std::array<double, 7> Kp_left_value = {
-        10.0, 10.0, 8.0, 8.0, 8.0, 8.0, 7.0};
+        20.0, 20.0, 16.0, 18.0, 18.0, 18.0, 40.0};
 
     const std::array<double, 7> Kv_left_value = {
-        1.8, 1.8, 1.4, 1.2, 1.2, 1.0, 1.3};
+        4.0, 4.0, 3.0, 2.5, 2.5, 2.0, 10.5};
+
+    const std::array<double, 7> M_right_value = {
+        1.8, 1.8, 1.5, 0.85, 0.85, 0.70, 0.60};
+
+    const std::array<double, 7> D_right_value = {
+        18.0, 18.0, 14.0, 9.0, 9.0, 7.0, 6.0};
+
+    const std::array<double, 7> K_right_value = {
+        1.5, 1.5, 1.2, 0.7, 0.7, 0.5, 0.35};
 
     const std::array<double, 7> Kp_right_value = {
-        9.0, 9.0, 7.0, 7.0, 7.0, 7.0, 6.0};
+        16.0, 16.0, 12.0, 12.0, 12.0, 12.0, 18.0};
 
     const std::array<double, 7> Kv_right_value = {
-        2.2, 2.2, 1.7, 1.5, 1.5, 1.2, 1.5};
+        3.0, 3.0, 2.2, 1.8, 1.8, 1.5, 4.0};
 
-    // 人上机感觉弱时，优先逐步提高输入增益；抖动时先降低右臂增益。
-    const double left_admittance_input_gain = 1.5;
-    const double right_admittance_input_gain = 1.2;
+    const double left_admittance_input_gain = 3.0;
+    const double right_admittance_input_gain = 1.5;
 
     Eigen::VectorXd tau_input_scaled = Eigen::VectorXd::Zero(model.nv);
 
@@ -6997,8 +6988,7 @@ namespace upperlimb_robot
 
     // ===================== 导纳参考限位 =====================
     const std::array<double, 7> q_min_value = {
-        -30.0 * DEG2RAD,
-        -30.0 * DEG2RAD,
+        -30.0 * DEG2RAD, 5.0 - 30.0 * DEG2RAD,
         -30.0 * DEG2RAD,
         -60.0 * DEG2RAD,
         -60.0 * DEG2RAD,
@@ -7429,6 +7419,1347 @@ namespace upperlimb_robot
 
       active_spring_csv << "\n";
       active_spring_csv.flush();
+    }
+  }
+
+  void runActiveSpring3DMode(const MotorStateCache &state,
+                           const SensorStateCache &sensor_state,
+                           ControlOutputCache &output)
+  {
+    // ===================== 输出初始化 =====================
+    output = ControlOutputCache{};
+    output.valid = false;
+
+    if (!sensor_state.valid)
+    {
+      output.valid = false;
+      return;
+    }
+
+    constexpr double DEG2RAD = M_PI / 180.0;
+    constexpr double dt = 1.0 / 50.0;
+
+    // ===================== 控制层索引 =====================
+    // 右臂 joint11~joint17 -> 控制层索引 0~6
+    // 右臂 joint18~joint20 -> 控制层索引 7~9
+    constexpr std::size_t IDX_R_J11 = 0;
+    constexpr std::size_t IDX_R_J12 = 1;
+    constexpr std::size_t IDX_R_J13 = 2;
+    constexpr std::size_t IDX_R_J14 = 3;
+    constexpr std::size_t IDX_R_J15 = 4;
+    constexpr std::size_t IDX_R_J16 = 5;
+    constexpr std::size_t IDX_R_J17 = 6;
+
+    // 左臂 joint1~joint7 -> 控制层索引 10~16
+    // 左臂 joint8~joint10 -> 控制层索引 17~19
+    constexpr std::size_t IDX_L_J1 = 10;
+    constexpr std::size_t IDX_L_J2 = 11;
+    constexpr std::size_t IDX_L_J3 = 12;
+    constexpr std::size_t IDX_L_J4 = 13;
+    constexpr std::size_t IDX_L_J5 = 14;
+    constexpr std::size_t IDX_L_J6 = 15;
+    constexpr std::size_t IDX_L_J7 = 16;
+
+    const std::array<std::size_t, 7> left_ctrl_id = {
+        IDX_L_J1, IDX_L_J2, IDX_L_J3, IDX_L_J4, IDX_L_J5, IDX_L_J6, IDX_L_J7};
+
+    const std::array<std::size_t, 7> right_ctrl_id = {
+        IDX_R_J11, IDX_R_J12, IDX_R_J13, IDX_R_J14, IDX_R_J15, IDX_R_J16, IDX_R_J17};
+
+    // ===================== 小工具函数 =====================
+    auto clamp_abs = [](double x, double lim) -> double
+    {
+      if (x > lim)
+      {
+        return lim;
+      }
+      if (x < -lim)
+      {
+        return -lim;
+      }
+      return x;
+    };
+
+    auto clamp_between = [](double x, double lo, double hi) -> double
+    {
+      if (x < lo)
+      {
+        return lo;
+      }
+      if (x > hi)
+      {
+        return hi;
+      }
+      return x;
+    };
+
+    auto apply_deadzone = [](double x, double dz) -> double
+    {
+      return (std::abs(x) < dz) ? 0.0 : x;
+    };
+
+    auto vector_finite = [](const Eigen::VectorXd &x) -> bool
+    {
+      return x.allFinite();
+    };
+
+    auto vec3_finite = [](const Eigen::Vector3d &x) -> bool
+    {
+      return std::isfinite(x.x()) && std::isfinite(x.y()) && std::isfinite(x.z());
+    };
+
+    auto reset_admittance_to_current = [&](const Eigen::VectorXd &q_now)
+    {
+      active_spring_3d_q_adm = q_now;
+      active_spring_3d_dq_adm = Eigen::VectorXd::Zero(q_now.size());
+      active_spring_3d_admittance_initialized = true;
+    };
+
+    // ===================== Pinocchio 懒加载 =====================
+    static bool pin_initialized = false;
+    static bool pin_init_failed = false;
+    static pinocchio::Model model;
+    static std::unique_ptr<pinocchio::Data> data;
+
+    static pinocchio::FrameIndex left_frame_id_arm = 0;
+    static pinocchio::FrameIndex left_frame_id_hand = 0;
+    static pinocchio::FrameIndex right_frame_id_arm = 0;
+    static pinocchio::FrameIndex right_frame_id_hand = 0;
+
+    static std::array<int, 7> left_q_id = {-1, -1, -1, -1, -1, -1, -1};
+    static std::array<int, 7> left_v_id = {-1, -1, -1, -1, -1, -1, -1};
+    static std::array<int, 7> right_q_id = {-1, -1, -1, -1, -1, -1, -1};
+    static std::array<int, 7> right_v_id = {-1, -1, -1, -1, -1, -1, -1};
+
+    if (!pin_initialized && !pin_init_failed)
+    {
+      try
+      {
+        std::string urdf_path =
+            ament_index_cpp::get_package_share_directory("upperlimb_robot") +
+            "/urdf/robot_arms.urdf";
+
+        pinocchio::urdf::buildModel(urdf_path, model);
+        data = std::make_unique<pinocchio::Data>(model);
+
+        // 大臂/手部传感器 frame：仅用于真实六维力映射和 FK 调试。
+        left_frame_id_arm = model.getFrameId("ft_sensor_frame");
+        right_frame_id_arm = model.getFrameId("ft_rightsensor_frame");
+        left_frame_id_hand = model.getFrameId("ft_sensor_frame_2");
+        right_frame_id_hand = model.getFrameId("ft_rightsensor_frame_2");
+
+        bool ok = true;
+
+        auto load_joint_index = [&](const std::string &joint_name,
+                                    int &q_id,
+                                    int &v_id) -> bool
+        {
+          pinocchio::JointIndex jid = model.getJointId(joint_name);
+
+          if (jid >= model.joints.size())
+          {
+            std::cerr << "[runActiveSpring3DMode] 找不到关节: "
+                      << joint_name << std::endl;
+            return false;
+          }
+
+          q_id = model.joints[jid].idx_q();
+          v_id = model.joints[jid].idx_v();
+
+          if (q_id < 0 || q_id >= model.nq || v_id < 0 || v_id >= model.nv)
+          {
+            std::cerr << "[runActiveSpring3DMode] 关节索引非法或不是可动关节: "
+                      << joint_name
+                      << " q_id=" << q_id
+                      << " v_id=" << v_id
+                      << " nq=" << model.nq
+                      << " nv=" << model.nv
+                      << std::endl;
+            return false;
+          }
+
+          return true;
+        };
+
+        ok = ok && load_joint_index("joint1", left_q_id[0], left_v_id[0]);
+        ok = ok && load_joint_index("joint2", left_q_id[1], left_v_id[1]);
+        ok = ok && load_joint_index("joint3", left_q_id[2], left_v_id[2]);
+        ok = ok && load_joint_index("joint4", left_q_id[3], left_v_id[3]);
+        ok = ok && load_joint_index("joint5", left_q_id[4], left_v_id[4]);
+        ok = ok && load_joint_index("joint6", left_q_id[5], left_v_id[5]);
+        ok = ok && load_joint_index("joint7", left_q_id[6], left_v_id[6]);
+
+        ok = ok && load_joint_index("joint11", right_q_id[0], right_v_id[0]);
+        ok = ok && load_joint_index("joint12", right_q_id[1], right_v_id[1]);
+        ok = ok && load_joint_index("joint13", right_q_id[2], right_v_id[2]);
+        ok = ok && load_joint_index("joint14", right_q_id[3], right_v_id[3]);
+        ok = ok && load_joint_index("joint15", right_q_id[4], right_v_id[4]);
+        ok = ok && load_joint_index("joint16", right_q_id[5], right_v_id[5]);
+        ok = ok && load_joint_index("joint17", right_q_id[6], right_v_id[6]);
+
+        if (left_frame_id_arm >= model.frames.size())
+        {
+          std::cerr << "[runActiveSpring3DMode] 找不到 frame: ft_sensor_frame" << std::endl;
+          ok = false;
+        }
+        if (right_frame_id_arm >= model.frames.size())
+        {
+          std::cerr << "[runActiveSpring3DMode] 找不到 frame: ft_rightsensor_frame" << std::endl;
+          ok = false;
+        }
+        if (left_frame_id_hand >= model.frames.size())
+        {
+          std::cerr << "[runActiveSpring3DMode] 找不到 frame: ft_sensor_frame_2" << std::endl;
+          ok = false;
+        }
+        if (right_frame_id_hand >= model.frames.size())
+        {
+          std::cerr << "[runActiveSpring3DMode] 找不到 frame: ft_rightsensor_frame_2" << std::endl;
+          ok = false;
+        }
+
+        if (!ok)
+        {
+          pin_init_failed = true;
+        }
+        else if (model.nq != 14 || model.nv != 14)
+        {
+          std::cerr
+              << "[runActiveSpring3DMode] 双臂整体模型自由度不是 14。"
+              << " 请确认 joint1~joint7、joint11~joint17 为 revolute，"
+              << "joint8~joint10、joint18~joint20 为 fixed。"
+              << " nq=" << model.nq
+              << " nv=" << model.nv
+              << std::endl;
+          pin_init_failed = true;
+        }
+        else
+        {
+          pin_initialized = true;
+
+          std::cout
+              << "[runActiveSpring3DMode] 双臂主动导纳 + 大臂传感器空间虚拟弹簧力注入 初始化成功。"
+              << " urdf_path=" << urdf_path
+              << " nq=" << model.nq
+              << " nv=" << model.nv
+              << std::endl;
+
+          std::cout << "[runActiveSpring3DMode] joint q/v mapping:" << std::endl;
+          for (std::size_t map_i = 0; map_i < 7; ++map_i)
+          {
+            std::cout << "  left joint" << (map_i + 1)
+                      << " ctrl_id=" << left_ctrl_id[map_i]
+                      << " q_id=" << left_q_id[map_i]
+                      << " v_id=" << left_v_id[map_i]
+                      << std::endl;
+          }
+          for (std::size_t map_i = 0; map_i < 7; ++map_i)
+          {
+            std::cout << "  right joint" << (map_i + 11)
+                      << " ctrl_id=" << right_ctrl_id[map_i]
+                      << " q_id=" << right_q_id[map_i]
+                      << " v_id=" << right_v_id[map_i]
+                      << std::endl;
+          }
+        }
+      }
+      catch (const std::exception &e)
+      {
+        std::cerr << "[runActiveSpring3DMode] Pinocchio 初始化异常: "
+                  << e.what() << std::endl;
+        pin_init_failed = true;
+      }
+    }
+
+    if (!pin_initialized || pin_init_failed || !data)
+    {
+      output.valid = false;
+      return;
+    }
+
+    // ===================== 组装双臂整体 q / v =====================
+    Eigen::VectorXd q = Eigen::VectorXd::Zero(model.nq);
+    Eigen::VectorXd v = Eigen::VectorXd::Zero(model.nv);
+
+    for (std::size_t i = 0; i < 7; ++i)
+    {
+      q(left_q_id[i]) = state.position[left_ctrl_id[i]] * DEG2RAD;
+      v(left_v_id[i]) = state.velocity[left_ctrl_id[i]] * DEG2RAD;
+
+      q(right_q_id[i]) = state.position[right_ctrl_id[i]] * DEG2RAD;
+      v(right_v_id[i]) = state.velocity[right_ctrl_id[i]] * DEG2RAD;
+    }
+
+    if (!vector_finite(q) || !vector_finite(v))
+    {
+      active_spring_3d_fault_counter++;
+      active_spring_3d_admittance_initialized = false;
+      std::cerr << "[runActiveSpring3DMode] q/v 出现 NaN 或 Inf，本轮不输出。fault="
+                << active_spring_3d_fault_counter << std::endl;
+      output.valid = false;
+      return;
+    }
+
+    // ===================== q / v 物理合理性检查 =====================
+    // finite 只能拦住 NaN / Inf，拦不住 188 rad 这类“有限但明显错误”的坏值。
+    // 这类坏值进入 Pinocchio 后会造成 FK 大跳变、重力补偿异常和导纳状态污染。
+    //
+    // 这里使用较宽的硬限幅，只用于拦截通信/编码器/状态同步异常帧；
+    // 不用于代替真实机械限位。后续可根据实机限位改成逐关节 q_min/q_max。
+    bool qv_reasonable = true;
+    int bad_q_index = -1;
+    double bad_q_value = 0.0;
+    int bad_v_index = -1;
+    double bad_v_value = 0.0;
+
+    const double q_abs_hard_limit_default = 3.8; // rad，约 218 deg
+    const double v_abs_hard_limit = 12.0;        // rad/s
+
+    Eigen::VectorXd q_abs_limit =
+        Eigen::VectorXd::Constant(model.nq, q_abs_hard_limit_default);
+
+    // 调试阶段：从日志看 bad_q_index 经常集中在 right joint11。
+    // 这里只放宽 right joint11 的硬限幅，用来区分“URDF 零位基准偏移”和“真实坏帧”。
+    // 如果放宽后系统稳定，下一步应改 right_urdf_offset_rad[0]，而不是修改编码器标定。
+    if (right_q_id[0] >= 0 && right_q_id[0] < model.nq)
+    {
+      q_abs_limit(right_q_id[0]) = 5.2; // rad，约 298 deg
+    }
+
+    for (int i = 0; i < model.nq; ++i)
+    {
+      if (!std::isfinite(q(i)) || std::abs(q(i)) > q_abs_limit(i))
+      {
+        qv_reasonable = false;
+        bad_q_index = i;
+        bad_q_value = q(i);
+        break;
+      }
+    }
+
+    if (qv_reasonable)
+    {
+      for (int i = 0; i < model.nv; ++i)
+      {
+        if (!std::isfinite(v(i)) || std::abs(v(i)) > v_abs_hard_limit)
+        {
+          qv_reasonable = false;
+          bad_v_index = i;
+          bad_v_value = v(i);
+          break;
+        }
+      }
+    }
+
+    if (!qv_reasonable)
+    {
+      active_spring_3d_fault_counter++;
+      active_spring_3d_admittance_initialized = false;
+      active_spring_3d_last_delta_valid = false;
+      std::string bad_joint_name = "unknown";
+      int bad_ctrl_id = -1;
+      double bad_state_pos_deg = 0.0;
+
+      if (bad_q_index >= 0)
+      {
+        for (std::size_t map_i = 0; map_i < 7; ++map_i)
+        {
+          if (left_q_id[map_i] == bad_q_index)
+          {
+            bad_joint_name = "left joint" + std::to_string(map_i + 1);
+            bad_ctrl_id = static_cast<int>(left_ctrl_id[map_i]);
+            bad_state_pos_deg = state.position[left_ctrl_id[map_i]];
+          }
+          if (right_q_id[map_i] == bad_q_index)
+          {
+            bad_joint_name = "right joint" + std::to_string(map_i + 11);
+            bad_ctrl_id = static_cast<int>(right_ctrl_id[map_i]);
+            bad_state_pos_deg = state.position[right_ctrl_id[map_i]];
+          }
+        }
+      }
+
+      std::cerr << "[runActiveSpring3DMode] q/v 超出物理合理范围，本轮不输出。"
+                << " bad_q_index=" << bad_q_index
+                << " bad_q_value=" << bad_q_value
+                << " bad_joint=" << bad_joint_name
+                << " bad_ctrl_id=" << bad_ctrl_id
+                << " bad_state_pos_deg=" << bad_state_pos_deg
+                << " bad_v_index=" << bad_v_index
+                << " bad_v_value=" << bad_v_value
+                << " fault=" << active_spring_3d_fault_counter
+                << std::endl;
+      output.valid = false;
+      return;
+    }
+
+    // ===================== 导纳状态初始化 =====================
+    // 第一次进入模式时，用当前实际关节角作为导纳参考，避免突然跳变。
+    if (!active_spring_3d_admittance_initialized ||
+        active_spring_3d_q_adm.size() != model.nq ||
+        active_spring_3d_dq_adm.size() != model.nv)
+    {
+      active_spring_3d_q_adm = q;
+      active_spring_3d_dq_adm = Eigen::VectorXd::Zero(model.nv);
+      active_spring_3d_admittance_initialized = true;
+
+      std::cout << "[runActiveSpring3DMode] 导纳状态已初始化" << std::endl;
+    }
+
+    // ===================== 正运动学 =====================
+    // 后续 p_left_arm / p_right_arm 就是调试时最关键的两个坐标。
+    pinocchio::forwardKinematics(model, *data, q, v);
+    pinocchio::updateFramePlacements(model, *data);
+
+    const Eigen::Vector3d p_left_arm =
+        data->oMf[left_frame_id_arm].translation();
+
+    const Eigen::Vector3d p_right_arm =
+        data->oMf[right_frame_id_arm].translation();
+
+    const Eigen::Vector3d p_left_hand =
+        data->oMf[left_frame_id_hand].translation();
+
+    const Eigen::Vector3d p_right_hand =
+        data->oMf[right_frame_id_hand].translation();
+
+    if (!vec3_finite(p_left_arm) || !vec3_finite(p_right_arm) ||
+        !vec3_finite(p_left_hand) || !vec3_finite(p_right_hand))
+    {
+      active_spring_3d_fault_counter++;
+      reset_admittance_to_current(q);
+      active_spring_3d_last_delta_valid = false;
+      std::cerr << "[runActiveSpring3DMode] FK 位置出现 NaN 或 Inf，本轮不输出。fault="
+                << active_spring_3d_fault_counter << std::endl;
+      output.valid = false;
+      return;
+    }
+
+    // ===================== 读取四个六维力传感器 =====================
+    struct Wrench6
+    {
+      double fx{0.0};
+      double fy{0.0};
+      double fz{0.0};
+      double mx{0.0};
+      double my{0.0};
+      double mz{0.0};
+    };
+
+    auto read_wrench = [&](int sensor_id) -> Wrench6
+    {
+      const auto &raw = sensor_state.sensor[sensor_id];
+      const auto &bias = sensor_state.bias[sensor_id];
+
+      return {
+          raw.fx - bias.fx,
+          raw.fy - bias.fy,
+          raw.fz - bias.fz,
+          raw.mx - bias.mx,
+          raw.my - bias.my,
+          raw.mz - bias.mz};
+    };
+
+    Wrench6 left_arm = read_wrench(SENSOR_LEFT_ARM);
+    Wrench6 left_hand = read_wrench(SENSOR_LEFT_HAND);
+    Wrench6 right_arm = read_wrench(SENSOR_RIGHT_ARM);
+    Wrench6 right_hand = read_wrench(SENSOR_RIGHT_HAND);
+
+    // ===================== 传感器方向符号修正 =====================
+    // 如果真实传感器正方向与 URDF frame 定义不一致，在这里修正。
+    // 当前先保持全 1。
+    static const std::array<double, 6> left_arm_sign = {
+        1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0};
+
+    static const std::array<double, 6> left_hand_sign = {
+        1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0};
+
+    static const std::array<double, 6> right_arm_sign = {
+        1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0};
+
+    static const std::array<double, 6> right_hand_sign = {
+        1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0};
+
+    auto apply_sign = [](Wrench6 &w, const std::array<double, 6> &sign)
+    {
+      w.fx *= sign[0];
+      w.fy *= sign[1];
+      w.fz *= sign[2];
+      w.mx *= sign[3];
+      w.my *= sign[4];
+      w.mz *= sign[5];
+    };
+
+    apply_sign(left_arm, left_arm_sign);
+    apply_sign(left_hand, left_hand_sign);
+    apply_sign(right_arm, right_arm_sign);
+    apply_sign(right_hand, right_hand_sign);
+
+    // ===================== 真实传感器死区与限幅 =====================
+    // 纯双侧主动模式只使用真实六维力传感器，不做虚拟力注入。
+    const double force_deadzone = 1.0;   // N
+    const double torque_deadzone = 0.05; // Nm
+    const double force_limit = 80.0;     // N
+    const double moment_limit = 8.0;     // Nm
+
+    auto process_real_wrench = [&](Wrench6 &w)
+    {
+      w.fx = apply_deadzone(w.fx, force_deadzone);
+      w.fy = apply_deadzone(w.fy, force_deadzone);
+      w.fz = apply_deadzone(w.fz, force_deadzone);
+
+      w.mx = apply_deadzone(w.mx, torque_deadzone);
+      w.my = apply_deadzone(w.my, torque_deadzone);
+      w.mz = apply_deadzone(w.mz, torque_deadzone);
+
+      w.fx = clamp_abs(w.fx, force_limit);
+      w.fy = clamp_abs(w.fy, force_limit);
+      w.fz = clamp_abs(w.fz, force_limit);
+
+      w.mx = clamp_abs(w.mx, moment_limit);
+      w.my = clamp_abs(w.my, moment_limit);
+      w.mz = clamp_abs(w.mz, moment_limit);
+    };
+
+    process_real_wrench(left_arm);
+    process_real_wrench(left_hand);
+    process_real_wrench(right_arm);
+    process_real_wrench(right_hand);
+
+    // 保存注入前的大臂真实传感器力，便于 CSV 对比。
+    const Wrench6 left_arm_real = left_arm;
+    const Wrench6 right_arm_real = right_arm;
+
+    // ===================== 基于大臂传感器正运动学的空间三维虚拟弹簧 =====================
+    // world 坐标约定：+X 向左，+Y 向后，+Z 向上。
+    // delta_arm = p_left_arm - p_right_arm。
+    // active_spring_3d_delta0 是进入模式瞬间的初始相对位置。
+    const Eigen::Vector3d delta_arm = p_left_arm - p_right_arm;
+
+    if (!active_spring_3d_initialized)
+    {
+      active_spring_3d_delta0 = delta_arm;
+      active_spring_3d_gain = 0.0;
+      active_spring_3d_initialized = true;
+
+      active_spring_3d_last_delta = delta_arm;
+      active_spring_3d_last_delta_valid = true;
+
+      std::cout << "[runActiveSpring3DMode] 初始化空间弹簧原长 delta0="
+                << active_spring_3d_delta0.transpose()
+                << " m" << std::endl;
+    }
+
+    pinocchio::Motion v_left_arm_frame =
+        pinocchio::getFrameVelocity(model, *data, left_frame_id_arm, pinocchio::WORLD);
+
+    pinocchio::Motion v_right_arm_frame =
+        pinocchio::getFrameVelocity(model, *data, right_frame_id_arm, pinocchio::WORLD);
+
+    const Eigen::Vector3d v_rel_raw =
+        v_left_arm_frame.linear() - v_right_arm_frame.linear();
+
+    // ===================== 空间弹簧输入保护 =====================
+    const double delta_jump_limit = 0.10; // m/cycle，过滤 FK 或编码器异常跳变
+    const double e_norm_limit = 0.18;     // m，三维形变量总限幅
+    const double v_norm_limit = 1.2;      // m/s，相对速度总限幅
+
+    bool spring_valid = true;
+    double delta_jump = 0.0;
+
+    if (!vec3_finite(delta_arm) || !vec3_finite(v_rel_raw))
+    {
+      spring_valid = false;
+    }
+
+    if (spring_valid && active_spring_3d_last_delta_valid)
+    {
+      delta_jump = (delta_arm - active_spring_3d_last_delta).norm();
+      if (delta_jump > delta_jump_limit)
+      {
+        spring_valid = false;
+      }
+    }
+
+    if (spring_valid)
+    {
+      active_spring_3d_last_delta = delta_arm;
+      active_spring_3d_last_delta_valid = true;
+    }
+    else
+    {
+      active_spring_3d_fault_counter++;
+      if ((active_spring_3d_fault_counter % 20) == 1)
+      {
+        std::cerr << "[runActiveSpring3DMode] 空间弹簧输入异常，本轮禁用虚拟弹簧。"
+                  << " delta=" << delta_arm.transpose()
+                  << " last_delta=" << active_spring_3d_last_delta.transpose()
+                  << " delta_jump=" << delta_jump
+                  << " v_rel_raw=" << v_rel_raw.transpose()
+                  << " fault=" << active_spring_3d_fault_counter
+                  << std::endl;
+      }
+    }
+
+    // ===================== 三维形变量 =====================
+    Eigen::Vector3d e_vec = delta_arm - active_spring_3d_delta0;
+
+    const double spring_deadband = 0.002; // 2 mm
+    for (int axis_i = 0; axis_i < 3; ++axis_i)
+    {
+      if (std::abs(e_vec(axis_i)) < spring_deadband)
+      {
+        e_vec(axis_i) = 0.0;
+      }
+    }
+
+    const Eigen::Vector3d e_vec_before_limit = e_vec;
+    (void)e_vec_before_limit; // 当前仅保留为调试占位，避免未使用 warning。
+    const double e_norm_before_limit = e_vec.norm();
+
+    if (e_norm_before_limit > e_norm_limit && e_norm_before_limit > 1e-9)
+    {
+      e_vec *= (e_norm_limit / e_norm_before_limit);
+    }
+
+    Eigen::Vector3d v_rel_used = v_rel_raw;
+    const double v_norm_raw = v_rel_used.norm();
+    if (v_norm_raw > v_norm_limit && v_norm_raw > 1e-9)
+    {
+      v_rel_used *= (v_norm_limit / v_norm_raw);
+    }
+
+    if (!spring_valid)
+    {
+      e_vec.setZero();
+      v_rel_used.setZero();
+    }
+
+    // ===================== 空间弹簧参数 =====================
+    // 初版三个方向刚度相同，先保证方向关系清晰。
+    // 后续如果 Z 向发抖，可单独降低 K_xyz.z()。
+    const Eigen::Vector3d K_xyz(45.0, 45.0, 45.0); // N/m
+    const Eigen::Vector3d B_xyz(2.0, 2.0, 2.0);    // N/(m/s)
+    const double F_norm_limit = 18.0;              // N
+
+    Eigen::Vector3d F_left_world =
+        -K_xyz.cwiseProduct(e_vec) -
+        B_xyz.cwiseProduct(v_rel_used);
+
+    const double F_norm_raw = F_left_world.norm();
+    if (F_norm_raw > F_norm_limit && F_norm_raw > 1e-9)
+    {
+      F_left_world *= (F_norm_limit / F_norm_raw);
+    }
+
+    active_spring_3d_gain = std::min(1.0, active_spring_3d_gain + dt / 0.4);
+    F_left_world *= active_spring_3d_gain;
+
+    const Eigen::Vector3d F_right_world = -F_left_world;
+
+    // ===================== world 三维弹簧力 -> 大臂传感器局部 fx/fy/fz =====================
+    // 已确认的大臂传感器方向：
+    // 左大臂：sensor X = world Z，sensor Y = world Y，sensor Z = -world X。
+    // 右大臂：sensor X = world Z，sensor Y = -world Y，sensor Z = world X。
+    const Eigen::Vector3d F_left_sensor(
+        F_left_world.z(),
+        F_left_world.y(),
+        -F_left_world.x());
+
+    const Eigen::Vector3d F_right_sensor(
+        F_right_world.z(),
+        -F_right_world.y(),
+        F_right_world.x());
+
+    const bool debug_disable_spring = false;
+
+    if (!debug_disable_spring)
+    {
+      left_arm.fx += F_left_sensor.x();
+      left_arm.fy += F_left_sensor.y();
+      left_arm.fz += F_left_sensor.z();
+
+      right_arm.fx += F_right_sensor.x();
+      right_arm.fy += F_right_sensor.y();
+      right_arm.fz += F_right_sensor.z();
+    }
+
+    // 兼容原 CSV / 控制台字段，便于和一维模式日志对齐。
+    const double active_spring_3d_d0 = active_spring_3d_delta0.norm();
+    const double d = delta_arm.norm();
+    const double e_raw = e_norm_before_limit;
+    const double e_before_limit = e_norm_before_limit;
+    const double e = e_vec.norm();
+    const double d_dot_raw = v_norm_raw;
+    const double d_dot_used = v_rel_used.norm();
+    const double d_jump = delta_jump;
+    const double F_left_sensor_z = F_left_sensor.z();
+    const double F_right_sensor_z = F_right_sensor.z();
+
+    // ===================== 给 GUI 的弹簧调试输出（三维空间弹簧） =====================
+    output.spring_debug_valid = spring_valid && !debug_disable_spring;
+    output.spring_debug_mode = 2;
+
+    output.spring_e_x = e_vec.x();
+    output.spring_e_y = e_vec.y();
+    output.spring_e_z = e_vec.z();
+    output.spring_e_norm = e_vec.norm();
+
+    output.spring_f_x = F_left_world.x();
+    output.spring_f_y = F_left_world.y();
+    output.spring_f_z = F_left_world.z();
+    output.spring_f_norm = F_left_world.norm();
+
+    // 注入后的最终传感器力只做安全限幅，不再做死区。
+    left_arm.fx = clamp_abs(left_arm.fx, force_limit);
+    left_arm.fy = clamp_abs(left_arm.fy, force_limit);
+    left_arm.fz = clamp_abs(left_arm.fz, force_limit);
+    left_arm.mx = clamp_abs(left_arm.mx, moment_limit);
+    left_arm.my = clamp_abs(left_arm.my, moment_limit);
+    left_arm.mz = clamp_abs(left_arm.mz, moment_limit);
+
+    right_arm.fx = clamp_abs(right_arm.fx, force_limit);
+    right_arm.fy = clamp_abs(right_arm.fy, force_limit);
+    right_arm.fz = clamp_abs(right_arm.fz, force_limit);
+    right_arm.mx = clamp_abs(right_arm.mx, moment_limit);
+    right_arm.my = clamp_abs(right_arm.my, moment_limit);
+    right_arm.mz = clamp_abs(right_arm.mz, moment_limit);
+
+    // 保存注入后的大臂合成传感器力。
+    const Wrench6 left_arm_total = left_arm;
+    const Wrench6 right_arm_total = right_arm;
+
+    // ===================== 真实传感器力 -> tau_ext =====================
+    // 四个六维力传感器的 wrench 均表示在各自传感器 LOCAL 坐标系下。
+    // 因此这里使用 LOCAL Jacobian 做 J^T F 映射。
+    auto make_force = [](const Wrench6 &w) -> pinocchio::Force
+    {
+      pinocchio::Force f = pinocchio::Force::Zero();
+      f.linear() << w.fx, w.fy, w.fz;
+      f.angular() << w.mx, w.my, w.mz;
+      return f;
+    };
+
+    Eigen::MatrixXd J_left_arm_local = Eigen::MatrixXd::Zero(6, model.nv);
+    Eigen::MatrixXd J_left_hand_local = Eigen::MatrixXd::Zero(6, model.nv);
+    Eigen::MatrixXd J_right_arm_local = Eigen::MatrixXd::Zero(6, model.nv);
+    Eigen::MatrixXd J_right_hand_local = Eigen::MatrixXd::Zero(6, model.nv);
+
+    pinocchio::computeFrameJacobian(
+        model, *data, q,
+        left_frame_id_arm,
+        pinocchio::LOCAL,
+        J_left_arm_local);
+
+    pinocchio::computeFrameJacobian(
+        model, *data, q,
+        left_frame_id_hand,
+        pinocchio::LOCAL,
+        J_left_hand_local);
+
+    pinocchio::computeFrameJacobian(
+        model, *data, q,
+        right_frame_id_arm,
+        pinocchio::LOCAL,
+        J_right_arm_local);
+
+    pinocchio::computeFrameJacobian(
+        model, *data, q,
+        right_frame_id_hand,
+        pinocchio::LOCAL,
+        J_right_hand_local);
+
+    const pinocchio::Force F_left_arm_sensor = make_force(left_arm_total);
+    const pinocchio::Force F_left_hand_sensor = make_force(left_hand);
+    const pinocchio::Force F_right_arm_sensor = make_force(right_arm_total);
+    const pinocchio::Force F_right_hand_sensor = make_force(right_hand);
+
+    Eigen::VectorXd tau_ext =
+        J_left_arm_local.transpose() * F_left_arm_sensor.toVector() +
+        J_left_hand_local.transpose() * F_left_hand_sensor.toVector() +
+        J_right_arm_local.transpose() * F_right_arm_sensor.toVector() +
+        J_right_hand_local.transpose() * F_right_hand_sensor.toVector();
+
+    if (!vector_finite(tau_ext))
+    {
+      active_spring_3d_fault_counter++;
+      reset_admittance_to_current(q);
+      std::cerr << "[runActiveSpring3DMode] tau_ext 出现 NaN 或 Inf，已重置导纳，本轮不输出。fault="
+                << active_spring_3d_fault_counter << std::endl;
+      output.valid = false;
+      return;
+    }
+
+    // 导纳输入来自合成后的传感器力：真实六维力 + 虚拟弹簧注入力。
+    Eigen::VectorXd tau_input = tau_ext;
+
+    // ===================== 左右臂独立导纳参数 =====================
+    // 左臂目前手感正常，先保持原来的主动弹簧参数。
+    // 右臂当前有抖动趋势，因此右臂单独调得更“钝”：
+    // 1. 增大 M_a，降低同样交互力下的导纳加速度；
+    // 2. 增大 D_a，提高阻尼；
+    // 3. 降低输入增益，避免弹簧注入力和传感器噪声被放大；
+    // 4. 降低右臂第 7 轴 Kp/Kv，避免肘部/末端附近高增益诱发抖动。
+    Eigen::VectorXd M_a = Eigen::VectorXd::Zero(model.nv);
+    Eigen::VectorXd D_a = Eigen::VectorXd::Zero(model.nv);
+    Eigen::VectorXd K_a = Eigen::VectorXd::Zero(model.nv);
+
+    const std::array<double, 7> M_left_value = {
+        1.2, 1.2, 1.0, 0.55, 0.55, 0.45, 0.40};
+
+    const std::array<double, 7> D_left_value = {
+        10.0, 10.0, 8.0, 5.0, 5.0, 4.0, 3.5};
+
+    const std::array<double, 7> K_left_value = {
+        1.2, 1.2, 1.0, 0.5, 0.5, 0.35, 0.25};
+
+    const std::array<double, 7> Kp_left_value = {
+        20.0, 20.0, 16.0, 18.0, 18.0, 18.0, 40.0};
+
+    const std::array<double, 7> Kv_left_value = {
+        4.0, 4.0, 3.0, 2.5, 2.5, 2.0, 10.5};
+
+    const std::array<double, 7> M_right_value = {
+        1.8, 1.8, 1.5, 0.85, 0.85, 0.70, 0.60};
+
+    const std::array<double, 7> D_right_value = {
+        18.0, 18.0, 14.0, 9.0, 9.0, 7.0, 6.0};
+
+    const std::array<double, 7> K_right_value = {
+        1.5, 1.5, 1.2, 0.7, 0.7, 0.5, 0.35};
+
+    const std::array<double, 7> Kp_right_value = {
+        16.0, 16.0, 12.0, 12.0, 12.0, 12.0, 18.0};
+
+    const std::array<double, 7> Kv_right_value = {
+        3.0, 3.0, 2.2, 1.8, 1.8, 1.5, 4.0};
+
+    const double left_admittance_input_gain = 3.0;
+    const double right_admittance_input_gain = 1.5;
+
+    Eigen::VectorXd tau_input_scaled = Eigen::VectorXd::Zero(model.nv);
+
+    for (std::size_t i = 0; i < 7; ++i)
+    {
+      M_a(left_v_id[i]) = M_left_value[i];
+      D_a(left_v_id[i]) = D_left_value[i];
+      K_a(left_v_id[i]) = K_left_value[i];
+
+      M_a(right_v_id[i]) = M_right_value[i];
+      D_a(right_v_id[i]) = D_right_value[i];
+      K_a(right_v_id[i]) = K_right_value[i];
+
+      tau_input_scaled(left_v_id[i]) =
+          left_admittance_input_gain * tau_input(left_v_id[i]);
+
+      tau_input_scaled(right_v_id[i]) =
+          right_admittance_input_gain * tau_input(right_v_id[i]);
+    }
+
+    if (!vector_finite(active_spring_3d_q_adm) ||
+        !vector_finite(active_spring_3d_dq_adm) ||
+        !vector_finite(tau_input) ||
+        !vector_finite(tau_input_scaled))
+    {
+      active_spring_3d_fault_counter++;
+      reset_admittance_to_current(q);
+      std::cerr << "[runActiveSpring3DMode] 导纳输入或内部状态出现 NaN/Inf，已重置导纳，本轮不输出。fault="
+                << active_spring_3d_fault_counter << std::endl;
+      output.valid = false;
+      return;
+    }
+
+    Eigen::VectorXd ddq_adm = Eigen::VectorXd::Zero(model.nv);
+
+    const std::array<double, 7> ddq_limit_value = {
+        3.0, 3.0, 3.0, 5.0, 5.0, 5.0, 5.0};
+
+    for (int i = 0; i < model.nv; ++i)
+    {
+      if (M_a(i) <= 1e-9)
+      {
+        ddq_adm(i) = 0.0;
+        continue;
+      }
+
+      ddq_adm(i) =
+          (tau_input_scaled(i) -
+           D_a(i) * active_spring_3d_dq_adm(i) -
+           K_a(i) * (active_spring_3d_q_adm(i) - q(i))) /
+          M_a(i);
+    }
+
+    // 导纳加速度限幅。这样即使 tau_input 短时尖峰，也不会把 q_adm/dq_adm 一次积分到异常值。
+    for (std::size_t i = 0; i < 7; ++i)
+    {
+      ddq_adm(left_v_id[i]) =
+          clamp_abs(ddq_adm(left_v_id[i]), ddq_limit_value[i]);
+
+      ddq_adm(right_v_id[i]) =
+          clamp_abs(ddq_adm(right_v_id[i]), ddq_limit_value[i]);
+    }
+
+    if (!vector_finite(ddq_adm))
+    {
+      active_spring_3d_fault_counter++;
+      reset_admittance_to_current(q);
+      std::cerr << "[runActiveSpring3DMode] ddq_adm 出现 NaN/Inf，已重置导纳，本轮不输出。fault="
+                << active_spring_3d_fault_counter << std::endl;
+      output.valid = false;
+      return;
+    }
+
+    active_spring_3d_dq_adm = active_spring_3d_dq_adm + ddq_adm * dt;
+    active_spring_3d_q_adm = active_spring_3d_q_adm + active_spring_3d_dq_adm * dt;
+
+    if (!vector_finite(active_spring_3d_q_adm) ||
+        !vector_finite(active_spring_3d_dq_adm))
+    {
+      active_spring_3d_fault_counter++;
+      reset_admittance_to_current(q);
+      std::cerr << "[runActiveSpring3DMode] 导纳积分后出现 NaN/Inf，已重置导纳，本轮不输出。fault="
+                << active_spring_3d_fault_counter << std::endl;
+      output.valid = false;
+      return;
+    }
+
+    // ===================== 导纳参考限位 =====================
+    const std::array<double, 7> q_min_value = {
+        -30.0 * DEG2RAD, 5.0 - 30.0 * DEG2RAD,
+        -30.0 * DEG2RAD,
+        -60.0 * DEG2RAD,
+        -60.0 * DEG2RAD,
+        -60.0 * DEG2RAD,
+        0.0 * DEG2RAD};
+
+    const std::array<double, 7> q_max_value = {
+        30.0 * DEG2RAD,
+        30.0 * DEG2RAD,
+        30.0 * DEG2RAD,
+        60.0 * DEG2RAD,
+        60.0 * DEG2RAD,
+        60.0 * DEG2RAD,
+        120.0 * DEG2RAD};
+
+    const std::array<double, 7> dq_limit_value = {
+        1.0,
+        1.0,
+        1.0,
+        1.5,
+        1.5,
+        1.5,
+        1.5};
+
+    for (std::size_t i = 0; i < 7; ++i)
+    {
+      active_spring_3d_q_adm(left_q_id[i]) =
+          clamp_between(
+              active_spring_3d_q_adm(left_q_id[i]),
+              q_min_value[i],
+              q_max_value[i]);
+
+      active_spring_3d_q_adm(right_q_id[i]) =
+          clamp_between(
+              active_spring_3d_q_adm(right_q_id[i]),
+              q_min_value[i],
+              q_max_value[i]);
+
+      active_spring_3d_dq_adm(left_v_id[i]) =
+          clamp_abs(
+              active_spring_3d_dq_adm(left_v_id[i]),
+              dq_limit_value[i]);
+
+      active_spring_3d_dq_adm(right_v_id[i]) =
+          clamp_abs(
+              active_spring_3d_dq_adm(right_v_id[i]),
+              dq_limit_value[i]);
+    }
+
+    // ===================== 主动模式扭矩跟踪 =====================
+    // tau_active = g + Kp(q_adm - q) + Kv(dq_adm - v)
+    // 最终输出只包含主动导纳扭矩，不叠加其他前馈项。
+    Eigen::VectorXd g =
+        pinocchio::computeGeneralizedGravity(model, *data, q);
+
+    if (!vector_finite(g))
+    {
+      active_spring_3d_fault_counter++;
+      reset_admittance_to_current(q);
+      std::cerr << "[runActiveSpring3DMode] 重力补偿 g(q) 出现 NaN/Inf，已重置导纳，本轮不输出。fault="
+                << active_spring_3d_fault_counter << std::endl;
+      output.valid = false;
+      return;
+    }
+
+    Eigen::VectorXd Kp = Eigen::VectorXd::Zero(model.nv);
+    Eigen::VectorXd Kv = Eigen::VectorXd::Zero(model.nv);
+
+    for (std::size_t i = 0; i < 7; ++i)
+    {
+      Kp(left_v_id[i]) = Kp_left_value[i];
+      Kv(left_v_id[i]) = Kv_left_value[i];
+
+      Kp(right_v_id[i]) = Kp_right_value[i];
+      Kv(right_v_id[i]) = Kv_right_value[i];
+    }
+
+    Eigen::VectorXd tau_active =
+        g +
+        Kp.asDiagonal() * (active_spring_3d_q_adm - q) +
+        Kv.asDiagonal() * (active_spring_3d_dq_adm - v);
+
+    Eigen::VectorXd tau_cmd = tau_active;
+
+    if (!vector_finite(tau_active) || !vector_finite(tau_cmd))
+    {
+      active_spring_3d_fault_counter++;
+      reset_admittance_to_current(q);
+      std::cerr << "[runActiveSpring3DMode] tau_active/tau_cmd 出现 NaN/Inf，已重置导纳，本轮不输出。fault="
+                << active_spring_3d_fault_counter << std::endl;
+      output.valid = false;
+      return;
+    }
+
+    // ===================== 最终扭矩限幅与输出 =====================
+    const std::array<double, 7> torque_limit = {
+        24.0, 20.0, 16.0, 12.0, 12.0, 12.0, 8.0};
+
+    auto write_torque = [&](std::size_t ctrl_id,
+                            int v_id,
+                            double sign,
+                            double limit)
+    {
+      output.use_torque[ctrl_id] = true;
+      output.target_torque[ctrl_id] =
+          clamp_abs(sign * tau_cmd(v_id), limit);
+    };
+
+    for (std::size_t i = 0; i < 7; ++i)
+    {
+      write_torque(left_ctrl_id[i], left_v_id[i], 1.0, torque_limit[i]);
+    }
+
+    // 右臂仍保留你当前程序中的 -1.0 输出修正。
+    // 如果测试发现右臂方向整体反了，优先把这里改成 1.0 做对比。
+    for (std::size_t i = 0; i < 7; ++i)
+    {
+      write_torque(right_ctrl_id[i], right_v_id[i], -1.0, torque_limit[i]);
+    }
+
+    // ===================== 末端 fixed 对应实机轴处理 =====================
+    // 双臂主动模式调试阶段不在控制循环中持续下发
+    // joint8~10 / joint18~20 的位置保持命令。
+    //
+    // 原因：之前日志中 8~10、18~20 频繁出现 SetPos、SetTrapPrm、
+    // SyncAxisPos、SetVel 等错误。双臂主动模式本身只需要 14 个主动关节
+    // 扭矩输出；末端 fixed 轴不参与 Pinocchio 14 自由度控制。
+    //
+    // 如果后续确实需要末端轴位置保持，建议在“进入模式”时做一次性保持，
+    // 不要在 90 Hz 控制循环中和 14 个扭矩轴混合反复下发。
+
+    output.valid = true;
+
+    // ===================== 控制台调试输出 =====================
+    if ((active_spring_3d_debug_counter++ % 30) == 0)
+    {
+      std::cout << "[active_spring_3d_sensor_injection] "
+                << "p_left_arm=" << p_left_arm.transpose()
+                << " p_right_arm=" << p_right_arm.transpose()
+                << " d=" << d
+                << " d0=" << active_spring_3d_d0
+                << " e_raw=" << e_raw
+                << " e=" << e
+                << " d_dot_raw=" << d_dot_raw
+                << " d_dot_used=" << d_dot_used
+                << " spring_valid=" << spring_valid
+                << " d_jump=" << d_jump
+                << " gain=" << active_spring_3d_gain
+                << std::endl;
+
+      std::cout << "[active_spring_3d_sensor_injection] "
+                << "F_left_world=" << F_left_world.transpose()
+                << " F_right_world=" << F_right_world.transpose()
+                << " F_left_sensor_z=" << F_left_sensor_z
+                << " F_right_sensor_z=" << F_right_sensor_z
+                << std::endl;
+
+      std::cout << "[active_spring_3d_sensor_injection] "
+                << "left_arm_real(fx,fy,fz)=("
+                << left_arm_real.fx << ","
+                << left_arm_real.fy << ","
+                << left_arm_real.fz << ") "
+                << "left_arm_total(fx,fy,fz)=("
+                << left_arm_total.fx << ","
+                << left_arm_total.fy << ","
+                << left_arm_total.fz << ")"
+                << std::endl;
+
+      std::cout << "[active_spring_3d_sensor_injection] "
+                << "right_arm_real(fx,fy,fz)=("
+                << right_arm_real.fx << ","
+                << right_arm_real.fy << ","
+                << right_arm_real.fz << ") "
+                << "right_arm_total(fx,fy,fz)=("
+                << right_arm_total.fx << ","
+                << right_arm_total.fy << ","
+                << right_arm_total.fz << ")"
+                << std::endl;
+
+      std::cout << "[active_spring_3d_sensor_injection] "
+                << "tau_ext=" << tau_ext.transpose()
+                << std::endl;
+
+      std::cout << "[active_spring_3d_sensor_injection] "
+                << "tau_active=" << tau_active.transpose()
+                << std::endl;
+
+      std::cout << "[active_spring_3d_sensor_injection] "
+                << "tau_cmd=" << tau_cmd.transpose()
+                << std::endl;
+    }
+
+    // ===================== CSV 调试日志 =====================
+    static std::ofstream active_spring_3d_csv;
+    static bool active_spring_3d_csv_initialized = false;
+    static int active_spring_3d_csv_counter = 0;
+    static auto active_spring_3d_t0 = std::chrono::steady_clock::now();
+
+    if (!active_spring_3d_csv_initialized)
+    {
+      auto now_sys = std::chrono::system_clock::now();
+      auto now_time_t = std::chrono::system_clock::to_time_t(now_sys);
+
+      char file_time[64];
+      std::strftime(
+          file_time,
+          sizeof(file_time),
+          "%Y%m%d_%H%M%S",
+          std::localtime(&now_time_t));
+
+      const char *pwd = std::getenv("PWD");
+      std::string csv_dir = (pwd != nullptr) ? std::string(pwd) : std::string(".");
+
+      std::string csv_path =
+          csv_dir +
+          "/active_spring_3d_sensor_injection_" +
+          file_time +
+          ".csv";
+
+      active_spring_3d_csv.open(csv_path, std::ios::out);
+
+      if (active_spring_3d_csv.is_open())
+      {
+        active_spring_3d_csv
+            << "wall_time,t,"
+            << "p_left_arm_x,p_left_arm_y,p_left_arm_z,"
+            << "p_right_arm_x,p_right_arm_y,p_right_arm_z,"
+            << "p_left_hand_x,p_left_hand_y,p_left_hand_z,"
+            << "p_right_hand_x,p_right_hand_y,p_right_hand_z,"
+            << "delta_arm_x,delta_arm_y,delta_arm_z,"
+            << "d,d0,e_raw,e_before_limit,e,d_dot_raw,d_dot_used,d_jump,spring_valid,gain,fault_counter,"
+            << "F_left_world_x,F_left_world_y,F_left_world_z,"
+            << "F_right_world_x,F_right_world_y,F_right_world_z,"
+            << "F_left_sensor_z,F_right_sensor_z,"
+            << "left_arm_real_fx,left_arm_real_fy,left_arm_real_fz,"
+            << "left_arm_total_fx,left_arm_total_fy,left_arm_total_fz,"
+            << "right_arm_real_fx,right_arm_real_fy,right_arm_real_fz,"
+            << "right_arm_total_fx,right_arm_total_fy,right_arm_total_fz";
+
+        for (int i = 0; i < model.nq; ++i)
+        {
+          active_spring_3d_csv << ",q_" << i;
+        }
+
+        for (int i = 0; i < model.nv; ++i)
+        {
+          active_spring_3d_csv << ",v_" << i;
+        }
+
+        for (int i = 0; i < model.nq; ++i)
+        {
+          active_spring_3d_csv << ",q_adm_" << i;
+        }
+
+        for (int i = 0; i < model.nv; ++i)
+        {
+          active_spring_3d_csv << ",dq_adm_" << i;
+        }
+
+        for (int i = 0; i < model.nv; ++i)
+        {
+          active_spring_3d_csv << ",ddq_adm_" << i;
+        }
+
+        for (int i = 0; i < model.nv; ++i)
+        {
+          active_spring_3d_csv << ",g_" << i;
+        }
+
+        for (int i = 0; i < model.nv; ++i)
+        {
+          active_spring_3d_csv << ",tau_ext_" << i;
+        }
+
+        for (int i = 0; i < model.nv; ++i)
+        {
+          active_spring_3d_csv << ",tau_active_" << i;
+        }
+
+        for (int i = 0; i < model.nv; ++i)
+        {
+          active_spring_3d_csv << ",tau_cmd_" << i;
+        }
+
+        for (std::size_t i = 0; i < AXIS_NUM; ++i)
+        {
+          active_spring_3d_csv << ",output_torque_" << i;
+        }
+
+        active_spring_3d_csv << "\n";
+        active_spring_3d_csv_initialized = true;
+
+        std::cout << "[runActiveSpring3DMode] CSV 日志文件: "
+                  << csv_path << std::endl;
+      }
+      else
+      {
+        std::cerr << "[runActiveSpring3DMode] 无法创建 CSV 日志文件: "
+                  << csv_path << std::endl;
+      }
+    }
+
+    active_spring_3d_csv_counter++;
+
+    // 约 30 Hz 写入 CSV，避免 90 Hz 下日志过大。
+    if (active_spring_3d_csv_initialized && (active_spring_3d_csv_counter % 3 == 0))
+    {
+      auto now_sys = std::chrono::system_clock::now();
+      auto now_steady = std::chrono::steady_clock::now();
+
+      double t =
+          std::chrono::duration<double>(now_steady - active_spring_3d_t0).count();
+
+      auto now_time_t = std::chrono::system_clock::to_time_t(now_sys);
+      auto ms =
+          std::chrono::duration_cast<std::chrono::milliseconds>(
+              now_sys.time_since_epoch()) %
+          1000;
+
+      char time_str[64];
+      std::strftime(
+          time_str,
+          sizeof(time_str),
+          "%Y-%m-%d %H:%M:%S",
+          std::localtime(&now_time_t));
+
+      active_spring_3d_csv
+          << time_str << "."
+          << std::setfill('0') << std::setw(3) << ms.count()
+          << std::setfill(' ')
+          << "," << t
+          << "," << p_left_arm.x()
+          << "," << p_left_arm.y()
+          << "," << p_left_arm.z()
+          << "," << p_right_arm.x()
+          << "," << p_right_arm.y()
+          << "," << p_right_arm.z()
+          << "," << p_left_hand.x()
+          << "," << p_left_hand.y()
+          << "," << p_left_hand.z()
+          << "," << p_right_hand.x()
+          << "," << p_right_hand.y()
+          << "," << p_right_hand.z()
+          << "," << delta_arm.x()
+          << "," << delta_arm.y()
+          << "," << delta_arm.z()
+          << "," << d
+          << "," << active_spring_3d_d0
+          << "," << e_raw
+          << "," << e_before_limit
+          << "," << e
+          << "," << d_dot_raw
+          << "," << d_dot_used
+          << "," << d_jump
+          << "," << (spring_valid ? 1 : 0)
+          << "," << active_spring_3d_gain
+          << "," << active_spring_3d_fault_counter
+          << "," << F_left_world.x()
+          << "," << F_left_world.y()
+          << "," << F_left_world.z()
+          << "," << F_right_world.x()
+          << "," << F_right_world.y()
+          << "," << F_right_world.z()
+          << "," << F_left_sensor_z
+          << "," << F_right_sensor_z
+          << "," << left_arm_real.fx
+          << "," << left_arm_real.fy
+          << "," << left_arm_real.fz
+          << "," << left_arm_total.fx
+          << "," << left_arm_total.fy
+          << "," << left_arm_total.fz
+          << "," << right_arm_real.fx
+          << "," << right_arm_real.fy
+          << "," << right_arm_real.fz
+          << "," << right_arm_total.fx
+          << "," << right_arm_total.fy
+          << "," << right_arm_total.fz;
+
+      for (int i = 0; i < q.size(); ++i)
+      {
+        active_spring_3d_csv << "," << q(i);
+      }
+
+      for (int i = 0; i < v.size(); ++i)
+      {
+        active_spring_3d_csv << "," << v(i);
+      }
+
+      for (int i = 0; i < active_spring_3d_q_adm.size(); ++i)
+      {
+        active_spring_3d_csv << "," << active_spring_3d_q_adm(i);
+      }
+
+      for (int i = 0; i < active_spring_3d_dq_adm.size(); ++i)
+      {
+        active_spring_3d_csv << "," << active_spring_3d_dq_adm(i);
+      }
+
+      for (int i = 0; i < ddq_adm.size(); ++i)
+      {
+        active_spring_3d_csv << "," << ddq_adm(i);
+      }
+
+      for (int i = 0; i < g.size(); ++i)
+      {
+        active_spring_3d_csv << "," << g(i);
+      }
+
+      for (int i = 0; i < tau_ext.size(); ++i)
+      {
+        active_spring_3d_csv << "," << tau_ext(i);
+      }
+
+      for (int i = 0; i < tau_active.size(); ++i)
+      {
+        active_spring_3d_csv << "," << tau_active(i);
+      }
+
+      for (int i = 0; i < tau_cmd.size(); ++i)
+      {
+        active_spring_3d_csv << "," << tau_cmd(i);
+      }
+
+      for (std::size_t i = 0; i < AXIS_NUM; ++i)
+      {
+        active_spring_3d_csv << "," << output.target_torque[i];
+      }
+
+      active_spring_3d_csv << "\n";
+      active_spring_3d_csv.flush();
     }
   }
 

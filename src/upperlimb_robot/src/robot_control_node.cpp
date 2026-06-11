@@ -23,6 +23,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include "sensor_msgs/msg/joint_state.hpp"
 
@@ -325,6 +326,7 @@ private:
     case upperlimb_robot::MODE_MIRROR:
     case upperlimb_robot::MODE_BILATERAL_ACTIVE:
     case upperlimb_robot::MODE_ACTIVE_SPRING:
+    case upperlimb_robot::MODE_ACTIVE_SPRING_3D:
       clearAllTorqueCommands();
       stopAllAxesMotionOnly();
       restoreAllAxesToPositionMode();
@@ -510,6 +512,28 @@ private:
       break;
     }
 
+    case upperlimb_robot::MODE_ACTIVE_SPRING_3D:
+    {
+      const bool bias_ok = captureForceSensorBias();
+      upperlimb_robot::resetActiveSpring3DMode();
+
+      const bool torque_ok = enterDualArmTorqueModeOnce();
+
+      if (bias_ok && torque_ok)
+      {
+        RCLCPP_INFO(this->get_logger(), "进入空间主动弹簧模式：已记录六维力零偏，已重置空间弹簧状态，14 个主动轴已切到扭矩模式");
+      }
+      else
+      {
+        RCLCPP_WARN(
+            this->get_logger(),
+            "进入空间主动弹簧模式：bias_ok=%d, torque_ok=%d，请检查传感器有效性和轴模式切换",
+            static_cast<int>(bias_ok),
+            static_cast<int>(torque_ok));
+      }
+      break;
+    }
+
     case upperlimb_robot::MODE_ACTIVE_MIRROR:
     {
       const bool ok = captureForceSensorBias();
@@ -616,7 +640,8 @@ private:
   {
     return mode == upperlimb_robot::MODE_BILATERAL_ZERO_FORCE ||
            mode == upperlimb_robot::MODE_BILATERAL_ACTIVE ||
-           mode == upperlimb_robot::MODE_ACTIVE_SPRING;
+           mode == upperlimb_robot::MODE_ACTIVE_SPRING ||
+           mode == upperlimb_robot::MODE_ACTIVE_SPRING_3D;
   }
 
   std::array<std::size_t, 14> dualArmActiveTorqueIndices() const
@@ -921,11 +946,38 @@ private:
     return out;
   }
 
-  // ===================== 传感器状态转成 24 维数组 =====================
-  std::array<double, 24> buildForceSensorArray(
+  // ===================== 虚拟弹簧调试量缓存 =====================
+  void updateSpringDebugFromOutput(const upperlimb_robot::ControlOutputCache &output)
+  {
+    std::lock_guard<std::mutex> lock(spring_debug_mutex_);
+
+    if (!output.spring_debug_valid)
+    {
+      latest_spring_debug_.fill(0.0);
+      return;
+    }
+
+    latest_spring_debug_[0] = static_cast<double>(output.spring_debug_mode);
+    latest_spring_debug_[1] = output.spring_debug_valid ? 1.0 : 0.0;
+    latest_spring_debug_[2] = output.spring_e_x;
+    latest_spring_debug_[3] = output.spring_e_y;
+    latest_spring_debug_[4] = output.spring_e_z;
+    latest_spring_debug_[5] = output.spring_e_norm;
+    latest_spring_debug_[6] = output.spring_f_x;
+    latest_spring_debug_[7] = output.spring_f_y;
+    latest_spring_debug_[8] = output.spring_f_z;
+    latest_spring_debug_[9] = output.spring_f_norm;
+  }
+
+  // ===================== 传感器状态转成数组 =====================
+  // 前 24 维仍为四个六维力传感器。
+  // 第 24~33 维为虚拟弹簧调试量：
+  // [mode, valid, ex, ey, ez, |e|, Fx, Fy, Fz, |F|]
+  std::vector<double> buildForceSensorArray(
       const upperlimb_robot::SensorStateCache &sensor_state) const
   {
-    std::array<double, 24> out{};
+    std::vector<double> out;
+    out.reserve(34);
 
     const auto right_hand = subtractBias(
         sensor_state.sensor[upperlimb_robot::SENSOR_RIGHT_HAND],
@@ -943,22 +995,28 @@ private:
         sensor_state.sensor[upperlimb_robot::SENSOR_LEFT_ARM],
         sensor_state.bias[upperlimb_robot::SENSOR_LEFT_ARM]);
 
-    std::size_t idx = 0;
-
     auto fill_one = [&](const upperlimb_robot::ForceSensorData &s)
     {
-      out[idx++] = s.fx;
-      out[idx++] = s.fy;
-      out[idx++] = s.fz;
-      out[idx++] = s.mx;
-      out[idx++] = s.my;
-      out[idx++] = s.mz;
+      out.push_back(s.fx);
+      out.push_back(s.fy);
+      out.push_back(s.fz);
+      out.push_back(s.mx);
+      out.push_back(s.my);
+      out.push_back(s.mz);
     };
 
     fill_one(right_hand);
     fill_one(right_arm);
     fill_one(left_hand);
     fill_one(left_arm);
+
+    {
+      std::lock_guard<std::mutex> lock(spring_debug_mutex_);
+      for (double v : latest_spring_debug_)
+      {
+        out.push_back(v);
+      }
+    }
 
     return out;
   }
@@ -1191,6 +1249,8 @@ private:
       upperlimb_robot::ControlOutputCache output =
           computeControlOutput(mode, local_state, local_sensor_state);
 
+      updateSpringDebugFromOutput(output);
+
       if (output.valid)
       {
         applyControlOutput(output);
@@ -1298,9 +1358,13 @@ private:
     case upperlimb_robot::MODE_BILATERAL_ACTIVE:
       upperlimb_robot::runBilateralActiveMode(state, sensor_state, output);
       break;
-      // 双手虚拟弹簧主动模式
+      // 双手 X 向虚拟弹簧主动模式
     case upperlimb_robot::MODE_ACTIVE_SPRING:
       upperlimb_robot::runActiveSpringMode(state, sensor_state, output);
+      break;
+      // 双手空间虚拟弹簧主动模式
+    case upperlimb_robot::MODE_ACTIVE_SPRING_3D:
+      upperlimb_robot::runActiveSpring3DMode(state, sensor_state, output);
       break;
     case upperlimb_robot::MODE_IDLE:
     default:
@@ -2137,6 +2201,9 @@ private:
 
   std::mutex sensor_mutex_;
   upperlimb_robot::SensorStateCache latest_sensor_state_;
+
+  mutable std::mutex spring_debug_mutex_;
+  std::array<double, 10> latest_spring_debug_{};
 
   // GTN/EtherCAT 底层库互斥锁：状态采集线程和控制线程必须串行访问控制卡库。
   std::mutex gtn_mutex_;
