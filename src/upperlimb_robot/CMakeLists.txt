@@ -46,9 +46,42 @@ set(GOOGOLTECH_LIBS
   ${GOOGOLTECH_LIB_DIR}/libecfg_parser.so
 )
 
+add_library(upperlimb_control_algorithms SHARED
+  src/control_algorithms.cpp
+)
+
+target_include_directories(upperlimb_control_algorithms PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${EIGEN3_INCLUDE_DIRS}
+)
+
+target_compile_features(upperlimb_control_algorithms PUBLIC cxx_std_17)
+
+ament_target_dependencies(upperlimb_control_algorithms
+  ament_index_cpp
+)
+
+target_link_libraries(upperlimb_control_algorithms
+  pinocchio::pinocchio
+  Eigen3::Eigen
+)
+
+add_library(upperlimb_experiment_control INTERFACE)
+
+target_include_directories(upperlimb_experiment_control INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+target_compile_features(upperlimb_experiment_control INTERFACE cxx_std_17)
+target_link_libraries(upperlimb_experiment_control
+  INTERFACE
+  upperlimb_control_algorithms
+)
+
 add_executable(robot_control_node
   src/robot_control_node.cpp
-  src/control_algorithms.cpp
 )
 
 target_include_directories(robot_control_node PUBLIC
@@ -72,19 +105,32 @@ rosidl_get_typesupport_target(cpp_typesupport_target
 
 target_link_libraries(robot_control_node
   "${cpp_typesupport_target}"
+  upperlimb_experiment_control
   ${GOOGOLTECH_LIBS}
-  pinocchio::pinocchio
-  Eigen3::Eigen
 )
 
 install(TARGETS
+  upperlimb_control_algorithms
+  upperlimb_experiment_control
   robot_control_node
-  DESTINATION lib/${PROJECT_NAME}
+  EXPORT upperlimb_robot_targets
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+  INCLUDES DESTINATION include
 )
 
 install(
   DIRECTORY include/
   DESTINATION include/
+)
+
+ament_export_targets(upperlimb_robot_targets HAS_LIBRARY_TARGET)
+ament_export_dependencies(ament_index_cpp Eigen3 pinocchio)
+
+install(
+  EXPORT upperlimb_robot_targets
+  DESTINATION share/${PROJECT_NAME}/cmake
 )
 
 install(

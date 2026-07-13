@@ -1,4 +1,5 @@
 #include "upperlimb_robot/control_algorithms.hpp"
+#include "upperlimb_robot/experiment_control.hpp"
 
 #include <cstdlib>
 #include <iostream>

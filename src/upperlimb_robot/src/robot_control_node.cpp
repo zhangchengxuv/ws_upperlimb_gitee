@@ -10,10 +10,12 @@
 
 #include "upperlimb_robot/gxn.h"
 #include "upperlimb_robot/control_algorithms.hpp"
+#include "upperlimb_robot/experiment_control.hpp"
 
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <cctype>
 #include <cmath>
 #include <csignal>
 #include <cstdio>
@@ -71,6 +73,14 @@ public:
   RobotControlNode() : Node("robot_control_node")
   {
     RCLCPP_INFO(this->get_logger(), "机器人硬件控制节点启动");
+
+    const std::string spring_level_param =
+        this->declare_parameter<std::string>("spring_experiment.level", "low");
+    experiment_spring_level_ = parseExperimentSpringLevel(spring_level_param);
+    RCLCPP_INFO(
+        this->get_logger(),
+        "弹簧刚度实验等级参数 spring_experiment.level=%s",
+        spring_level_param.c_str());
 
     control_command_sub_ =
         this->create_subscription<upperlimb_robot::msg::ControlCommand>(
@@ -208,6 +218,33 @@ private:
     return fn();
   }
 
+  upperlimb_robot::experiment::SpringLevel parseExperimentSpringLevel(
+      std::string level) const
+  {
+    std::transform(
+        level.begin(),
+        level.end(),
+        level.begin(),
+        [](unsigned char c)
+        {
+          return static_cast<char>(std::tolower(c));
+        });
+
+    if (level == "medium")
+    {
+      return upperlimb_robot::experiment::SpringLevel::Medium;
+    }
+    if (level == "high")
+    {
+      return upperlimb_robot::experiment::SpringLevel::High;
+    }
+    if (level == "off")
+    {
+      return upperlimb_robot::experiment::SpringLevel::Off;
+    }
+    return upperlimb_robot::experiment::SpringLevel::Low;
+  }
+
   // ===================== 模式进入失败回退 =====================
   //
   // onModeEnter() 内部不能直接修改 applied_mode_，但可以请求状态机回退。
@@ -313,6 +350,12 @@ private:
   {
     (void)new_mode;
 
+    if (old_mode == upperlimb_robot::MODE_EXPERIMENT_SPRING_STIFFNESS)
+    {
+      experiment_control_.stop();
+      experiment_control_.reset();
+    }
+
     switch (old_mode)
     {
 
@@ -327,6 +370,7 @@ private:
     case upperlimb_robot::MODE_BILATERAL_ACTIVE:
     case upperlimb_robot::MODE_ACTIVE_SPRING:
     case upperlimb_robot::MODE_ACTIVE_SPRING_3D:
+    case upperlimb_robot::MODE_EXPERIMENT_SPRING_STIFFNESS:
       clearAllTorqueCommands();
       stopAllAxesMotionOnly();
       restoreAllAxesToPositionMode();
@@ -534,6 +578,45 @@ private:
       break;
     }
 
+    case upperlimb_robot::MODE_EXPERIMENT_SPRING_STIFFNESS:
+    {
+      const bool bias_ok = captureForceSensorBias();
+
+      experiment_control_.reset();
+      experiment_control_.setExperimentMode(
+          upperlimb_robot::experiment::ExperimentMode::SpringStiffness);
+      experiment_control_.setSpringLevel(experiment_spring_level_);
+
+      // 当前 ControlCommand 只有模式号，没有独立 start 命令。
+      // 因此进入本实验模式时启动一次阶梯轨迹；退出模式会 stop/reset。
+      experiment_control_.start();
+
+      const bool torque_ok = enterDualArmTorqueModeOnce();
+
+      if (bias_ok && torque_ok)
+      {
+        RCLCPP_INFO(
+            this->get_logger(),
+            "进入弹簧刚度实验模式：已记录六维力零偏，14 个主动轴已切到扭矩模式");
+      }
+      else
+      {
+        RCLCPP_WARN(
+            this->get_logger(),
+            "进入弹簧刚度实验模式失败：bias_ok=%d, torque_ok=%d；退回 Idle",
+            static_cast<int>(bias_ok),
+            static_cast<int>(torque_ok));
+
+        experiment_control_.stop();
+        experiment_control_.reset();
+        clearDualArmTorqueCommandsNoModeSwitch();
+        stopAllAxesMotionOnly();
+        restoreAllAxesToPositionMode();
+        requestModeEnterFallback(upperlimb_robot::MODE_IDLE);
+      }
+      break;
+    }
+
     case upperlimb_robot::MODE_ACTIVE_MIRROR:
     {
       const bool ok = captureForceSensorBias();
@@ -641,7 +724,8 @@ private:
     return mode == upperlimb_robot::MODE_BILATERAL_ZERO_FORCE ||
            mode == upperlimb_robot::MODE_BILATERAL_ACTIVE ||
            mode == upperlimb_robot::MODE_ACTIVE_SPRING ||
-           mode == upperlimb_robot::MODE_ACTIVE_SPRING_3D;
+           mode == upperlimb_robot::MODE_ACTIVE_SPRING_3D ||
+           mode == upperlimb_robot::MODE_EXPERIMENT_SPRING_STIFFNESS;
   }
 
   std::array<std::size_t, 14> dualArmActiveTorqueIndices() const
@@ -1245,9 +1329,17 @@ private:
       updateModeStateMachine();
 
       const int mode = applied_mode_;
+      double actual_dt_s = 1.0 / static_cast<double>(control_hz);
+      if (last_control_time_valid_)
+      {
+        actual_dt_s =
+            std::chrono::duration<double>(cycle_start - last_control_time_).count();
+      }
+      last_control_time_ = cycle_start;
+      last_control_time_valid_ = true;
 
       upperlimb_robot::ControlOutputCache output =
-          computeControlOutput(mode, local_state, local_sensor_state);
+          computeControlOutput(mode, local_state, local_sensor_state, actual_dt_s);
 
       updateSpringDebugFromOutput(output);
 
@@ -1300,7 +1392,8 @@ private:
   upperlimb_robot::ControlOutputCache computeControlOutput(
       int mode,
       const upperlimb_robot::MotorStateCache &state,
-      const upperlimb_robot::SensorStateCache &sensor_state)
+      const upperlimb_robot::SensorStateCache &sensor_state,
+      double actual_dt_s)
   {
     upperlimb_robot::ControlOutputCache output{};
 
@@ -1365,6 +1458,10 @@ private:
       // 双手空间虚拟弹簧主动模式
     case upperlimb_robot::MODE_ACTIVE_SPRING_3D:
       upperlimb_robot::runActiveSpring3DMode(state, sensor_state, output);
+      break;
+      // 毕设弹簧刚度实验：左右臂都保持 14 轴扭矩模式。
+    case upperlimb_robot::MODE_EXPERIMENT_SPRING_STIFFNESS:
+      experiment_control_.run(state, sensor_state, actual_dt_s, output);
       break;
     case upperlimb_robot::MODE_IDLE:
     default:
@@ -2184,6 +2281,9 @@ private:
   std::thread state_read_thread_;
   std::thread control_thread_;
 
+  std::chrono::steady_clock::time_point last_control_time_{};
+  bool last_control_time_valid_ = false;
+
   std::atomic<int> current_mode_{upperlimb_robot::MODE_IDLE};
   int applied_mode_{upperlimb_robot::MODE_IDLE};
 
@@ -2204,6 +2304,10 @@ private:
 
   mutable std::mutex spring_debug_mutex_;
   std::array<double, 10> latest_spring_debug_{};
+
+  upperlimb_robot::experiment::ExperimentControl experiment_control_;
+  upperlimb_robot::experiment::SpringLevel experiment_spring_level_{
+      upperlimb_robot::experiment::SpringLevel::Low};
 
   // GTN/EtherCAT 底层库互斥锁：状态采集线程和控制线程必须串行访问控制卡库。
   std::mutex gtn_mutex_;

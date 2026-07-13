@@ -19,6 +19,8 @@
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>ament_index_cpp</depend>
+  <depend>Eigen3</depend>
+  <depend>pinocchio</depend>
 
   <!-- 4. 执行依赖 -->
   <exec_depend>rosidl_default_runtime</exec_depend>

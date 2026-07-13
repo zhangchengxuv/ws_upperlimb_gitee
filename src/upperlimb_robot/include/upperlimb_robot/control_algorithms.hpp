@@ -75,6 +75,9 @@ namespace upperlimb_robot
     // 双手空间虚拟弹簧主动模式
     MODE_ACTIVE_SPRING_3D = 15,
 
+    // 毕设虚拟弹簧刚度实验模式
+    MODE_EXPERIMENT_SPRING_STIFFNESS = 16,
+
   };
 
   // ===================== 电机状态缓存 =====================
