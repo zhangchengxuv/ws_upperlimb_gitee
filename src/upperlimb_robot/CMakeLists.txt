@@ -16,7 +16,7 @@ find_package(std_msgs REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 
 # ========================================
-# ROS2 Interfaces 
+# ROS2 Interfaces
 # ========================================
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ControlCommand.msg"
@@ -67,19 +67,6 @@ target_link_libraries(upperlimb_control_algorithms
   Eigen3::Eigen
 )
 
-add_library(upperlimb_experiment_control INTERFACE)
-
-target_include_directories(upperlimb_experiment_control INTERFACE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-)
-
-target_compile_features(upperlimb_experiment_control INTERFACE cxx_std_17)
-target_link_libraries(upperlimb_experiment_control
-  INTERFACE
-  upperlimb_control_algorithms
-)
-
 add_executable(robot_control_node
   src/robot_control_node.cpp
 )
@@ -105,13 +92,12 @@ rosidl_get_typesupport_target(cpp_typesupport_target
 
 target_link_libraries(robot_control_node
   "${cpp_typesupport_target}"
-  upperlimb_experiment_control
+  upperlimb_control_algorithms
   ${GOOGOLTECH_LIBS}
 )
 
 install(TARGETS
   upperlimb_control_algorithms
-  upperlimb_experiment_control
   robot_control_node
   EXPORT upperlimb_robot_targets
   ARCHIVE DESTINATION lib

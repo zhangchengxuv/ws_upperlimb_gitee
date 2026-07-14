@@ -10,7 +10,6 @@
 
 #include "upperlimb_robot/gxn.h"
 #include "upperlimb_robot/control_algorithms.hpp"
-#include "upperlimb_robot/experiment_control.hpp"
 
 #include <array>
 #include <atomic>

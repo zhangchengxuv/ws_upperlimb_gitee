@@ -3,6 +3,15 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
+#include <memory>
+#include <string>
+
+#include <Eigen/Core>
+#include <Eigen/Dense>
+
+#include <pinocchio/multibody/data.hpp>
+#include <pinocchio/multibody/model.hpp>
 
 namespace upperlimb_robot
 {
@@ -313,5 +322,231 @@ namespace upperlimb_robot
 
   // 双手空间虚拟弹簧主动模式
   void runActiveSpring3DMode(const MotorStateCache &state, const SensorStateCache &sensor_state, ControlOutputCache &output);
+
+  namespace experiment
+  {
+
+    // ===================== 毕设刚度实验模式 =====================
+    //
+    // 这个小实验名称：SpringStiffnessExperiment
+    // 中文可称为“低中高虚拟弹簧刚度实验”。
+    //
+    // 注意：
+    // 1. 这里只声明实验控制类；
+    // 2. 具体算法实现放在 control_algorithms.cpp；
+    // 3. 底层控制循环、电机输出、安全限幅仍沿用 RobotControlNode。
+
+    enum class ExperimentMode
+    {
+      Idle,
+      ConstantTorque,
+      SpringStiffness
+    };
+
+    enum class SpringLevel
+    {
+      Off,
+      Low,
+      Medium,
+      High
+    };
+
+    enum class TrajectoryPhase
+    {
+      Ready,
+      Moving,
+      Holding,
+      Finished
+    };
+
+    struct SpringExperimentConfig
+    {
+      // 刚度单位 N/m。默认值只是软件初始值，未经过实机安全验证。
+      double k_low{100.0};
+      double k_medium{300.0};
+      double k_high{500.0};
+
+      // 左臂任务空间 PD，单位分别为 N/m 和 N*s/m。
+      double left_kp_x{300.0};
+      double left_kd_x{25.0};
+      double left_kp_yz{60.0};
+      double left_kd_yz{8.0};
+
+      // 关节阻尼，单位 Nm/(rad/s)，只作为小阻尼。
+      double joint_damping{0.35};
+
+      Eigen::Vector3d direction_world{1.0, 0.0, 0.0};
+
+      std::array<double, 7> step_displacements{
+          0.0,
+          0.005,
+          0.010,
+          0.015,
+          0.010,
+          0.005,
+          0.0};
+
+      double move_speed{0.003};
+      double ready_time{1.0};
+      double hold_time{2.0};
+      double stiffness_ramp_time{1.0};
+
+      double extension_limit{0.015};
+      double spring_force_limit{10.0};
+
+      double left_task_force_limit{12.0};
+      double left_tracking_error_limit{0.01};
+      double right_drift_limit{0.002};
+
+      // Holding 阶段只有在实际位置和速度稳定后才开始计时。
+      double position_tolerance{0.001};
+      double velocity_threshold{0.002};
+
+      double dt_min{0.001};
+      double dt_max{0.05};
+    };
+
+    class ExperimentControl
+    {
+    public:
+      ExperimentControl() = default;
+
+      void run(const MotorStateCache &state,
+               const SensorStateCache &sensor_state,
+               double dt_s,
+               ControlOutputCache &output);
+
+      void setExperimentMode(ExperimentMode mode);
+      void setSpringLevel(SpringLevel level);
+      void start();
+      void stop();
+      void reset();
+
+      void setConstantTorque(std::size_t joint_index, double torque_nm);
+
+      double selectedStiffness() const;
+
+    private:
+      struct RobotKinematics
+      {
+        Eigen::VectorXd q;
+        Eigen::VectorXd v;
+        Eigen::Vector3d p_left{Eigen::Vector3d::Zero()};
+        Eigen::Vector3d p_right{Eigen::Vector3d::Zero()};
+        Eigen::Vector3d v_left{Eigen::Vector3d::Zero()};
+        Eigen::Vector3d v_right{Eigen::Vector3d::Zero()};
+        Eigen::MatrixXd J_left_lwa;
+        Eigen::MatrixXd J_right_local;
+        Eigen::VectorXd gravity;
+        Eigen::Matrix3d right_rotation{Eigen::Matrix3d::Identity()};
+      };
+
+      static double clampBetween(double value, double lo, double hi);
+      static double clampAbs(double value, double limit);
+      static bool finiteVec3(const Eigen::Vector3d &v);
+      static bool finiteMatrix(const Eigen::MatrixXd &m);
+      static Eigen::Vector3d limitNorm(const Eigen::Vector3d &v, double limit);
+
+      double validDt(double dt_s) const;
+      bool normalizedAxis(Eigen::Vector3d &axis) const;
+      bool checkConfig();
+
+      bool initPinocchioOnce();
+      bool loadJointIndex(const std::string &joint_name, int &q_id, int &v_id);
+      bool readRobotState(const MotorStateCache &state, RobotKinematics &kin);
+      void initializeExperiment(const RobotKinematics &kin);
+
+      void updateTrajectory(double dt,
+                            const Eigen::Vector3d &axis_world,
+                            const RobotKinematics &kin);
+      void updateStiffness(double dt);
+
+      Eigen::VectorXd computeLeftTrackingTorque(
+          const RobotKinematics &kin,
+          const Eigen::Vector3d &axis_world);
+
+      Eigen::VectorXd computeRightSpringTorque(
+          const RobotKinematics &kin,
+          const Eigen::Vector3d &axis_world,
+          double &extension,
+          double &spring_force_scalar);
+
+      bool writeTorqueOutput(const RobotKinematics &kin,
+                             const Eigen::VectorXd &tau_left_track,
+                             const Eigen::VectorXd &tau_right_spring,
+                             ControlOutputCache &output);
+      void writeZeroTorqueOutput(ControlOutputCache &output);
+
+      double measuredRightAxialForce(const SensorStateCache &sensor_state,
+                                     const RobotKinematics &kin,
+                                     const Eigen::Vector3d &axis_world) const;
+
+      void writeLog(double dt,
+                    const RobotKinematics &kin,
+                    double extension,
+                    double theoretical_right_axial_force,
+                    double measured_right_axial_force,
+                    double right_drift,
+                    bool torque_saturated);
+      void openLogFile();
+
+      const char *springLevelName() const;
+      const char *trajectoryPhaseName() const;
+      void setSafeFault(const char *message);
+
+      void runSpringStiffnessExperiment(const MotorStateCache &state,
+                                        const SensorStateCache &sensor_state,
+                                        double dt_s,
+                                        ControlOutputCache &output);
+      void runConstantTorqueExperiment(ControlOutputCache &output);
+      void runIdleExperiment(ControlOutputCache &output);
+
+      ExperimentMode mode_{ExperimentMode::Idle};
+      SpringLevel spring_level_{SpringLevel::Off};
+      TrajectoryPhase phase_{TrajectoryPhase::Ready};
+      SpringExperimentConfig config_;
+
+      bool started_{false};
+      bool initialized_{false};
+      bool fault_{false};
+
+      std::size_t step_index_{0};
+
+      double phase_time_{0.0};
+      double current_stiffness_{0.0};
+
+      Eigen::Vector3d initial_left_position_{Eigen::Vector3d::Zero()};
+      Eigen::Vector3d initial_right_position_{Eigen::Vector3d::Zero()};
+      Eigen::Vector3d initial_relative_position_{Eigen::Vector3d::Zero()};
+      Eigen::Vector3d target_left_position_{Eigen::Vector3d::Zero()};
+      Eigen::Vector3d target_left_velocity_{Eigen::Vector3d::Zero()};
+
+      std::size_t torque_joint_index_{0};
+      double torque_nm_{0.0};
+      bool constant_torque_enabled_{false};
+
+      bool pin_initialized_{false};
+      bool pin_init_failed_{false};
+      pinocchio::Model model_;
+      std::unique_ptr<pinocchio::Data> data_;
+      pinocchio::FrameIndex left_frame_id_{0};
+      pinocchio::FrameIndex right_frame_id_{0};
+
+      static constexpr std::array<std::size_t, 7> left_ctrl_id_ = {
+          10, 11, 12, 13, 14, 15, 16};
+      static constexpr std::array<std::size_t, 7> right_ctrl_id_ = {
+          0, 1, 2, 3, 4, 5, 6};
+
+      std::array<int, 7> left_q_id_ = {-1, -1, -1, -1, -1, -1, -1};
+      std::array<int, 7> left_v_id_ = {-1, -1, -1, -1, -1, -1, -1};
+      std::array<int, 7> right_q_id_ = {-1, -1, -1, -1, -1, -1, -1};
+      std::array<int, 7> right_v_id_ = {-1, -1, -1, -1, -1, -1, -1};
+
+      std::ofstream csv_;
+      bool csv_initialized_{false};
+      std::size_t csv_row_count_{0};
+    };
+
+  } // namespace experiment
 
 } // namespace upperlimb_robot
