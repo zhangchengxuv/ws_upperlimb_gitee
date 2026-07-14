@@ -334,7 +334,9 @@ namespace upperlimb_robot
     // 注意：
     // 1. 这里只声明实验控制类；
     // 2. 具体算法实现放在 control_algorithms.cpp；
-    // 3. 底层控制循环、电机输出、安全限幅仍沿用 RobotControlNode。
+    // 3. 底层控制循环、电机输出、安全限幅仍沿用 RobotControlNode；
+    // 4. 本实验只控制14个主动关节：右臂索引0~6、左臂索引10~16；
+    // 5. 每条臂最后三个关节不参与控制：右臂7~9、左臂17~19。
 
     enum class ExperimentMode
     {
@@ -353,9 +355,16 @@ namespace upperlimb_robot
 
     enum class TrajectoryPhase
     {
+      // 保持初始姿态：先等待 ready_time，再完成刚度渐入。
       Ready,
+
+      // 目标位置沿实验轴以受限速度向当前阶梯移动。
       Moving,
+
+      // 到达阶梯后，等待实际位置和速度稳定并保持 hold_time。
       Holding,
+
+      // 最后一阶完成，不自动重启，也不自动切换刚度等级。
       Finished
     };
 
@@ -386,9 +395,16 @@ namespace upperlimb_robot
           0.005,
           0.0};
 
+      // 左臂任务空间目标最大移动速度，单位 m/s。
       double move_speed{0.003};
+
+      // 进入实验后保持 K=0 的静止等待时间，单位 s。
       double ready_time{1.0};
+
+      // 每个阶梯在实际位置/速度稳定后继续保持的时间，单位 s。
       double hold_time{2.0};
+
+      // 所选刚度从0线性渐入、结束或故障后线性渐出的时间，单位 s。
       double stiffness_ramp_time{1.0};
 
       double extension_limit{0.015};
@@ -532,6 +548,7 @@ namespace upperlimb_robot
       pinocchio::FrameIndex left_frame_id_{0};
       pinocchio::FrameIndex right_frame_id_{0};
 
+      // 仅包含14个主动关节。不可控末端索引7~9、17~19不在映射中。
       static constexpr std::array<std::size_t, 7> left_ctrl_id_ = {
           10, 11, 12, 13, 14, 15, 16};
       static constexpr std::array<std::size_t, 7> right_ctrl_id_ = {

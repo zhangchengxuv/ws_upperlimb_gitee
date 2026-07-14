@@ -1350,7 +1350,7 @@ private:
       {
         if (isDualArmTorqueMode(applied_mode_))
         {
-          // 双臂零力 / 双侧主动 / 主动弹簧模式下，算法单帧无效时只清零 PT。
+          // 双臂零力 / 双侧主动 / 主动弹簧 / 刚度实验模式下，算法单帧无效时只清零PT。
           // 不在控制循环中频繁切回位置模式，避免下一帧又切回扭矩模式导致底层报错。
           clearDualArmTorqueCommandsNoModeSwitch();
         }
@@ -1466,6 +1466,33 @@ private:
     default:
       upperlimb_robot::runIdle(state, output);
       break;
+    }
+
+    // ===================== 不可控末端关节输出清理 =====================
+    //
+    // 无论上层哪个算法写入了什么内容，控制总入口返回前都再次清除：
+    // 右臂最后三个关节 -> 控制层索引 7~9
+    // 左臂最后三个关节 -> 控制层索引 17~19
+    //
+    // applyPositionOutput()/applyTorqueOutput() 还会通过 isControlledAxisIndex()
+    // 再过滤一次，因此算法层和执行层形成双重保护。
+    for (std::size_t i = 0; i < upperlimb_robot::AXIS_NUM; ++i)
+    {
+      if (isControlledAxisIndex(i))
+      {
+        continue;
+      }
+
+      output.use_position[i] = false;
+      output.use_velocity[i] = false;
+      output.use_torque[i] = false;
+
+      output.target_position[i] = 0.0;
+      output.target_velocity[i] = 0.0;
+      output.target_torque[i] = 0.0;
+      output.target_acc[i] = 0.0;
+      output.target_dec[i] = 0.0;
+      output.target_smooth_time[i] = 0;
     }
 
     return output;
@@ -1812,7 +1839,7 @@ private:
         continue;
       }
 
-      // 双臂零力 / 双侧主动 / 主动弹簧模式下，算法层只输出 14 个主动轴扭矩。
+      // 双臂零力 / 双侧主动 / 主动弹簧 / 刚度实验模式下，算法层只输出14个主动轴扭矩。
       // 末端 fixed 轴 8~10 / 18~20 不在控制循环内做位置保持、模式读取或 PT 清理，
       // 避免继续触发 SetPos / SetTrapPrm / SetVel / SyncAxisPos 类错误。
       if (dual_arm_torque_mode && output.use_torque[i])
@@ -2028,7 +2055,7 @@ private:
         continue;
       }
 
-      // 双臂零力 / 双侧主动 / 主动弹簧模式下，非 14 个主动扭矩轴完全跳过。
+      // 双臂零力 / 双侧主动 / 主动弹簧 / 刚度实验模式下，非14个主动扭矩轴完全跳过。
       // 不读模式、不清 PT、不切位置模式，避免轴8~10/18~20继续干扰主控制。
       if (dual_arm_torque_mode && !output.use_torque[i])
       {
