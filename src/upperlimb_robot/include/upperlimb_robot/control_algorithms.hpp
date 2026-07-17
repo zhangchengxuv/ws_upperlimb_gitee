@@ -180,6 +180,8 @@ namespace upperlimb_robot
   // 2. 算法层统一使用真实物理量
   // 3. target_torque 的单位是 Nm，不是 raw
   // 4. 正常写法为：output.target_torque[6] = 2.0;（2.0 Nm）
+  // 5. 允许不同轴使用不同控制方式，例如左臂位置模式、右臂扭矩模式；
+  //    但同一个轴不能同时把 use_position 和 use_torque 设为 true。
   //
   struct ControlOutputCache
   {
@@ -375,13 +377,32 @@ namespace upperlimb_robot
       double k_medium{300.0};
       double k_high{500.0};
 
-      // 左臂任务空间 PD，单位分别为 N/m 和 N*s/m。
-      double left_kp_x{300.0};
-      double left_kd_x{25.0};
-      double left_kp_yz{60.0};
-      double left_kd_yz{8.0};
+      // ===================== 左臂位置模式参数 =====================
+      // 左臂不再使用 J^T F 扭矩跟踪，而是使用差分逆运动学生成 joint1~joint7
+      // 的位置目标，再由执行层的位置模式完成运动。
+      //
+      // left_cartesian_kp：笛卡尔位置误差到期望速度的比例，单位 1/s。
+      // left_cartesian_speed_limit：大臂绑缚点最大合成速度，单位 m/s。
+      // left_ik_damping：阻尼最小二乘中的阻尼系数，越大越保守。
+      // left_joint_speed_limit：差分逆运动学输出的单关节最大速度，单位 rad/s。
+      double left_cartesian_kp{2.0};
+      double left_cartesian_speed_limit{0.010};
+      double left_ik_damping{0.03};
+      double left_joint_speed_limit{0.20};
 
-      // 关节阻尼，单位 Nm/(rad/s)，只作为小阻尼。
+      // 关节位置命令保护：
+      // 1. 相对进入实验时的关节角，单关节最多变化约 20 deg；
+      // 2. 位置命令最多领先实际关节约 3 deg，避免目标长期积累后突然追赶。
+      double left_joint_range_limit{0.35};
+      double left_joint_lead_limit{0.0523598776};
+
+      // 发送给 GTN Trap 位置规划器的参数，单位分别为 deg/s、deg/s^2。
+      double left_position_velocity{10.0};
+      double left_position_acc{30.0};
+      double left_position_dec{30.0};
+      short left_position_smooth_time{25};
+
+      // 右臂扭矩模式的小关节阻尼，单位 Nm/(rad/s)。
       double joint_damping{0.35};
 
       Eigen::Vector3d direction_world{1.0, 0.0, 0.0};
@@ -410,8 +431,9 @@ namespace upperlimb_robot
       double extension_limit{0.015};
       double spring_force_limit{10.0};
 
-      double left_task_force_limit{12.0};
-      double left_tracking_error_limit{0.01};
+      // 左侧大臂实际位置与目标位置的最大允许误差，单位 m。
+      // 超过该值后停止轨迹并保持当前位置命令。
+      double left_tracking_error_limit{0.02};
       double right_drift_limit{0.002};
 
       // Holding 阶段只有在实际位置和速度稳定后才开始计时。
@@ -477,21 +499,11 @@ namespace upperlimb_robot
                             const RobotKinematics &kin);
       void updateStiffness(double dt);
 
-      Eigen::VectorXd computeLeftTrackingTorque(
-          const RobotKinematics &kin,
-          const Eigen::Vector3d &axis_world);
-
       Eigen::VectorXd computeRightSpringTorque(
           const RobotKinematics &kin,
           const Eigen::Vector3d &axis_world,
           double &extension,
           double &spring_force_scalar);
-
-      bool writeTorqueOutput(const RobotKinematics &kin,
-                             const Eigen::VectorXd &tau_left_track,
-                             const Eigen::VectorXd &tau_right_spring,
-                             ControlOutputCache &output);
-      void writeZeroTorqueOutput(ControlOutputCache &output);
 
       double measuredRightAxialForce(const SensorStateCache &sensor_state,
                                      const RobotKinematics &kin,
@@ -536,6 +548,11 @@ namespace upperlimb_robot
       Eigen::Vector3d initial_relative_position_{Eigen::Vector3d::Zero()};
       Eigen::Vector3d target_left_position_{Eigen::Vector3d::Zero()};
       Eigen::Vector3d target_left_velocity_{Eigen::Vector3d::Zero()};
+
+      // 左臂位置模式内部目标。
+      // 初始值取进入实验模式时的实际 joint1~joint7 角度，之后由差分逆运动学逐周期更新。
+      std::array<double, 7> initial_left_joint_position_rad_{};
+      std::array<double, 7> left_joint_position_command_rad_{};
 
       std::size_t torque_joint_index_{0};
       double torque_nm_{0.0};

@@ -8859,6 +8859,9 @@ namespace upperlimb_robot
       target_left_position_.setZero();
       target_left_velocity_.setZero();
 
+      initial_left_joint_position_rad_.fill(0.0);
+      left_joint_position_command_rad_.fill(0.0);
+
       torque_joint_index_ = 0;
       torque_nm_ = 0.0;
       constant_torque_enabled_ = false;
@@ -8990,7 +8993,7 @@ namespace upperlimb_robot
     // ===================== 实验参数一致性检查 =====================
     //
     // 检查内容：
-    // 1. 方向、刚度、PD、时间、速度和限幅均为有限数；
+    // 1. 方向、刚度、位置模式、逆运动学、时间、速度和限幅均为有限数；
     // 2. 0 < Low < Medium < High；
     // 3. 最大阶梯位移不超过允许形变量；
     // 4. High 刚度下的最大理论力不超过弹簧力限幅；
@@ -9004,14 +9007,20 @@ namespace upperlimb_robot
         return false;
       }
 
-      const std::array<double, 20> values = {
+      // 统一检查所有 double 参数，避免 NaN/Inf 进入轨迹、逆运动学或力矩计算。
+      const std::array<double, 25> values = {
           config_.k_low,
           config_.k_medium,
           config_.k_high,
-          config_.left_kp_x,
-          config_.left_kd_x,
-          config_.left_kp_yz,
-          config_.left_kd_yz,
+          config_.left_cartesian_kp,
+          config_.left_cartesian_speed_limit,
+          config_.left_ik_damping,
+          config_.left_joint_speed_limit,
+          config_.left_joint_range_limit,
+          config_.left_joint_lead_limit,
+          config_.left_position_velocity,
+          config_.left_position_acc,
+          config_.left_position_dec,
           config_.joint_damping,
           config_.move_speed,
           config_.ready_time,
@@ -9019,12 +9028,12 @@ namespace upperlimb_robot
           config_.stiffness_ramp_time,
           config_.extension_limit,
           config_.spring_force_limit,
-          config_.left_task_force_limit,
           config_.left_tracking_error_limit,
           config_.right_drift_limit,
           config_.position_tolerance,
           config_.velocity_threshold,
-          config_.dt_min};
+          config_.dt_min,
+          config_.dt_max};
 
       for (double value : values)
       {
@@ -9033,12 +9042,6 @@ namespace upperlimb_robot
           setSafeFault("[ExperimentControl] 配置中存在 NaN 或 Inf");
           return false;
         }
-      }
-
-      if (!std::isfinite(config_.dt_max))
-      {
-        setSafeFault("[ExperimentControl] dt_max 非法");
-        return false;
       }
 
       if (!(config_.k_low > 0.0 &&
@@ -9060,15 +9063,12 @@ namespace upperlimb_robot
         max_step = std::max(max_step, std::abs(step));
       }
 
-      // 轨迹要求的最大位移必须处于弹簧形变量有效范围内，
-      // 否则后半段会被 extension_limit 截断，导致标称位移和理论力不再一致。
       if (max_step > config_.extension_limit + 1e-9)
       {
         setSafeFault("[ExperimentControl] 最大阶梯位移超过 extension_limit");
         return false;
       }
 
-      // 弹簧最大理论力由刚度上限和形变量上限共同决定。
       if (config_.k_high * config_.extension_limit >
           config_.spring_force_limit + 1e-9)
       {
@@ -9082,7 +9082,6 @@ namespace upperlimb_robot
           config_.stiffness_ramp_time <= 1e-6 ||
           config_.extension_limit <= 0.0 ||
           config_.spring_force_limit <= 0.0 ||
-          config_.left_task_force_limit <= 0.0 ||
           config_.left_tracking_error_limit <= 0.0 ||
           config_.right_drift_limit <= 0.0 ||
           config_.position_tolerance <= 0.0 ||
@@ -9094,13 +9093,19 @@ namespace upperlimb_robot
         return false;
       }
 
-      if (config_.left_kp_x < 0.0 ||
-          config_.left_kd_x < 0.0 ||
-          config_.left_kp_yz < 0.0 ||
-          config_.left_kd_yz < 0.0 ||
+      if (config_.left_cartesian_kp < 0.0 ||
+          config_.left_cartesian_speed_limit <= 0.0 ||
+          config_.left_ik_damping <= 0.0 ||
+          config_.left_joint_speed_limit <= 0.0 ||
+          config_.left_joint_range_limit <= 0.0 ||
+          config_.left_joint_lead_limit <= 0.0 ||
+          config_.left_position_velocity <= 0.0 ||
+          config_.left_position_acc <= 0.0 ||
+          config_.left_position_dec <= 0.0 ||
+          config_.left_position_smooth_time < 0 ||
           config_.joint_damping < 0.0)
       {
-        setSafeFault("[ExperimentControl] PD 增益或关节阻尼不能为负");
+        setSafeFault("[ExperimentControl] 左臂位置模式参数或右臂阻尼参数非法");
         return false;
       }
 
@@ -9352,9 +9357,18 @@ namespace upperlimb_robot
       initial_right_position_ = kin.p_right;
       initial_relative_position_ = kin.p_left - kin.p_right;
 
-      // 初始目标等于当前实际位置，避免实验启动时发生任务空间目标跳变。
+      // 初始笛卡尔目标等于当前实际位置，避免实验启动时发生目标跳变。
       target_left_position_ = kin.p_left;
       target_left_velocity_.setZero();
+
+      // 左臂位置模式的七个关节目标全部从进入实验时的实际关节角开始。
+      // 因此进入模式后不会先回到预设零位，而是从人工摆好的当前姿态开始运动。
+      for (std::size_t i = 0; i < 7; ++i)
+      {
+        const double q_now = kin.q(left_q_id_[i]);
+        initial_left_joint_position_rad_[i] = q_now;
+        left_joint_position_command_rad_[i] = q_now;
+      }
 
       step_index_ = 0;
       phase_ = TrajectoryPhase::Ready;
@@ -9533,76 +9547,6 @@ namespace upperlimb_robot
       }
     }
 
-    // ===================== 左臂任务空间轨迹跟踪力矩 =====================
-    //
-    // 位置误差和速度误差分别分解为：
-    // 1. 轨迹轴向分量；
-    // 2. 与轨迹轴正交的横向分量。
-    //
-    // 任务空间控制力：
-    // F = Kpx*ep_parallel + Kdx*ev_parallel
-    //   + Kpyz*ep_cross   + Kdyz*ev_cross
-    //
-    // 再通过 LOCAL_WORLD_ALIGNED Jacobian 转换为14维关节力矩：tau=J^T F。
-    Eigen::VectorXd ExperimentControl::computeLeftTrackingTorque(
-        const RobotKinematics &kin,
-        const Eigen::Vector3d &axis_world)
-    {
-      const Eigen::Vector3d position_error =
-          target_left_position_ - kin.p_left;
-      const Eigen::Vector3d velocity_error =
-          target_left_velocity_ - kin.v_left;
-
-      if (!finiteVec3(position_error) || !finiteVec3(velocity_error))
-      {
-        setSafeFault("[ExperimentControl] 左臂任务空间误差非法");
-        return Eigen::VectorXd::Zero(model_.nv);
-      }
-
-      if (position_error.norm() > config_.left_tracking_error_limit)
-      {
-        setSafeFault("[ExperimentControl] 左臂任务空间跟踪误差超限");
-        return Eigen::VectorXd::Zero(model_.nv);
-      }
-
-      const Eigen::Vector3d pos_axis =
-          axis_world * position_error.dot(axis_world);
-      const Eigen::Vector3d vel_axis =
-          axis_world * velocity_error.dot(axis_world);
-
-      const Eigen::Vector3d pos_cross = position_error - pos_axis;
-      const Eigen::Vector3d vel_cross = velocity_error - vel_axis;
-
-      Eigen::Vector3d F_left =
-          config_.left_kp_x * pos_axis +
-          config_.left_kd_x * vel_axis +
-          config_.left_kp_yz * pos_cross +
-          config_.left_kd_yz * vel_cross;
-
-      F_left = limitNorm(F_left, config_.left_task_force_limit);
-
-      if (!finiteVec3(F_left))
-      {
-        setSafeFault("[ExperimentControl] 左臂任务力非法");
-        return Eigen::VectorXd::Zero(model_.nv);
-      }
-
-      pinocchio::Force left_wrench = pinocchio::Force::Zero();
-      left_wrench.linear() = F_left;
-      left_wrench.angular().setZero();
-
-      Eigen::VectorXd tau_left =
-          kin.J_left_lwa.transpose() * left_wrench.toVector();
-
-      if (!tau_left.allFinite())
-      {
-        setSafeFault("[ExperimentControl] 左臂任务空间映射力矩非法");
-        return Eigen::VectorXd::Zero(model_.nv);
-      }
-
-      return tau_left;
-    }
-
     // ===================== 右臂一维虚拟弹簧力矩 =====================
     //
     // 实际形变量使用反馈位置计算，而不是使用左臂目标位移：
@@ -9677,130 +9621,6 @@ namespace upperlimb_robot
       }
 
       return tau_right;
-    }
-
-    // ===================== 合成双臂14个主动关节扭矩 =====================
-    //
-    // 左臂：gravity + task-space tracking torque - joint damping
-    // 右臂：gravity + virtual spring torque        - joint damping
-    //
-    // 只写：
-    // 右臂索引 0~6；左臂索引 10~16。
-    //
-    // 明确不写：
-    // 右臂末端索引 7~9；左臂末端索引 17~19。
-    bool ExperimentControl::writeTorqueOutput(
-        const RobotKinematics &kin,
-        const Eigen::VectorXd &tau_left_track,
-        const Eigen::VectorXd &tau_right_spring,
-        ControlOutputCache &output)
-    {
-      output = ControlOutputCache{};
-
-      if (tau_left_track.size() != model_.nv ||
-          tau_right_spring.size() != model_.nv ||
-          !tau_left_track.allFinite() ||
-          !tau_right_spring.allFinite())
-      {
-        setSafeFault("[ExperimentControl] 计算得到的实验力矩尺寸或数值非法");
-        writeZeroTorqueOutput(output);
-        return false;
-      }
-
-      const std::array<double, 7> torque_limit = {
-          24.0, 20.0, 16.0, 12.0, 12.0, 12.0, 8.0};
-
-      bool torque_saturated = false;
-
-      for (std::size_t i = 0; i < 7; ++i)
-      {
-        const int left_v_id = left_v_id_[i];
-        const int right_v_id = right_v_id_[i];
-
-        const double tau_left =
-            kin.gravity(left_v_id) +
-            tau_left_track(left_v_id) -
-            config_.joint_damping * kin.v(left_v_id);
-
-        const double tau_right =
-            kin.gravity(right_v_id) +
-            tau_right_spring(right_v_id) -
-            config_.joint_damping * kin.v(right_v_id);
-
-        if (!std::isfinite(tau_left) || !std::isfinite(tau_right))
-        {
-          setSafeFault("[ExperimentControl] 最终输出力矩非法");
-          writeZeroTorqueOutput(output);
-          return false;
-        }
-
-        if (std::abs(tau_left) > torque_limit[i] ||
-            std::abs(tau_right) > torque_limit[i])
-        {
-          torque_saturated = true;
-        }
-
-        output.use_torque[left_ctrl_id_[i]] = true;
-        output.target_torque[left_ctrl_id_[i]] =
-            clampAbs(tau_left, torque_limit[i]);
-
-        // 右臂电机输出方向沿用现有双臂模式的整体 -1 修正。
-        output.use_torque[right_ctrl_id_[i]] = true;
-        output.target_torque[right_ctrl_id_[i]] =
-            clampAbs(-tau_right, torque_limit[i]);
-      }
-
-      // 双保险：每条臂最后三个关节所有输出标志和目标值保持清零。
-      // 即使未来有人在本函数前面误写了这些下标，执行到这里也会被清除。
-      constexpr std::array<std::size_t, 6> non_controlled_indices = {
-          7, 8, 9, 17, 18, 19};
-
-      for (const std::size_t index : non_controlled_indices)
-      {
-        output.use_position[index] = false;
-        output.use_velocity[index] = false;
-        output.use_torque[index] = false;
-        output.target_position[index] = 0.0;
-        output.target_velocity[index] = 0.0;
-        output.target_torque[index] = 0.0;
-        output.target_acc[index] = 0.0;
-        output.target_dec[index] = 0.0;
-        output.target_smooth_time[index] = 0;
-      }
-
-      output.valid = true;
-      return torque_saturated;
-    }
-
-    // ===================== 简化零扭矩输出 =====================
-    //
-    // 仅对14个主动关节发送0 Nm；不可控的末端6个关节保持完全不输出。
-    // 该函数用于输入无效、配置错误、未启动和故障后的简化处理。
-    void ExperimentControl::writeZeroTorqueOutput(ControlOutputCache &output)
-    {
-      output = ControlOutputCache{};
-
-      for (std::size_t i = 0; i < 7; ++i)
-      {
-        output.use_torque[left_ctrl_id_[i]] = true;
-        output.target_torque[left_ctrl_id_[i]] = 0.0;
-
-        output.use_torque[right_ctrl_id_[i]] = true;
-        output.target_torque[right_ctrl_id_[i]] = 0.0;
-      }
-
-      // output 已经整体清零；这里再次明确末端6个关节不得产生任何控制请求。
-      constexpr std::array<std::size_t, 6> non_controlled_indices = {
-          7, 8, 9, 17, 18, 19};
-
-      for (const std::size_t index : non_controlled_indices)
-      {
-        output.use_position[index] = false;
-        output.use_velocity[index] = false;
-        output.use_torque[index] = false;
-      }
-
-      output.valid = true;
     }
 
     // ===================== 右侧大臂传感器轴向力 =====================
@@ -9989,90 +9809,121 @@ namespace upperlimb_robot
 
     // ===================== 低/中/高虚拟弹簧刚度实验主流程 =====================
     //
-    // 实验角色：
-    // 1. 左臂：任务空间运动侧，左大臂传感器 frame 沿世界 X 方向做准静态阶梯轨迹；
-    // 2. 右臂：虚拟弹簧输出侧，右大臂绑缚端由外部刚性支架固定；
-    // 3. 每次实验只选择 Low / Medium / High 中的一个刚度等级；
-    // 4. 弹簧形变量使用左右大臂 frame 的实际反馈相对位置计算。
+    // 本实验使用混合控制：
+    // 1. 左臂 joint1~joint7（控制层索引10~16）使用位置模式；
+    // 2. 右臂 joint11~joint17（控制层索引0~6）使用扭矩模式；
+    // 3. 每条臂最后三个关节完全不发送控制命令。
     //
-    // 每个控制周期执行顺序：
-    // 清空输出 -> 检查输入/配置 -> 运动学 -> 初始化零点 -> 检查固定端
-    // -> 更新轨迹和刚度 -> 计算左跟踪力矩/右弹簧力矩 -> 合成14轴输出 -> 记录日志。
+    // 左臂位置目标不是预设零位，而是：
+    // “进入实验模式时的实际关节角 + 差分逆运动学产生的小增量”。
+    // 因此人工摆好初始姿态后进入模式，左臂就从该姿态开始沿世界 X 做阶梯运动。
     void ExperimentControl::runSpringStiffnessExperiment(
         const MotorStateCache &state,
         const SensorStateCache &sensor_state,
         double dt_s,
         ControlOutputCache &output)
     {
-      // 每周期先清空，防止上一控制模式或上一周期的输出标志残留。
-      output = ControlOutputCache{};
+      constexpr double RAD2DEG = 180.0 / 3.14159265358979323846;
 
+      // 每周期先清空，防止上一周期或上一模式的标志残留。
+      output = ControlOutputCache{};
       const double dt = validDt(dt_s);
 
-      // 六维力传感器无效时停止实验，保持当前简化的14轴零扭矩处理。
+      // 简化保持输出：
+      // 左臂保持已有位置命令；如果实验尚未初始化，则保持当前实际关节角。
+      // 右臂保持扭矩模式并发送0 Nm。
+      // 这里使用局部 lambda，避免再增加一个类成员函数。
+      auto write_mixed_hold_output = [&]()
+      {
+        output = ControlOutputCache{};
+
+        for (std::size_t i = 0; i < 7; ++i)
+        {
+          const std::size_t left_index = left_ctrl_id_[i];
+          const std::size_t right_index = right_ctrl_id_[i];
+
+          output.use_position[left_index] = true;
+          output.target_position[left_index] =
+              initialized_
+                  ? left_joint_position_command_rad_[i] * RAD2DEG
+                  : state.position[left_index];
+          output.target_velocity[left_index] = config_.left_position_velocity;
+          output.target_acc[left_index] = config_.left_position_acc;
+          output.target_dec[left_index] = config_.left_position_dec;
+          output.target_smooth_time[left_index] =
+              config_.left_position_smooth_time;
+
+          output.use_torque[right_index] = true;
+          output.target_torque[right_index] = 0.0;
+        }
+
+        // output 整体初始化为0，因此右臂7~9、左臂17~19保持完全不输出。
+        output.valid = true;
+      };
+
+      // 六维力传感器无效时停止实验。
+      // 故障处理保持简单：左臂位置保持，右臂扭矩清零。
       if (!sensor_state.valid)
       {
         setSafeFault("[ExperimentControl] 传感器数据无效");
         updateStiffness(dt);
-        writeZeroTorqueOutput(output);
+        write_mixed_hold_output();
         return;
       }
 
-      // 参数检查和 Pinocchio 初始化失败时不继续计算控制力矩。
+      // 检查配置并初始化双臂 Pinocchio 模型。
       if (!checkConfig() || !initPinocchioOnce())
       {
         updateStiffness(dt);
-        writeZeroTorqueOutput(output);
+        write_mixed_hold_output();
         return;
       }
 
-      // 实验轴默认是世界 +X，并在使用前统一归一化。
       Eigen::Vector3d axis_world;
       if (!normalizedAxis(axis_world))
       {
         setSafeFault("[ExperimentControl] direction_world 归一化失败");
         updateStiffness(dt);
-        writeZeroTorqueOutput(output);
+        write_mixed_hold_output();
         return;
       }
 
-      // 读取14个主动关节，完成 FK、速度、Jacobian 和重力补偿。
+      // 读取14个主动关节，计算左右大臂位置、速度、Jacobian和重力项。
       RobotKinematics kin;
       if (!readRobotState(state, kin))
       {
         updateStiffness(dt);
-        writeZeroTorqueOutput(output);
+        write_mixed_hold_output();
         return;
       }
 
-      // 第一次启动时记录当前实际姿态作为轨迹零点和弹簧自然位置。
-      // 初始化后不直接返回：本周期继续输出重力补偿，避免刚切到扭矩模式时发送0 Nm。
+      // 启动后的第一帧有效状态作为本次实验的起始位姿。
+      // initializeExperiment() 同时记录左臂七个实际关节角，作为位置模式初始目标。
       if (started_ && !initialized_)
       {
         initializeExperiment(kin);
       }
 
-      // 尚未 start() 时没有有效实验零点，保持简化零扭矩输出。
       if (!initialized_)
       {
         updateStiffness(dt);
-        writeZeroTorqueOutput(output);
+        write_mixed_hold_output();
         return;
       }
 
-      // 手动 stop() 后不再执行左臂轨迹和右臂弹簧。
-      // Finished 除外：完成最后一步后仍保持最终姿态，同时让虚拟刚度平滑降到0，
-      // 直到外部切换模式。
+      // 手动 stop 后不再推进轨迹。
+      // Finished 阶段仍持续保持最终位置，并让刚度逐渐降到0。
       if (!started_ && phase_ != TrajectoryPhase::Finished)
       {
         updateStiffness(dt);
-        writeZeroTorqueOutput(output);
+        write_mixed_hold_output();
         return;
       }
 
-      // 右侧是物理固定端；超过允许漂移说明固定条件或机构状态不再满足实验假设。
+      // 右侧大臂绑缚端应由外部支架固定。
       const double right_drift =
           (kin.p_right - initial_right_position_).norm();
+
       if (!std::isfinite(right_drift))
       {
         setSafeFault("[ExperimentControl] 右侧固定端漂移计算非法");
@@ -10082,36 +9933,26 @@ namespace upperlimb_robot
         setSafeFault("[ExperimentControl] 右侧固定端漂移超限");
       }
 
-      // 先推进轨迹阶段，再根据新阶段计算本周期目标刚度。
-      // 本版只调用一次 updateStiffness()，修复原代码每周期重复调用造成刚度渐变过快的问题。
+      // 轨迹目标仍然是笛卡尔空间中的0、5、10、15、10、5、0 mm阶梯。
       updateTrajectory(dt, axis_world, kin);
       updateStiffness(dt);
 
       double extension = 0.0;
       double spring_force_scalar = 0.0;
-
-      Eigen::VectorXd tau_left_track = Eigen::VectorXd::Zero(model_.nv);
       Eigen::VectorXd tau_right_spring = Eigen::VectorXd::Zero(model_.nv);
 
       if (!fault_)
       {
-        // 左臂：任务空间阶梯轨迹跟踪。
-        tau_left_track = computeLeftTrackingTorque(kin, axis_world);
-
-        // 只有左臂计算未触发故障时，才继续计算右臂虚拟弹簧输出。
-        if (!fault_)
-        {
-          tau_right_spring =
-              computeRightSpringTorque(
-                  kin,
-                  axis_world,
-                  extension,
-                  spring_force_scalar);
-        }
+        tau_right_spring =
+            computeRightSpringTorque(
+                kin,
+                axis_world,
+                extension,
+                spring_force_scalar);
       }
       else
       {
-        // 故障后仅为日志计算实际轴向形变量；实验新增力矩保持为0。
+        // 故障后只为日志保留实际形变量，虚拟弹簧力置0。
         const Eigen::Vector3d relative_change =
             (kin.p_left - kin.p_right) - initial_relative_position_;
 
@@ -10125,27 +9966,174 @@ namespace upperlimb_robot
         spring_force_scalar = 0.0;
       }
 
-      // 右侧传感器实测轴向力用于和理论弹簧力比较，不直接参与控制。
+      // ===================== 左臂差分逆运动学 =====================
+      //
+      // 目标：让左大臂传感器 frame 的位置跟踪 target_left_position_。
+      // 不控制姿态，只控制世界坐标下的 X/Y/Z 三维位置。
+      //
+      // 计算步骤：
+      // 1. v_cmd = target_velocity + Kp * position_error；
+      // 2. dq = J^T * (J*J^T + lambda^2*I)^-1 * v_cmd；
+      // 3. 对 dq 限幅后积分成七个关节位置命令。
+      if (!fault_)
+      {
+        const Eigen::Vector3d position_error =
+            target_left_position_ - kin.p_left;
+
+        if (!finiteVec3(position_error))
+        {
+          setSafeFault("[ExperimentControl] 左臂笛卡尔位置误差非法");
+        }
+        else if (position_error.norm() > config_.left_tracking_error_limit)
+        {
+          setSafeFault("[ExperimentControl] 左臂位置模式跟踪误差超限");
+        }
+        else
+        {
+          Eigen::Vector3d cartesian_velocity_command =
+              target_left_velocity_ +
+              config_.left_cartesian_kp * position_error;
+
+          cartesian_velocity_command =
+              limitNorm(
+                  cartesian_velocity_command,
+                  config_.left_cartesian_speed_limit);
+
+          // LOCAL_WORLD_ALIGNED Jacobian 的前三行是 frame 原点的世界坐标线速度。
+          // 这里只抽取左臂七个主动关节对应的列，形成3x7线速度Jacobian。
+          Eigen::Matrix<double, 3, 7> J_left_linear;
+          J_left_linear.setZero();
+
+          for (std::size_t i = 0; i < 7; ++i)
+          {
+            J_left_linear.col(static_cast<int>(i)) =
+                kin.J_left_lwa.block(0, left_v_id_[i], 3, 1);
+          }
+
+          const double lambda2 =
+              config_.left_ik_damping * config_.left_ik_damping;
+
+          const Eigen::Matrix3d damped_matrix =
+              J_left_linear * J_left_linear.transpose() +
+              lambda2 * Eigen::Matrix3d::Identity();
+
+          Eigen::Matrix<double, 7, 1> left_joint_velocity_command =
+              J_left_linear.transpose() *
+              damped_matrix.ldlt().solve(cartesian_velocity_command);
+
+          if (!J_left_linear.allFinite() ||
+              !left_joint_velocity_command.allFinite())
+          {
+            setSafeFault("[ExperimentControl] 左臂差分逆运动学计算非法");
+          }
+          else
+          {
+            // 将关节速度积分为位置目标。
+            // 同时限制：单关节速度、相对进入位姿的总变化、相对实际位置的领先量。
+            for (std::size_t i = 0; i < 7; ++i)
+            {
+              const double dq =
+                  clampAbs(
+                      left_joint_velocity_command(static_cast<int>(i)),
+                      config_.left_joint_speed_limit);
+
+              left_joint_position_command_rad_[i] += dq * dt;
+
+              const double initial_q =
+                  initial_left_joint_position_rad_[i];
+              const double actual_q =
+                  kin.q(left_q_id_[i]);
+
+              left_joint_position_command_rad_[i] =
+                  clampBetween(
+                      left_joint_position_command_rad_[i],
+                      initial_q - config_.left_joint_range_limit,
+                      initial_q + config_.left_joint_range_limit);
+
+              left_joint_position_command_rad_[i] =
+                  clampBetween(
+                      left_joint_position_command_rad_[i],
+                      actual_q - config_.left_joint_lead_limit,
+                      actual_q + config_.left_joint_lead_limit);
+
+              if (!std::isfinite(left_joint_position_command_rad_[i]))
+              {
+                setSafeFault("[ExperimentControl] 左臂关节位置目标非法");
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      // ===================== 写入混合控制输出 =====================
+      // 左臂：位置模式；右臂：扭矩模式。
+      output = ControlOutputCache{};
+
+      for (std::size_t i = 0; i < 7; ++i)
+      {
+        const std::size_t left_index = left_ctrl_id_[i];
+
+        output.use_position[left_index] = true;
+        output.target_position[left_index] =
+            left_joint_position_command_rad_[i] * RAD2DEG;
+        output.target_velocity[left_index] = config_.left_position_velocity;
+        output.target_acc[left_index] = config_.left_position_acc;
+        output.target_dec[left_index] = config_.left_position_dec;
+        output.target_smooth_time[left_index] =
+            config_.left_position_smooth_time;
+      }
+
+      const std::array<double, 7> right_torque_limit = {
+          24.0, 20.0, 16.0, 12.0, 12.0, 12.0, 8.0};
+
+      bool torque_saturated = false;
+
+      for (std::size_t i = 0; i < 7; ++i)
+      {
+        const std::size_t right_index = right_ctrl_id_[i];
+        const int right_v_id = right_v_id_[i];
+
+        double tau_right = 0.0;
+
+        if (!fault_ &&
+            tau_right_spring.size() == model_.nv &&
+            tau_right_spring.allFinite())
+        {
+          tau_right =
+              kin.gravity(right_v_id) +
+              tau_right_spring(right_v_id) -
+              config_.joint_damping * kin.v(right_v_id);
+        }
+
+        if (!std::isfinite(tau_right))
+        {
+          setSafeFault("[ExperimentControl] 右臂最终扭矩非法");
+          tau_right = 0.0;
+        }
+
+        if (std::abs(tau_right) > right_torque_limit[i])
+        {
+          torque_saturated = true;
+        }
+
+        output.use_torque[right_index] = true;
+
+        // 右臂输出方向沿用现有双臂控制中的整体 -1 修正。
+        output.target_torque[right_index] =
+            fault_
+                ? 0.0
+                : clampAbs(-tau_right, right_torque_limit[i]);
+      }
+
+      // 每条臂最后三个关节不在上述两个循环中，因此不会发送位置或扭矩命令。
+      output.valid = true;
+
       const double measured_right_force =
           measuredRightAxialForce(sensor_state, kin, axis_world);
 
-      // spring_force_scalar 是作用在左侧的恢复力；右侧理论力方向相反。
+      // spring_force_scalar 是左侧恢复力；右侧理论轴向力方向相反。
       const double theoretical_right_axial_force = -spring_force_scalar;
-
-      bool torque_saturated = false;
-      if (fault_)
-      {
-        writeZeroTorqueOutput(output);
-      }
-      else
-      {
-        torque_saturated =
-            writeTorqueOutput(
-                kin,
-                tau_left_track,
-                tau_right_spring,
-                output);
-      }
 
       writeLog(dt,
                kin,
@@ -10155,7 +10143,22 @@ namespace upperlimb_robot
                right_drift,
                torque_saturated);
 
-      // GUI 调试量：本实验是一维轴向弹簧，因此使用 spring_debug_mode=1。
+      // 低频打印左侧目标和实际位置，便于确认位置模式是否开始运动。
+      static int debug_counter = 0;
+      if ((debug_counter++ % 25) == 0)
+      {
+        std::cout
+            << "[ExperimentControl][mixed] phase="
+            << trajectoryPhaseName()
+            << " step=" << step_index_
+            << " left_target=" << target_left_position_.transpose()
+            << " left_actual=" << kin.p_left.transpose()
+            << " extension=" << extension
+            << " stiffness=" << current_stiffness_
+            << std::endl;
+      }
+
+      // GUI 调试量：本实验是一维轴向弹簧。
       output.spring_debug_valid = initialized_ && !fault_;
       output.spring_debug_mode = 1;
 
@@ -10204,7 +10207,3 @@ namespace upperlimb_robot
   } // namespace experiment
 
 } // namespace upperlimb_robot
-
-// git pull --tags upperlimb main
-// 修改测试
-// 测试

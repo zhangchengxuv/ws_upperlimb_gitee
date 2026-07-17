@@ -586,29 +586,32 @@ private:
           upperlimb_robot::experiment::ExperimentMode::SpringStiffness);
       experiment_control_.setSpringLevel(experiment_spring_level_);
 
-      // 当前 ControlCommand 只有模式号，没有独立 start 命令。
-      // 因此进入本实验模式时启动一次阶梯轨迹；退出模式会 stop/reset。
-      experiment_control_.start();
+      // 本实验使用混合控制：
+      // 左臂主动关节10~16切到位置模式；右臂主动关节0~6切到扭矩模式。
+      // 两侧最后三个关节7~9、17~19仍然完全不参与控制。
+      const bool mixed_mode_ok = enterSpringExperimentMixedModeOnce();
 
-      const bool torque_ok = enterDualArmTorqueModeOnce();
-
-      if (bias_ok && torque_ok)
+      if (bias_ok && mixed_mode_ok)
       {
+        // 当前 ControlCommand 只有模式号，没有独立 start 命令，
+        // 因此轴模式准备成功后立即启动一次阶梯实验。
+        experiment_control_.start();
+
         RCLCPP_INFO(
             this->get_logger(),
-            "进入弹簧刚度实验模式：已记录六维力零偏，14 个主动轴已切到扭矩模式");
+            "进入弹簧刚度实验模式：左臂7轴位置模式，右臂7轴扭矩模式，起始位姿取进入模式时实际姿态");
       }
       else
       {
         RCLCPP_WARN(
             this->get_logger(),
-            "进入弹簧刚度实验模式失败：bias_ok=%d, torque_ok=%d；退回 Idle",
+            "进入弹簧刚度实验模式失败：bias_ok=%d, mixed_mode_ok=%d；退回 Idle",
             static_cast<int>(bias_ok),
-            static_cast<int>(torque_ok));
+            static_cast<int>(mixed_mode_ok));
 
         experiment_control_.stop();
         experiment_control_.reset();
-        clearDualArmTorqueCommandsNoModeSwitch();
+        clearRightArmTorqueCommandsNoModeSwitch();
         stopAllAxesMotionOnly();
         restoreAllAxesToPositionMode();
         requestModeEnterFallback(upperlimb_robot::MODE_IDLE);
@@ -723,8 +726,14 @@ private:
     return mode == upperlimb_robot::MODE_BILATERAL_ZERO_FORCE ||
            mode == upperlimb_robot::MODE_BILATERAL_ACTIVE ||
            mode == upperlimb_robot::MODE_ACTIVE_SPRING ||
-           mode == upperlimb_robot::MODE_ACTIVE_SPRING_3D ||
-           mode == upperlimb_robot::MODE_EXPERIMENT_SPRING_STIFFNESS;
+           mode == upperlimb_robot::MODE_ACTIVE_SPRING_3D;
+  }
+
+  // 弹簧刚度实验是独立的混合输出模式：
+  // 左臂索引10~16使用位置模式，右臂索引0~6使用扭矩模式。
+  bool isSpringExperimentMixedMode(int mode) const
+  {
+    return mode == upperlimb_robot::MODE_EXPERIMENT_SPRING_STIFFNESS;
   }
 
   std::array<std::size_t, 14> dualArmActiveTorqueIndices() const
@@ -760,6 +769,80 @@ private:
     }
 
     return all_ok;
+  }
+
+  // ===================== 刚度实验混合轴模式初始化 =====================
+  //
+  // 只在进入模式时执行一次：
+  // 1. 左臂 joint1~joint7（索引10~16）切到位置模式并同步当前位置；
+  // 2. 右臂 joint11~joint17（索引0~6）切到扭矩模式；
+  // 3. 最后六个不可控关节不做任何模式切换。
+  bool enterSpringExperimentMixedModeOnce()
+  {
+    bool all_ok = true;
+
+    // 左臂七个主动关节：位置模式。
+    for (std::size_t i = 10; i <= 16; ++i)
+    {
+      if (!ensureAxisInPositionMode(i))
+      {
+        all_ok = false;
+        continue;
+      }
+
+      command_sent_[i] = false;
+      position_profile_configured_[i] = false;
+      last_target_torque_[i] = 0.0;
+    }
+
+    // 右臂七个主动关节：扭矩模式。
+    for (std::size_t i = 0; i <= 6; ++i)
+    {
+      if (!ensureAxisInTorqueMode(i))
+      {
+        all_ok = false;
+        continue;
+      }
+
+      // 切入扭矩模式后立即显式发送0 PT，避免沿用上一模式残留扭矩。
+      const int axis = axis_ids_[i];
+      const short rtn_zero = GTN_SetEcatAxisPT(core_id_, axis, 0);
+      if (rtn_zero != 0)
+      {
+        RCLCPP_ERROR(
+            this->get_logger(),
+            "刚度实验进入混合模式时清零右臂PT失败，axis=%d，错误码=%d",
+            axis,
+            rtn_zero);
+        all_ok = false;
+      }
+
+      last_target_torque_[i] = 0.0;
+      command_sent_[i] = false;
+      position_profile_configured_[i] = false;
+    }
+
+    return all_ok;
+  }
+
+  // 混合模式单帧无效时，只清零右臂七个扭矩轴。
+  // 左臂仍保持上一次位置目标，不在控制循环中反复切换轴模式。
+  void clearRightArmTorqueCommandsNoModeSwitch()
+  {
+    for (std::size_t i = 0; i <= 6; ++i)
+    {
+      const int axis = axis_ids_[i];
+      const short rtn = GTN_SetEcatAxisPT(core_id_, axis, 0);
+
+      if (rtn != 0)
+      {
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "刚度实验清零右臂 PT 失败，轴%d，错误码=%d", axis, rtn);
+      }
+
+      last_target_torque_[i] = 0.0;
+    }
   }
 
   void clearDualArmTorqueCommandsNoModeSwitch()
@@ -1350,9 +1433,13 @@ private:
       {
         if (isDualArmTorqueMode(applied_mode_))
         {
-          // 双臂零力 / 双侧主动 / 主动弹簧 / 刚度实验模式下，算法单帧无效时只清零PT。
-          // 不在控制循环中频繁切回位置模式，避免下一帧又切回扭矩模式导致底层报错。
+          // 纯14轴扭矩模式单帧无效时只清零PT，避免循环中反复切轴模式。
           clearDualArmTorqueCommandsNoModeSwitch();
+        }
+        else if (isSpringExperimentMixedMode(applied_mode_))
+        {
+          // 混合模式只清零右臂扭矩；左臂继续保持上一次位置目标。
+          clearRightArmTorqueCommandsNoModeSwitch();
         }
         else
         {
@@ -1458,7 +1545,7 @@ private:
     case upperlimb_robot::MODE_ACTIVE_SPRING_3D:
       upperlimb_robot::runActiveSpring3DMode(state, sensor_state, output);
       break;
-      // 毕设弹簧刚度实验：左右臂都保持 14 轴扭矩模式。
+      // 毕设弹簧刚度实验：左臂位置模式，右臂扭矩模式。
     case upperlimb_robot::MODE_EXPERIMENT_SPRING_STIFFNESS:
       experiment_control_.run(state, sensor_state, actual_dt_s, output);
       break;
@@ -1500,11 +1587,30 @@ private:
 
   // ===================== 执行控制输出 =====================
   //
-  // 先执行位置输出，再执行扭矩输出。
-  // 位置输出阶段会显式确保该轴已经处于位置模式；
-  // 扭矩输出阶段会显式确保该轴已经处于扭矩模式。
-  //
+  // 普通模式仍沿用原来的位置输出和扭矩输出函数。
+  // 弹簧刚度实验进入独立混合输出分支：左臂位置、右臂扭矩。
   void applyControlOutput(const upperlimb_robot::ControlOutputCache &output)
+  {
+    if (isSpringExperimentMixedMode(applied_mode_))
+    {
+      applyMixedPositionTorqueOutput(output);
+      return;
+    }
+
+    applyPositionOutput(output);
+    applyTorqueOutput(output);
+  }
+
+  // ===================== 左位置 + 右扭矩混合输出 =====================
+  //
+  // ControlOutputCache 已经按轴提供 use_position / use_torque 标志，
+  // 因此不需要新建第二套底层下发代码：
+  // 1. applyPositionOutput() 只处理左臂10~16的位置目标；
+  // 2. applyTorqueOutput() 只处理右臂0~6的扭矩目标；
+  // 3. 同一轴如果被错误地同时设置两种标志，位置函数会优先跳过该轴，
+  //    最终由扭矩函数处理，避免同一周期发送两种相互冲突的命令。
+  void applyMixedPositionTorqueOutput(
+      const upperlimb_robot::ControlOutputCache &output)
   {
     applyPositionOutput(output);
     applyTorqueOutput(output);
@@ -1839,7 +1945,7 @@ private:
         continue;
       }
 
-      // 双臂零力 / 双侧主动 / 主动弹簧 / 刚度实验模式下，算法层只输出14个主动轴扭矩。
+      // 纯双臂扭矩模式下，算法层只输出14个主动轴扭矩。
       // 末端 fixed 轴 8~10 / 18~20 不在控制循环内做位置保持、模式读取或 PT 清理，
       // 避免继续触发 SetPos / SetTrapPrm / SetVel / SyncAxisPos 类错误。
       if (dual_arm_torque_mode && output.use_torque[i])
@@ -2055,7 +2161,7 @@ private:
         continue;
       }
 
-      // 双臂零力 / 双侧主动 / 主动弹簧 / 刚度实验模式下，非14个主动扭矩轴完全跳过。
+      // 纯双臂扭矩模式下，非14个主动扭矩轴完全跳过。
       // 不读模式、不清 PT、不切位置模式，避免轴8~10/18~20继续干扰主控制。
       if (dual_arm_torque_mode && !output.use_torque[i])
       {
