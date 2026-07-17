@@ -88,5 +88,5 @@
         "typeinfo": "cpp",
         "variant": "cpp"
     },
-    "cmake.sourceDirectory": "/home/zhangchenxu/Documents/00_Project/MyProject/ws_upperlimb/src/upperlimb_robot"
+    "cmake.sourceDirectory": "/home/upperlimb/Documents/zhangchenxu/MyProjet/ws_upperlimb/src/pinocchio_kin_demo"
 }

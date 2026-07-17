@@ -82,10 +82,10 @@ namespace upperlimb_robot
     MODE_RIGHT_ACTIVE = 14,
 
     // 双手空间虚拟弹簧主动模式
-    MODE_ACTIVE_SPRING_3D = 15,
+    MODE_ACTIVE_SPRING_3D = 16,
 
     // 毕设虚拟弹簧刚度实验模式
-    MODE_EXPERIMENT_SPRING_STIFFNESS = 16,
+    MODE_EXPERIMENT_SPRING_STIFFNESS = 15,
 
   };
 
