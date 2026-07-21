@@ -372,41 +372,68 @@ namespace upperlimb_robot
 
     struct SpringExperimentConfig
     {
-      // 刚度单位 N/m。默认值只是软件初始值，未经过实机安全验证。
+      // ===================== 虚拟弹簧刚度 =====================
+      //
+      // 单位：N/m。
+      // 默认值只是软件初始值，尚未经过实机刚度标定。
       double k_low{100.0};
       double k_medium{300.0};
       double k_high{500.0};
 
       // ===================== 左臂位置模式参数 =====================
-      // 左臂不再使用 J^T F 扭矩跟踪，而是使用差分逆运动学生成 joint1~joint7
-      // 的位置目标，再由执行层的位置模式完成运动。
       //
-      // left_cartesian_kp：笛卡尔位置误差到期望速度的比例，单位 1/s。
-      // left_cartesian_speed_limit：大臂绑缚点最大合成速度，单位 m/s。
-      // left_ik_damping：阻尼最小二乘中的阻尼系数，越大越保守。
-      // left_joint_speed_limit：差分逆运动学输出的单关节最大速度，单位 rad/s。
+      // 左臂使用差分逆运动学产生 joint1~joint7 的位置目标，
+      // 再由驱动器的位置模式完成实际运动。
+      //
+      // left_cartesian_kp：
+      // 笛卡尔位置误差转换为期望速度的比例，单位 1/s。
+      //
+      // left_cartesian_speed_limit：
+      // 左大臂传感器 frame 的最大合成速度，单位 m/s。
+      //
+      // left_ik_damping：
+      // 阻尼最小二乘逆运动学的阻尼系数。
+      //
+      // left_joint_speed_limit：
+      // 单个关节的最大逆运动学速度，单位 rad/s。
       double left_cartesian_kp{2.0};
       double left_cartesian_speed_limit{0.010};
       double left_ik_damping{0.03};
       double left_joint_speed_limit{0.20};
 
-      // 关节位置命令保护：
-      // 1. 相对进入实验时的关节角，单关节最多变化约 20 deg；
-      // 2. 位置命令最多领先实际关节约 3 deg，避免目标长期积累后突然追赶。
+      // ===================== 左臂关节位置保护 =====================
+      //
+      // 单关节相对进入实验姿态的最大变化量，单位 rad。
+      // 0.35 rad 约等于 20 deg。
       double left_joint_range_limit{0.35};
+
+      // 关节位置命令最多领先实际位置的距离，单位 rad。
+      // 0.05236 rad 约等于 3 deg。
       double left_joint_lead_limit{0.0523598776};
 
-      // 发送给 GTN Trap 位置规划器的参数，单位分别为 deg/s、deg/s^2。
+      // ===================== 位置模式 Trap 参数 =====================
+      //
+      // 速度单位：deg/s。
+      // 加速度、减速度单位：deg/s^2。
       double left_position_velocity{10.0};
       double left_position_acc{30.0};
       double left_position_dec{30.0};
       short left_position_smooth_time{25};
 
-      // 右臂扭矩模式的小关节阻尼，单位 Nm/(rad/s)。
+      // ===================== 右臂关节阻尼 =====================
+      //
+      // 单位：Nm/(rad/s)。
       double joint_damping{0.35};
 
+      // ===================== 实验方向 =====================
+      //
+      // 默认世界坐标系 +X 方向。
       Eigen::Vector3d direction_world{1.0, 0.0, 0.0};
 
+      // ===================== 阶梯位移 =====================
+      //
+      // 单位：m。
+      // 顺序：0、5、10、15、10、5、0 mm。
       std::array<double, 7> step_displacements{
           0.0,
           0.005,
@@ -416,34 +443,70 @@ namespace upperlimb_robot
           0.005,
           0.0};
 
-      // 左臂任务空间目标最大移动速度，单位 m/s。
+      // 左臂笛卡尔目标的最大移动速度，单位 m/s。
       double move_speed{0.003};
+
+      // ===================== 实验时间 =====================
 
       // 进入实验后保持 K=0 的静止等待时间，单位 s。
       double ready_time{1.0};
 
-      // 每个阶梯在实际位置/速度稳定后继续保持的时间，单位 s。
+      // 每个阶梯稳定后继续保持的时间，单位 s。
       double hold_time{2.0};
 
-      // 所选刚度从0线性渐入、结束或故障后线性渐出的时间，单位 s。
+      // 刚度由0渐变到设定值的时间，单位 s。
       double stiffness_ramp_time{1.0};
 
+      // ===================== 虚拟弹簧安全限制 =====================
+
+      // 最大允许形变量，单位 m。
       double extension_limit{0.015};
+
+      // 最大允许虚拟弹簧力，单位 N。
       double spring_force_limit{10.0};
 
-      // 左侧大臂实际位置与目标位置的最大允许误差，单位 m。
-      // 超过该值后停止轨迹并保持当前位置命令。
-      double left_tracking_error_limit{0.02};
-      double right_drift_limit{0.002};
+      // ===================== 左臂跟踪保护 =====================
 
-      // Holding 阶段只有在实际位置和速度稳定后才开始计时。
+      // 左臂实际位置与目标位置之间的最大误差，单位 m。
+      double left_tracking_error_limit{0.02};
+
+      // ===================== 右侧固定端漂移保护 =====================
+      //
+      // 右臂由位置模式切换到扭矩模式后，
+      // 重力补偿可能使机构产生少量静态重新平衡。
+      //
+      // 在这段时间内：
+      // 1. 左臂保持初始位置；
+      // 2. 虚拟刚度保持为0；
+      // 3. 持续更新右侧位置参考；
+      // 4. 不判断右侧漂移故障。
+      //
+      // 该值不能大于 ready_time。
+      double right_reference_settle_time{0.50};
+
+      // 启动稳定结束后，右侧 frame 允许的最大三维漂移，单位 m。
+      //
+      // 原来的2 mm单帧判断过于敏感，暂时调整为5 mm。
+      double right_drift_limit{0.005};
+
+      // 漂移连续超限达到该时间后才触发故障，单位 s。
+      //
+      // 用于过滤编码器噪声、机械振动和单帧异常。
+      double right_drift_fault_time{0.20};
+
+      // ===================== Holding 稳定判断 =====================
+
+      // 位置误差阈值，单位 m。
       double position_tolerance{0.001};
+
+      // 相对轴向速度阈值，单位 m/s。
       double velocity_threshold{0.002};
+
+      // ===================== 控制周期限制 =====================
 
       double dt_min{0.001};
       double dt_max{0.05};
     };
-
     class ExperimentControl
     {
     public:
@@ -543,16 +606,30 @@ namespace upperlimb_robot
       double phase_time_{0.0};
       double current_stiffness_{0.0};
 
+      // 右侧固定端连续超限累计时间，单位 s。
+      //
+      // 只有漂移连续超过 right_drift_limit，
+      // 并达到 right_drift_fault_time，才触发故障。
+      double right_drift_exceed_time_{0.0};
+
       Eigen::Vector3d initial_left_position_{Eigen::Vector3d::Zero()};
       Eigen::Vector3d initial_right_position_{Eigen::Vector3d::Zero()};
       Eigen::Vector3d initial_relative_position_{Eigen::Vector3d::Zero()};
       Eigen::Vector3d target_left_position_{Eigen::Vector3d::Zero()};
       Eigen::Vector3d target_left_velocity_{Eigen::Vector3d::Zero()};
 
-      // 左臂位置模式内部目标。
-      // 初始值取进入实验模式时的实际 joint1~joint7 角度，之后由差分逆运动学逐周期更新。
+      // ===================== 混合控制关节位置记录 =====================
+      //
+      // 左臂：
+      // initial_left_joint_position_rad_ 保存进入实验时的实际关节角；
+      // left_joint_position_command_rad_ 保存差分逆运动学生成的位置目标。
+      //
+      // 右臂：
+      // initial_right_joint_position_rad_ 保存进入实验时的实际关节角。
+      // 正常停止时可保持该姿态；故障时优先保持故障发生时的当前位置。
       std::array<double, 7> initial_left_joint_position_rad_{};
       std::array<double, 7> left_joint_position_command_rad_{};
+      std::array<double, 7> initial_right_joint_position_rad_{};
 
       std::size_t torque_joint_index_{0};
       double torque_nm_{0.0};

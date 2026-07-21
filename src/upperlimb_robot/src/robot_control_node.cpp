@@ -586,20 +586,18 @@ private:
           upperlimb_robot::experiment::ExperimentMode::SpringStiffness);
       experiment_control_.setSpringLevel(experiment_spring_level_);
 
-      // 本实验使用混合控制：
-      // 左臂主动关节10~16切到位置模式；右臂主动关节0~6切到扭矩模式。
-      // 两侧最后三个关节7~9、17~19仍然完全不参与控制。
+      // 模式进入阶段，左右臂七个主动关节都先保持位置模式。
+      // 右臂不提前切到扭矩模式，也不发送0 Nm。
+      // 第一帧有效重力补偿扭矩生成后，再在同一周期切到扭矩模式并发送。
       const bool mixed_mode_ok = enterSpringExperimentMixedModeOnce();
 
       if (bias_ok && mixed_mode_ok)
       {
-        // 当前 ControlCommand 只有模式号，没有独立 start 命令，
-        // 因此轴模式准备成功后立即启动一次阶梯实验。
         experiment_control_.start();
 
         RCLCPP_INFO(
             this->get_logger(),
-            "进入弹簧刚度实验模式：左臂7轴位置模式，右臂7轴扭矩模式，起始位姿取进入模式时实际姿态");
+            "进入弹簧刚度实验模式：左右臂先保持当前位置，首帧有效输出后左臂位置控制、右臂扭矩控制");
       }
       else
       {
@@ -795,33 +793,24 @@ private:
       last_target_torque_[i] = 0.0;
     }
 
-    // 右臂七个主动关节：扭矩模式。
+    // 右臂七个主动关节：进入阶段保持位置模式。
+    // 不在这里提前切到扭矩模式，也不发送0 Nm。
+    // 第一帧有效重力补偿扭矩生成后，applyTorqueOutput() 会在同一周期内
+    // 完成“切到扭矩模式 + 发送有效扭矩”。
     for (std::size_t i = 0; i <= 6; ++i)
     {
-      if (!ensureAxisInTorqueMode(i))
+      if (!ensureAxisInPositionMode(i))
       {
         all_ok = false;
         continue;
       }
 
-      // 切入扭矩模式后立即显式发送0 PT，避免沿用上一模式残留扭矩。
-      const int axis = axis_ids_[i];
-      const short rtn_zero = GTN_SetEcatAxisPT(core_id_, axis, 0);
-      if (rtn_zero != 0)
-      {
-        RCLCPP_ERROR(
-            this->get_logger(),
-            "刚度实验进入混合模式时清零右臂PT失败，axis=%d，错误码=%d",
-            axis,
-            rtn_zero);
-        all_ok = false;
-      }
-
-      last_target_torque_[i] = 0.0;
       command_sent_[i] = false;
       position_profile_configured_[i] = false;
+      last_target_torque_[i] = 0.0;
     }
 
+    // 索引7~9、17~19没有进入任何循环，因此不会切换模式或发送命令。
     return all_ok;
   }
 
@@ -1438,8 +1427,10 @@ private:
         }
         else if (isSpringExperimentMixedMode(applied_mode_))
         {
-          // 混合模式只清零右臂扭矩；左臂继续保持上一次位置目标。
+          // 混合模式出现意外无效输出时，不能让右臂停在扭矩模式并保持0 Nm。
+          // 先清零PT，再把14个主动轴恢复到位置模式并同步当前位置。
           clearRightArmTorqueCommandsNoModeSwitch();
+          restoreAllAxesToPositionMode();
         }
         else
         {
@@ -2162,7 +2153,6 @@ private:
       }
 
       // 纯双臂扭矩模式下，非14个主动扭矩轴完全跳过。
-      // 不读模式、不清 PT、不切位置模式，避免轴8~10/18~20继续干扰主控制。
       if (dual_arm_torque_mode && !output.use_torque[i])
       {
         last_target_torque_[i] = 0.0;
@@ -2171,13 +2161,15 @@ private:
 
       const int axis = axis_ids_[i];
 
-      unsigned short actual_mode = -1;
-      const short rtn_get_mode = GTN_GetEcatAxisMode(core_id_, axis, &actual_mode);
+      unsigned short actual_mode = static_cast<unsigned short>(-1);
+      const short rtn_get_mode =
+          GTN_GetEcatAxisMode(core_id_, axis, &actual_mode);
       if (rtn_get_mode == 0)
       {
         axis_in_torque_mode_[i] = (actual_mode == 10);
       }
 
+      // 当前轴不再请求扭矩控制时，先清零PT，再恢复位置模式。
       if (!output.use_torque[i])
       {
         if (axis_in_torque_mode_[i])
@@ -2210,11 +2202,17 @@ private:
       }
 
       const double target_torque_nm = output.target_torque[i];
-
-      if (std::abs(target_torque_nm - last_target_torque_[i]) < torque_epsilon_)
+      if (!std::isfinite(target_torque_nm))
       {
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "轴%d 目标扭矩为NaN或Inf，本轮不发送", axis);
         continue;
       }
+
+      // 先确保轴已经处于扭矩模式，再判断是否需要重复发送。
+      // 这样第一帧即使目标扭矩与缓存值相同，也不会漏掉模式切换。
+      bool switched_to_torque_mode = false;
 
       if (!axis_in_torque_mode_[i])
       {
@@ -2229,14 +2227,34 @@ private:
 
         if (!ensureAxisInTorqueMode(i))
         {
+          RCLCPP_ERROR_THROTTLE(
+              this->get_logger(), *this->get_clock(), 2000,
+              "轴%d 切入扭矩模式失败，本轮不发送PT", axis);
           continue;
         }
+
+        switched_to_torque_mode = true;
+      }
+
+      if (!switched_to_torque_mode &&
+          std::abs(target_torque_nm - last_target_torque_[i]) < torque_epsilon_)
+      {
+        continue;
       }
 
       const double torque_raw_double =
           upperlimb_robot::torqueNmToRaw(axis, target_torque_nm);
 
-      const short torque_raw = static_cast<short>(std::lround(torque_raw_double));
+      if (!std::isfinite(torque_raw_double))
+      {
+        RCLCPP_ERROR_THROTTLE(
+            this->get_logger(), *this->get_clock(), 2000,
+            "轴%d 扭矩单位换算结果非法，本轮不发送", axis);
+        continue;
+      }
+
+      const short torque_raw =
+          static_cast<short>(std::lround(torque_raw_double));
 
       const short rtn_pt = GTN_SetEcatAxisPT(core_id_, axis, torque_raw);
       if (rtn_pt != 0)
