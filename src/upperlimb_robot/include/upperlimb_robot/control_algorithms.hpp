@@ -328,17 +328,26 @@ namespace upperlimb_robot
   namespace experiment
   {
 
-    // ===================== 毕设刚度实验模式 =====================
+    // ===================== 自由运动虚拟弹簧可视化实验 =====================
     //
-    // 这个小实验名称：SpringStiffnessExperiment
-    // 中文可称为“低中高虚拟弹簧刚度实验”。
+    // 该实验继续沿用原来的 MODE_EXPERIMENT_SPRING_STIFFNESS 模式编号，
+    // 但实验目的已经从“右侧固定端刚度标定”改为“自由运动直观验证”：
     //
-    // 注意：
-    // 1. 这里只声明实验控制类；
-    // 2. 具体算法实现放在 control_algorithms.cpp；
-    // 3. 底层控制循环、电机输出、安全限幅仍沿用 RobotControlNode；
-    // 4. 本实验只控制14个主动关节：右臂索引0~6、左臂索引10~16；
-    // 5. 每条臂最后三个关节不参与控制：右臂7~9、左臂17~19。
+    // 1. 左臂 joint1~joint7 使用位置模式，沿世界坐标 X 方向完成最大 5 cm 的阶梯运动；
+    // 2. 右臂 joint11~joint17 使用扭矩模式，不再要求外部支架固定；
+    // 3. 右臂基础输出包含重力补偿、关节阻尼和很弱的初始姿态保持；
+    // 4. 虚拟弹簧根据左右大臂传感器 frame 的实际相对位移计算；
+    // 5. 弹簧力通过右大臂 LOCAL Jacobian 做 J^T F，形成右臂关节弹簧力矩；
+    // 6. 取消“右侧漂移超限退出”，右臂允许被左臂通过虚拟弹簧拖动；
+    // 7. 右侧漂移仍然记录到 CSV，只作为观察量，不作为故障条件；
+    // 8. 该模式用于验证方向、Jacobian 映射和拖动效果，不用于正式固定端刚度标定。
+    //
+    // 主动关节映射：
+    // 右臂：控制层索引 0~6；
+    // 左臂：控制层索引 10~16。
+    //
+    // 不可控末端关节：
+    // 右臂 7~9、左臂 17~19，始终不发送控制命令。
 
     enum class ExperimentMode
     {
@@ -357,156 +366,147 @@ namespace upperlimb_robot
 
     enum class TrajectoryPhase
     {
-      // 保持初始姿态：先等待 ready_time，再完成刚度渐入。
+      // 进入模式后先保持初始姿态，完成重力补偿接管和刚度渐入。
       Ready,
 
-      // 目标位置沿实验轴以受限速度向当前阶梯移动。
+      // 左臂笛卡尔目标向当前阶梯位置移动。
       Moving,
 
-      // 到达阶梯后，等待实际位置和速度稳定并保持 hold_time。
+      // 左臂到达当前阶梯后保持一段时间，便于观察右臂跟随。
       Holding,
 
-      // 最后一阶完成，不自动重启，也不自动切换刚度等级。
+      // 完成 0→5 cm→0 的完整运动。
       Finished
     };
 
     struct SpringExperimentConfig
     {
-      // ===================== 虚拟弹簧刚度 =====================
+      // ===================== X 向虚拟弹簧参数 =====================
       //
-      // 单位：N/m。
-      // 默认值只是软件初始值，尚未经过实机刚度标定。
-      double k_low{100.0};
-      double k_medium{300.0};
-      double k_high{500.0};
+      // 最大位移为 5 cm 时，对应的最大理论力分别为：
+      // Low    : 150 N/m × 0.05 m = 7.5 N
+      // Medium : 250 N/m × 0.05 m = 12.5 N
+      // High   : 300 N/m × 0.05 m = 15 N
+      //
+      // 初次实机测试必须从 Low 开始。
+      double k_low{150.0};
+      double k_medium{250.0};
+      double k_high{300.0};
+
+      // 笛卡尔相对速度阻尼，单位 N/(m/s)。
+      // 它只抑制左右大臂沿实验轴的快速相对运动，
+      // 在准静态运动时影响很小，在快速抖动时提高稳定性。
+      double spring_cartesian_damping{8.0};
+
+      // 虚拟弹簧力绝对值上限，单位 N。
+      double spring_force_limit{15.0};
+
+      // 实际相对形变量的软件限幅，单位 m。
+      // 左臂目标最大为 0.05 m，这里留出少量余量。
+      double extension_limit{0.06};
+
+      // 相对速度的软件限幅，单位 m/s。
+      double extension_rate_limit{0.50};
 
       // ===================== 左臂位置模式参数 =====================
       //
-      // 左臂使用差分逆运动学产生 joint1~joint7 的位置目标，
-      // 再由驱动器的位置模式完成实际运动。
+      // 左臂通过三维差分逆运动学跟踪大臂传感器 frame 的笛卡尔位置。
       //
-      // left_cartesian_kp：
-      // 笛卡尔位置误差转换为期望速度的比例，单位 1/s。
-      //
-      // left_cartesian_speed_limit：
-      // 左大臂传感器 frame 的最大合成速度，单位 m/s。
-      //
-      // left_ik_damping：
-      // 阻尼最小二乘逆运动学的阻尼系数。
-      //
-      // left_joint_speed_limit：
-      // 单个关节的最大逆运动学速度，单位 rad/s。
+      // v_cmd = target_velocity + left_cartesian_kp × position_error
       double left_cartesian_kp{2.0};
-      double left_cartesian_speed_limit{0.010};
+
+      // 笛卡尔速度命令合成限幅，单位 m/s。
+      double left_cartesian_speed_limit{0.015};
+
+      // 阻尼最小二乘逆运动学阻尼。
       double left_ik_damping{0.03};
-      double left_joint_speed_limit{0.20};
 
-      // ===================== 左臂关节位置保护 =====================
-      //
-      // 单关节相对进入实验姿态的最大变化量，单位 rad。
-      // 0.35 rad 约等于 20 deg。
-      double left_joint_range_limit{0.35};
+      // 单关节差分逆运动学速度限幅，单位 rad/s。
+      double left_joint_speed_limit{0.25};
 
-      // 关节位置命令最多领先实际位置的距离，单位 rad。
-      // 0.05236 rad 约等于 3 deg。
+      // 单关节相对进入实验时姿态的最大变化，单位 rad。
+      // 0.60 rad 约为 34.4°。
+      double left_joint_range_limit{0.60};
+
+      // 关节位置目标最多领先实际关节位置的距离，单位 rad。
+      // 0.05236 rad 约为 3°。
       double left_joint_lead_limit{0.0523598776};
 
-      // ===================== 位置模式 Trap 参数 =====================
-      //
-      // 速度单位：deg/s。
-      // 加速度、减速度单位：deg/s^2。
-      double left_position_velocity{10.0};
+      // 发送给执行层 Trap 位置规划器的参数。
+      // 速度单位 deg/s，加速度和减速度单位 deg/s²。
+      double left_position_velocity{12.0};
       double left_position_acc{30.0};
       double left_position_dec{30.0};
       short left_position_smooth_time{25};
 
-      // ===================== 右臂关节阻尼 =====================
-      //
-      // 单位：Nm/(rad/s)。
-      double joint_damping{0.35};
+      // 左臂目标与实际大臂 frame 的最大允许误差，单位 m。
+      double left_tracking_error_limit{0.03};
 
-      // ===================== 实验方向 =====================
+      // Holding 阶段允许的左臂位置误差，单位 m。
+      double left_position_tolerance{0.002};
+
+      // ===================== 左臂 5 cm 阶梯轨迹 =====================
       //
-      // 默认世界坐标系 +X 方向。
+      // 世界坐标 direction_world 默认为 +X。
+      // 当前世界坐标定义：+X 向机器人左侧。
+      //
+      // 阶梯顺序：
+      // 0、1、2、3、4、5、4、3、2、1、0 cm。
       Eigen::Vector3d direction_world{1.0, 0.0, 0.0};
 
-      // ===================== 阶梯位移 =====================
-      //
-      // 单位：m。
-      // 顺序：0、5、10、15、10、5、0 mm。
-      std::array<double, 7> step_displacements{
-          0.0,
-          0.005,
-          0.010,
-          0.015,
-          0.010,
-          0.005,
-          0.0};
+      std::array<double, 11> step_displacements{
+          0.00,
+          0.01,
+          0.02,
+          0.03,
+          0.04,
+          0.05,
+          0.04,
+          0.03,
+          0.02,
+          0.01,
+          0.00};
 
-      // 左臂笛卡尔目标的最大移动速度，单位 m/s。
-      double move_speed{0.003};
+      // 左臂笛卡尔目标移动速度，单位 m/s。
+      // 0.005 m/s = 5 mm/s，每个 1 cm 阶梯约移动 2 s。
+      double move_speed{0.005};
 
-      // ===================== 实验时间 =====================
-
-      // 进入实验后保持 K=0 的静止等待时间，单位 s。
+      // 进入模式后保持初始姿态的时间，单位 s。
       double ready_time{1.0};
 
-      // 每个阶梯稳定后继续保持的时间，单位 s。
-      double hold_time{2.0};
+      // 刚度从 0 线性渐入选定等级的时间，单位 s。
+      double stiffness_ramp_time{1.5};
 
-      // 刚度由0渐变到设定值的时间，单位 s。
-      double stiffness_ramp_time{1.0};
+      // 每个阶梯到达后保持时间，单位 s。
+      double hold_time{1.0};
 
-      // ===================== 虚拟弹簧安全限制 =====================
-
-      // 最大允许形变量，单位 m。
-      double extension_limit{0.015};
-
-      // 最大允许虚拟弹簧力，单位 N。
-      double spring_force_limit{10.0};
-
-      // ===================== 左臂跟踪保护 =====================
-
-      // 左臂实际位置与目标位置之间的最大误差，单位 m。
-      double left_tracking_error_limit{0.02};
-
-      // ===================== 右侧固定端漂移保护 =====================
+      // ===================== 右臂自由扭矩控制 =====================
       //
-      // 右臂由位置模式切换到扭矩模式后，
-      // 重力补偿可能使机构产生少量静态重新平衡。
+      // 右臂最终模型力矩：
       //
-      // 在这段时间内：
-      // 1. 左臂保持初始位置；
-      // 2. 虚拟刚度保持为0；
-      // 3. 持续更新右侧位置参考；
-      // 4. 不判断右侧漂移故障。
+      // tau_model =
+      //     gravity
+      //   + tau_spring
+      //   + tau_weak_posture
+      //   - right_joint_damping × dq
       //
-      // 该值不能大于 ready_time。
-      double right_reference_settle_time{0.50};
+      // right_joint_damping 用于抑制关节快速运动。
+      double right_joint_damping{0.80};
 
-      // 启动稳定结束后，右侧 frame 允许的最大三维漂移，单位 m。
+      // 很弱的初始姿态保持刚度，单位 Nm/rad。
       //
-      // 原来的2 mm单帧判断过于敏感，暂时调整为5 mm。
-      double right_drift_limit{0.005};
+      // 该项只用于减轻重力模型误差导致的慢速漂移，
+      // 不应设置得太大，否则右臂会变硬、难以被弹簧拖动。
+      double right_posture_kp{1.0};
 
-      // 漂移连续超限达到该时间后才触发故障，单位 s。
-      //
-      // 用于过滤编码器噪声、机械振动和单帧异常。
-      double right_drift_fault_time{0.20};
+      // 每个右臂关节的弱姿态保持力矩限幅，单位 Nm。
+      double right_posture_torque_limit{1.5};
 
-      // ===================== Holding 稳定判断 =====================
-
-      // 位置误差阈值，单位 m。
-      double position_tolerance{0.001};
-
-      // 相对轴向速度阈值，单位 m/s。
-      double velocity_threshold{0.002};
-
-      // ===================== 控制周期限制 =====================
-
+      // ===================== 控制周期保护 =====================
       double dt_min{0.001};
       double dt_max{0.05};
     };
+
     class ExperimentControl
     {
     public:
@@ -528,20 +528,31 @@ namespace upperlimb_robot
       double selectedStiffness() const;
 
     private:
+      // 每个控制周期内统一保存 Pinocchio 计算结果。
       struct RobotKinematics
       {
         Eigen::VectorXd q;
         Eigen::VectorXd v;
+
         Eigen::Vector3d p_left{Eigen::Vector3d::Zero()};
         Eigen::Vector3d p_right{Eigen::Vector3d::Zero()};
+
         Eigen::Vector3d v_left{Eigen::Vector3d::Zero()};
         Eigen::Vector3d v_right{Eigen::Vector3d::Zero()};
+
+        // 左臂使用 LOCAL_WORLD_ALIGNED Jacobian 做差分逆运动学。
         Eigen::MatrixXd J_left_lwa;
+
+        // 右臂使用 LOCAL Jacobian 映射局部传感器 frame 下的弹簧力。
         Eigen::MatrixXd J_right_local;
+
         Eigen::VectorXd gravity;
+
+        // 右大臂传感器 frame 到世界坐标系的旋转矩阵。
         Eigen::Matrix3d right_rotation{Eigen::Matrix3d::Identity()};
       };
 
+      // 简单数值工具。
       static double clampBetween(double value, double lo, double hi);
       static double clampAbs(double value, double limit);
       static bool finiteVec3(const Eigen::Vector3d &v);
@@ -550,45 +561,23 @@ namespace upperlimb_robot
 
       double validDt(double dt_s) const;
       bool normalizedAxis(Eigen::Vector3d &axis) const;
-      bool checkConfig();
 
+      // Pinocchio 初始化和状态读取仍单独保留。
+      // 这两部分包含大量模型索引检查，放进主循环会使核心控制逻辑难以阅读。
       bool initPinocchioOnce();
       bool loadJointIndex(const std::string &joint_name, int &q_id, int &v_id);
       bool readRobotState(const MotorStateCache &state, RobotKinematics &kin);
-      void initializeExperiment(const RobotKinematics &kin);
 
-      void updateTrajectory(double dt,
-                            const Eigen::Vector3d &axis_world,
-                            const RobotKinematics &kin);
-      void updateStiffness(double dt);
-
-      Eigen::VectorXd computeRightSpringTorque(
-          const RobotKinematics &kin,
-          const Eigen::Vector3d &axis_world,
-          double &extension,
-          double &spring_force_scalar);
-
-      double measuredRightAxialForce(const SensorStateCache &sensor_state,
-                                     const RobotKinematics &kin,
-                                     const Eigen::Vector3d &axis_world) const;
-
-      void writeLog(double dt,
-                    const RobotKinematics &kin,
-                    double extension,
-                    double theoretical_right_axial_force,
-                    double measured_right_axial_force,
-                    double right_drift,
-                    bool torque_saturated);
-      void openLogFile();
-
-      const char *springLevelName() const;
-      const char *trajectoryPhaseName() const;
       void setSafeFault(const char *message);
 
+      // 新的自由运动可视化实验绝大部分逻辑集中在本函数中：
+      // 配置检查、初始化、轨迹、刚度渐入、弹簧力、J^T F、
+      // 左臂逆运动学、右臂重力补偿、输出、CSV 和调试打印。
       void runSpringStiffnessExperiment(const MotorStateCache &state,
                                         const SensorStateCache &sensor_state,
                                         double dt_s,
                                         ControlOutputCache &output);
+
       void runConstantTorqueExperiment(ControlOutputCache &output);
       void runIdleExperiment(ControlOutputCache &output);
 
@@ -600,41 +589,40 @@ namespace upperlimb_robot
       bool started_{false};
       bool initialized_{false};
       bool fault_{false};
+      bool config_validated_{false};
 
       std::size_t step_index_{0};
+      std::size_t debug_counter_{0};
 
       double phase_time_{0.0};
       double current_stiffness_{0.0};
 
-      // 右侧固定端连续超限累计时间，单位 s。
-      //
-      // 只有漂移连续超过 right_drift_limit，
-      // 并达到 right_drift_fault_time，才触发故障。
-      double right_drift_exceed_time_{0.0};
-
+      // 进入实验时记录的左右大臂 frame 位置。
       Eigen::Vector3d initial_left_position_{Eigen::Vector3d::Zero()};
       Eigen::Vector3d initial_right_position_{Eigen::Vector3d::Zero()};
+
+      // 虚拟弹簧自然相对位置：
+      // initial_relative_position = initial_left_position - initial_right_position。
       Eigen::Vector3d initial_relative_position_{Eigen::Vector3d::Zero()};
+
+      // 左臂当前笛卡尔目标及目标速度。
       Eigen::Vector3d target_left_position_{Eigen::Vector3d::Zero()};
       Eigen::Vector3d target_left_velocity_{Eigen::Vector3d::Zero()};
 
-      // ===================== 混合控制关节位置记录 =====================
-      //
-      // 左臂：
-      // initial_left_joint_position_rad_ 保存进入实验时的实际关节角；
-      // left_joint_position_command_rad_ 保存差分逆运动学生成的位置目标。
-      //
-      // 右臂：
-      // initial_right_joint_position_rad_ 保存进入实验时的实际关节角。
-      // 正常停止时可保持该姿态；故障时优先保持故障发生时的当前位置。
+      // 左臂位置命令状态。
       std::array<double, 7> initial_left_joint_position_rad_{};
       std::array<double, 7> left_joint_position_command_rad_{};
+
+      // 右臂进入实验时的关节角。
+      // 仅用于很弱的防慢漂姿态保持，不是刚性位置锁定。
       std::array<double, 7> initial_right_joint_position_rad_{};
 
+      // 单轴恒扭矩调试参数。
       std::size_t torque_joint_index_{0};
       double torque_nm_{0.0};
       bool constant_torque_enabled_{false};
 
+      // Pinocchio 模型。
       bool pin_initialized_{false};
       bool pin_init_failed_{false};
       pinocchio::Model model_;
@@ -642,9 +630,10 @@ namespace upperlimb_robot
       pinocchio::FrameIndex left_frame_id_{0};
       pinocchio::FrameIndex right_frame_id_{0};
 
-      // 仅包含14个主动关节。不可控末端索引7~9、17~19不在映射中。
+      // 仅包含 14 个主动关节。
       static constexpr std::array<std::size_t, 7> left_ctrl_id_ = {
           10, 11, 12, 13, 14, 15, 16};
+
       static constexpr std::array<std::size_t, 7> right_ctrl_id_ = {
           0, 1, 2, 3, 4, 5, 6};
 
@@ -653,6 +642,7 @@ namespace upperlimb_robot
       std::array<int, 7> right_q_id_ = {-1, -1, -1, -1, -1, -1, -1};
       std::array<int, 7> right_v_id_ = {-1, -1, -1, -1, -1, -1, -1};
 
+      // 每次进入实验生成独立 CSV。
       std::ofstream csv_;
       bool csv_initialized_{false};
       std::size_t csv_row_count_{0};
