@@ -22,3 +22,15 @@
 //---------------------------//
 2026-7-1 17:53:50:920  The g_pSlaveListExV1 is 0
 2026-7-1 17:53:50:920  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-7-2 16:38:18:803  The g_pSlaveListExV1 is 0
+2026-7-2 16:38:18:803  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-7-2 16:40:7:260  The g_pSlaveListExV1 is 0
+2026-7-2 16:40:7:260  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-7-2 16:57:58:214  The g_pSlaveListExV1 is 0
+2026-7-2 16:57:58:214  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-7-2 17:30:21:6  The g_pSlaveListExV1 is 0
+2026-7-2 17:30:21:6  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2

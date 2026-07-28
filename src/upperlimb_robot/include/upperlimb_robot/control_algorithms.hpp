@@ -482,25 +482,123 @@ namespace upperlimb_robot
 
       // ===================== 右臂自由扭矩控制 =====================
       //
-      // 右臂最终模型力矩：
+      // 数组顺序始终对应：
       //
-      // tau_model =
-      //     gravity
-      //   + tau_spring
-      //   + tau_weak_posture
-      //   - right_joint_damping × dq
+      //   下标 0 -> 右臂 joint11 -> 控制层索引 0
+      //   下标 1 -> 右臂 joint12 -> 控制层索引 1
+      //   下标 2 -> 右臂 joint13 -> 控制层索引 2
+      //   下标 3 -> 右臂 joint14 -> 控制层索引 3
+      //   下标 4 -> 右臂 joint15 -> 控制层索引 4
+      //   下标 5 -> 右臂 joint16 -> 控制层索引 5
+      //   下标 6 -> 右臂 joint17 -> 控制层索引 6
       //
-      // right_joint_damping 用于抑制关节快速运动。
-      double right_joint_damping{0.80};
+      // 右臂每个关节的最终模型方向力矩为：
+      //
+      // tau_gravity_compensated[i]
+      //     = right_gravity_gain[i] * gravity_model[i]
+      //     + right_gravity_bias_nm[i]
+      //
+      // tau_model[i]
+      //     = tau_gravity_compensated[i]
+      //     + tau_spring[i]
+      //     + tau_posture[i]
+      //     - right_joint_damping[i] * dq[i]
+      //
+      // 之后代码仍会按照当前右臂驱动方向约定发送：
+      //
+      //   tau_sent[i] = -tau_model[i]
+      //
+      // 因此调节下面参数时，只改数值，不要同时修改最终整体负号。
 
-      // 很弱的初始姿态保持刚度，单位 Nm/rad。
+      // --------------------- 每轴重力补偿比例 ---------------------
       //
-      // 该项只用于减轻重力模型误差导致的慢速漂移，
-      // 不应设置得太大，否则右臂会变硬、难以被弹簧拖动。
-      double right_posture_kp{1.0};
+      // Pinocchio 给出的理论重力力矩先乘以该比例。
+      //
+      // 若某个关节在弹簧关闭时持续沿重力方向下沉，
+      // 可只提高该关节对应的比例，例如：
+      //
+      //   1.00 -> 1.03 -> 1.05 -> 1.08
+      //
+      // 若提高后关节反向缓慢上升，说明比例过大，应回调。
+      // 初始测试建议每次只改 0.02~0.03。
+      std::array<double, 7> right_gravity_gain{
+          1.25, // joint11
+          1.00, // joint12
+          1.00, // joint13
+          1.00, // joint14
+          1.00, // joint15
+          1.00, // joint16
+          1.00  // joint17
+      };
 
-      // 每个右臂关节的弱姿态保持力矩限幅，单位 Nm。
-      double right_posture_torque_limit{1.5};
+      // --------------------- 每轴重力剩余偏置 ---------------------
+      //
+      // 单位：Nm，表达在 Pinocchio 模型方向中。
+      //
+      // 只有在调好 right_gravity_gain 后，仍存在近似恒定的小幅漂移时，
+      // 才使用该项做细调。建议从 ±0.05 Nm 或 ±0.10 Nm 开始。
+      //
+      // 例如 joint14 仍缓慢下沉，可尝试：
+      //
+      //   right_gravity_bias_nm[3] = 0.10;
+      //
+      // 如果漂移更严重，则该轴偏置符号应反向。
+      std::array<double, 7> right_gravity_bias_nm{
+          0.0, // joint11
+          0.0, // joint12
+          0.0, // joint13
+          0.0, // joint14
+          0.0, // joint15
+          0.0, // joint16
+          0.0  // joint17
+      };
+
+      // --------------------- 每轴关节阻尼 ---------------------
+      //
+      // 单位：Nm/(rad/s)。
+      // 该项只抑制运动速度和振荡，不能在静止时提供持续支撑力矩。
+      // 若某轴下沉速度很快但重力比例已基本正确，可适度提高该轴阻尼。
+      std::array<double, 7> right_joint_damping{
+          0.80, // joint11
+          0.80, // joint12
+          0.80, // joint13
+          0.80, // joint14
+          0.80, // joint15
+          0.80, // joint16
+          0.80  // joint17
+      };
+
+      // --------------------- 每轴弱姿态保持刚度 ---------------------
+      //
+      // 单位：Nm/rad。
+      //
+      // tau_posture[i] = right_posture_kp[i] * (q_initial[i] - q_actual[i])
+      //
+      // 该项只用于抑制重力模型误差导致的慢漂移。
+      // 数值过大会使右臂变硬，降低被虚拟弹簧拖动的直观效果。
+      std::array<double, 7> right_posture_kp{
+          1.0, // joint11
+          1.0, // joint12
+          1.0, // joint13
+          1.0, // joint14
+          1.0, // joint15
+          1.0, // joint16
+          1.0  // joint17
+      };
+
+      // --------------------- 每轴姿态保持力矩限幅 ---------------------
+      //
+      // 单位：Nm。
+      // 限制弱姿态保持项，避免右臂偏离较大时产生过强回拉。
+      std::array<double, 7> right_posture_torque_limit{
+          1.5, // joint11
+          1.5, // joint12
+          1.5, // joint13
+          1.5, // joint14
+          1.5, // joint15
+          1.5, // joint16
+          1.5  // joint17
+      };
 
       // ===================== 控制周期保护 =====================
       double dt_min{0.001};

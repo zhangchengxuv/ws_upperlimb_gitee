@@ -9409,7 +9409,9 @@ namespace upperlimb_robot
       {
         bool config_ok = true;
 
-        const std::array<double, 29> values = {
+        // 先检查所有标量配置。
+        // 每个右臂关节的独立参数在后面的循环中单独检查。
+        const std::array<double, 26> scalar_values = {
             config_.k_low,
             config_.k_medium,
             config_.k_high,
@@ -9432,18 +9434,66 @@ namespace upperlimb_robot
             config_.ready_time,
             config_.stiffness_ramp_time,
             config_.hold_time,
-            config_.right_joint_damping,
-            config_.right_posture_kp,
-            config_.right_posture_torque_limit,
             config_.dt_min,
             config_.dt_max,
             axis_world.norm(),
             selectedStiffness()};
 
-        for (double value : values)
+        for (double value : scalar_values)
         {
           if (!std::isfinite(value))
           {
+            config_ok = false;
+            break;
+          }
+        }
+
+        // 检查右臂 joint11~joint17 的每轴独立参数。
+        //
+        // right_gravity_gain：重力模型比例，限制在 (0, 2]；
+        // right_gravity_bias_nm：重力剩余偏置，保守限制在 ±5 Nm；
+        // right_joint_damping：每轴速度阻尼，不允许为负；
+        // right_posture_kp：每轴弱姿态保持刚度，不允许为负；
+        // right_posture_torque_limit：每轴姿态保持限幅，不允许为负。
+        for (std::size_t i = 0; i < 7; ++i)
+        {
+          const double gravity_gain =
+              config_.right_gravity_gain[i];
+
+          const double gravity_bias =
+              config_.right_gravity_bias_nm[i];
+
+          const double joint_damping =
+              config_.right_joint_damping[i];
+
+          const double posture_kp =
+              config_.right_posture_kp[i];
+
+          const double posture_limit =
+              config_.right_posture_torque_limit[i];
+
+          if (!std::isfinite(gravity_gain) ||
+              !std::isfinite(gravity_bias) ||
+              !std::isfinite(joint_damping) ||
+              !std::isfinite(posture_kp) ||
+              !std::isfinite(posture_limit) ||
+              gravity_gain <= 0.0 ||
+              gravity_gain > 2.0 ||
+              std::abs(gravity_bias) > 5.0 ||
+              joint_damping < 0.0 ||
+              posture_kp < 0.0 ||
+              posture_limit < 0.0)
+          {
+            std::cerr
+                << "[ExperimentControl] 右臂每轴参数非法。"
+                << " axis=joint" << (11 + i)
+                << " gravity_gain=" << gravity_gain
+                << " gravity_bias_nm=" << gravity_bias
+                << " damping=" << joint_damping
+                << " posture_kp=" << posture_kp
+                << " posture_limit=" << posture_limit
+                << std::endl;
+
             config_ok = false;
             break;
           }
@@ -9508,9 +9558,6 @@ namespace upperlimb_robot
             config_.ready_time < 0.0 ||
             config_.stiffness_ramp_time <= 1e-6 ||
             config_.hold_time < 0.0 ||
-            config_.right_joint_damping < 0.0 ||
-            config_.right_posture_kp < 0.0 ||
-            config_.right_posture_torque_limit < 0.0 ||
             config_.dt_min <= 0.0 ||
             config_.dt_max < config_.dt_min)
         {
@@ -9645,6 +9692,27 @@ namespace upperlimb_robot
                << "tau_spring_r5,"
                << "tau_spring_r6,"
                << "tau_spring_r7,"
+               << "tau_gravity_model_r1,"
+               << "tau_gravity_model_r2,"
+               << "tau_gravity_model_r3,"
+               << "tau_gravity_model_r4,"
+               << "tau_gravity_model_r5,"
+               << "tau_gravity_model_r6,"
+               << "tau_gravity_model_r7,"
+               << "gravity_gain_r1,"
+               << "gravity_gain_r2,"
+               << "gravity_gain_r3,"
+               << "gravity_gain_r4,"
+               << "gravity_gain_r5,"
+               << "gravity_gain_r6,"
+               << "gravity_gain_r7,"
+               << "gravity_bias_nm_r1,"
+               << "gravity_bias_nm_r2,"
+               << "gravity_bias_nm_r3,"
+               << "gravity_bias_nm_r4,"
+               << "gravity_bias_nm_r5,"
+               << "gravity_bias_nm_r6,"
+               << "gravity_bias_nm_r7,"
                << "tau_gravity_r1,"
                << "tau_gravity_r2,"
                << "tau_gravity_r3,"
@@ -10243,6 +10311,13 @@ namespace upperlimb_robot
       std::array<double, 7>
           tau_spring_log{};
 
+      // Pinocchio 原始重力模型输出，尚未乘每轴比例、尚未加偏置。
+      std::array<double, 7>
+          tau_gravity_model_log{};
+
+      // 实际加入 tau_model 的每轴重力补偿：
+      // right_gravity_gain[i] * gravity_model[i] + right_gravity_bias_nm[i]。
+      // 为兼容原 CSV 分析脚本，最终仍使用列名 tau_gravity_r1~r7。
       std::array<double, 7>
           tau_gravity_log{};
 
@@ -10278,24 +10353,45 @@ namespace upperlimb_robot
         const double actual_right_q =
             kin.q(right_q_id);
 
+        // --------------------- 每轴弱姿态保持 ---------------------
+        //
+        // 右臂偏离进入实验时的关节角后，产生很弱的回拉力矩。
+        // 每个关节使用各自的 Kp 和力矩限幅。
         double tau_posture =
-            config_.right_posture_kp *
+            config_.right_posture_kp[i] *
             (initial_right_joint_position_rad_[i] -
              actual_right_q);
 
         tau_posture =
             clampAbs(
                 tau_posture,
-                config_.right_posture_torque_limit);
+                config_.right_posture_torque_limit[i]);
 
-        const double tau_gravity =
+        // --------------------- 每轴重力补偿 ---------------------
+        //
+        // 第一步：读取 Pinocchio 在当前姿态下计算的理论重力力矩。
+        const double tau_gravity_model =
             kin.gravity(right_v_id);
+
+        // 第二步：为 joint11~joint17 分别乘比例，并分别增加常值偏置。
+        //
+        // 如果某个关节持续下沉，只调整该关节对应的：
+        //   right_gravity_gain[i]
+        // 或在比例基本正确后小幅调整：
+        //   right_gravity_bias_nm[i]
+        //
+        // 注意：这里仍是 Pinocchio 模型方向，后面发送前保留原右臂整体负号。
+        const double tau_gravity =
+            config_.right_gravity_gain[i] *
+                tau_gravity_model +
+            config_.right_gravity_bias_nm[i];
 
         const double tau_spring =
             tau_right_spring(right_v_id);
 
+        // 每个关节使用独立速度阻尼。
         const double tau_joint_damping =
-            -config_.right_joint_damping *
+            -config_.right_joint_damping[i] *
             kin.v(right_v_id);
 
         const double tau_model =
@@ -10342,6 +10438,9 @@ namespace upperlimb_robot
 
         tau_spring_log[i] =
             tau_spring;
+
+        tau_gravity_model_log[i] =
+            tau_gravity_model;
 
         tau_gravity_log[i] =
             tau_gravity;
@@ -10451,6 +10550,28 @@ namespace upperlimb_robot
           csv_ << "," << value;
         }
 
+        // 原始 Pinocchio 重力模型值。
+        for (double value :
+             tau_gravity_model_log)
+        {
+          csv_ << "," << value;
+        }
+
+        // 本次运行实际使用的每轴重力比例。
+        for (double value :
+             config_.right_gravity_gain)
+        {
+          csv_ << "," << value;
+        }
+
+        // 本次运行实际使用的每轴重力偏置，单位 Nm。
+        for (double value :
+             config_.right_gravity_bias_nm)
+        {
+          csv_ << "," << value;
+        }
+
+        // 经过每轴比例和偏置后的实际重力补偿力矩。
         for (double value :
              tau_gravity_log)
         {
