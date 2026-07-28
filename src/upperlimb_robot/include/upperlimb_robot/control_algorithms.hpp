@@ -333,7 +333,7 @@ namespace upperlimb_robot
     // 该实验继续沿用原来的 MODE_EXPERIMENT_SPRING_STIFFNESS 模式编号，
     // 但实验目的已经从“右侧固定端刚度标定”改为“自由运动直观验证”：
     //
-    // 1. 左臂 joint1~joint7 使用位置模式，沿世界坐标 X 方向完成最大 5 cm 的阶梯运动；
+    // 1. 左臂 joint1~joint7 使用位置模式，沿世界坐标 X 方向低速单次移动 10 cm；
     // 2. 右臂 joint11~joint17 使用扭矩模式，不再要求外部支架固定；
     // 3. 右臂基础输出包含重力补偿、关节阻尼和很弱的初始姿态保持；
     // 4. 虚拟弹簧根据左右大臂传感器 frame 的实际相对位移计算；
@@ -369,41 +369,39 @@ namespace upperlimb_robot
       // 进入模式后先保持初始姿态，完成重力补偿接管和刚度渐入。
       Ready,
 
-      // 左臂笛卡尔目标向当前阶梯位置移动。
+      // 左臂笛卡尔目标从初始位置低速移动到 10 cm 目标位置。
       Moving,
 
-      // 左臂到达当前阶梯后保持一段时间，便于观察右臂跟随。
-      Holding,
-
-      // 完成 0→5 cm→0 的完整运动。
-      Finished
+      // 左臂到达 10 cm 目标位置后持续保持，直到用户手动退出模式。
+      Holding
     };
 
     struct SpringExperimentConfig
     {
       // ===================== X 向虚拟弹簧参数 =====================
       //
-      // 最大位移为 5 cm 时，对应的最大理论力分别为：
-      // Low    : 150 N/m × 0.05 m = 7.5 N
-      // Medium : 250 N/m × 0.05 m = 12.5 N
-      // High   : 300 N/m × 0.05 m = 15 N
+      // 本实验只使用一个固定刚度。
       //
-      // 初次实机测试必须从 Low 开始。
-      double k_low{150.0};
-      double k_medium{250.0};
-      double k_high{300.0};
+      // 左臂目标位移为 0.10 m 时，最大理论弹簧力为：
+      //
+      //   F = K × x = 300 N/m × 0.10 m = 30 N
+      //
+      // SpringLevel::Low / Medium / High 都使用该数值；
+      // SpringLevel::Off 仍表示关闭虚拟弹簧。
+      double spring_stiffness{300.0};
 
       // 笛卡尔相对速度阻尼，单位 N/(m/s)。
       // 它只抑制左右大臂沿实验轴的快速相对运动，
-      // 在准静态运动时影响很小，在快速抖动时提高稳定性。
+      // 在本次低速运动中影响很小，在快速抖动时提高稳定性。
       double spring_cartesian_damping{8.0};
 
       // 虚拟弹簧力绝对值上限，单位 N。
-      double spring_force_limit{15.0};
+      // 300 N/m × 0.10 m = 30 N，因此设置为 30 N。
+      double spring_force_limit{30.0};
 
       // 实际相对形变量的软件限幅，单位 m。
-      // 左臂目标最大为 0.05 m，这里留出少量余量。
-      double extension_limit{0.06};
+      // 左臂目标为 0.10 m，这里留出 0.02 m 余量。
+      double extension_limit{0.12};
 
       // 相对速度的软件限幅，单位 m/s。
       double extension_rate_limit{0.50};
@@ -445,40 +443,25 @@ namespace upperlimb_robot
       // Holding 阶段允许的左臂位置误差，单位 m。
       double left_position_tolerance{0.002};
 
-      // ===================== 左臂 5 cm 阶梯轨迹 =====================
+      // ===================== 左臂单次 10 cm 低速运动 =====================
       //
       // 世界坐标 direction_world 默认为 +X。
       // 当前世界坐标定义：+X 向机器人左侧。
-      //
-      // 阶梯顺序：
-      // 0、1、2、3、4、5、4、3、2、1、0 cm。
       Eigen::Vector3d direction_world{1.0, 0.0, 0.0};
 
-      std::array<double, 11> step_displacements{
-          0.00,
-          0.01,
-          0.02,
-          0.03,
-          0.04,
-          0.05,
-          0.04,
-          0.03,
-          0.02,
-          0.01,
-          0.00};
+      // 左臂从进入模式时的位置出发，只向指定方向移动一次。
+      // 单位：m。0.10 m = 10 cm。
+      double target_displacement{0.10};
 
       // 左臂笛卡尔目标移动速度，单位 m/s。
-      // 0.005 m/s = 5 mm/s，每个 1 cm 阶梯约移动 2 s。
+      // 0.005 m/s = 5 mm/s，移动 10 cm 大约需要 20 s。
       double move_speed{0.005};
 
-      // 进入模式后保持初始姿态的时间，单位 s。
+      // 进入模式后先保持初始姿态，单位 s。
       double ready_time{1.0};
 
-      // 刚度从 0 线性渐入选定等级的时间，单位 s。
+      // 虚拟弹簧刚度从 0 线性增加到 300 N/m 的时间，单位 s。
       double stiffness_ramp_time{1.5};
-
-      // 每个阶梯到达后保持时间，单位 s。
-      double hold_time{1.0};
 
       // ===================== 右臂自由扭矩控制 =====================
       //
@@ -669,7 +652,7 @@ namespace upperlimb_robot
       void setSafeFault(const char *message);
 
       // 新的自由运动可视化实验绝大部分逻辑集中在本函数中：
-      // 配置检查、初始化、轨迹、刚度渐入、弹簧力、J^T F、
+      // 配置检查、初始化、单次低速轨迹、刚度渐入、弹簧力、J^T F、
       // 左臂逆运动学、右臂重力补偿、输出、CSV 和调试打印。
       void runSpringStiffnessExperiment(const MotorStateCache &state,
                                         const SensorStateCache &sensor_state,
@@ -689,7 +672,6 @@ namespace upperlimb_robot
       bool fault_{false};
       bool config_validated_{false};
 
-      std::size_t step_index_{0};
       std::size_t debug_counter_{0};
 
       double phase_time_{0.0};

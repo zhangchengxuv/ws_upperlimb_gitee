@@ -8849,7 +8849,6 @@ namespace upperlimb_robot
       initialized_ = false;
       fault_ = false;
 
-      step_index_ = 0;
       debug_counter_ = 0;
       phase_time_ = 0.0;
       current_stiffness_ = 0.0;
@@ -8905,21 +8904,18 @@ namespace upperlimb_robot
       constant_torque_enabled_ = true;
     }
 
-    // 将离散刚度等级转换为实际刚度，单位 N/m。
+    // 本实验只有一个固定刚度：300 N/m。
+    //
+    // 为了保持与现有 GUI 和 RobotControlNode 的接口兼容，
+    // Low / Medium / High 三个非 Off 选项都返回同一个刚度。
     double ExperimentControl::selectedStiffness() const
     {
-      switch (spring_level_)
+      if (spring_level_ == SpringLevel::Off)
       {
-      case SpringLevel::Low:
-        return config_.k_low;
-      case SpringLevel::Medium:
-        return config_.k_medium;
-      case SpringLevel::High:
-        return config_.k_high;
-      case SpringLevel::Off:
-      default:
         return 0.0;
       }
+
+      return config_.spring_stiffness;
     }
 
     // 将 value 限制在 [lo, hi]。
@@ -9291,10 +9287,8 @@ namespace upperlimb_robot
         case TrajectoryPhase::Moving:
           return "moving";
         case TrajectoryPhase::Holding:
-          return "holding";
-        case TrajectoryPhase::Finished:
         default:
-          return "finished";
+          return "holding";
         }
       };
 
@@ -9411,10 +9405,8 @@ namespace upperlimb_robot
 
         // 先检查所有标量配置。
         // 每个右臂关节的独立参数在后面的循环中单独检查。
-        const std::array<double, 26> scalar_values = {
-            config_.k_low,
-            config_.k_medium,
-            config_.k_high,
+        const std::array<double, 24> scalar_values = {
+            config_.spring_stiffness,
             config_.spring_cartesian_damping,
             config_.spring_force_limit,
             config_.extension_limit,
@@ -9430,10 +9422,10 @@ namespace upperlimb_robot
             config_.left_position_dec,
             config_.left_tracking_error_limit,
             config_.left_position_tolerance,
+            config_.target_displacement,
             config_.move_speed,
             config_.ready_time,
             config_.stiffness_ramp_time,
-            config_.hold_time,
             config_.dt_min,
             config_.dt_max,
             axis_world.norm(),
@@ -9499,40 +9491,26 @@ namespace upperlimb_robot
           }
         }
 
-        // 刚度等级必须严格递增。
-        if (!(config_.k_low > 0.0 &&
-              config_.k_medium > config_.k_low &&
-              config_.k_high > config_.k_medium))
+        // 本实验使用固定刚度和单个目标位移。
+        if (config_.spring_stiffness <= 0.0 ||
+            config_.target_displacement <= 0.0)
         {
           config_ok = false;
         }
 
-        // 检查阶梯数组，并获得最大目标位移。
-        double max_step = 0.0;
-
-        for (double step : config_.step_displacements)
-        {
-          if (!std::isfinite(step))
-          {
-            config_ok = false;
-            break;
-          }
-
-          max_step =
-              std::max(max_step, std::abs(step));
-        }
-
-        // 左臂目标最大 5 cm，形变量限幅必须至少能覆盖该值。
-        if (max_step > config_.extension_limit + 1e-9)
+        // 10 cm 目标位移必须在形变量软件限幅之内。
+        if (config_.target_displacement >
+            config_.extension_limit + 1e-9)
         {
           config_ok = false;
         }
 
-        // High 刚度在最大目标位移下不应超过弹簧力限幅。
+        // 最大理论弹簧力不能超过弹簧力软件限幅。
         //
         // 当前默认：
-        // 300 N/m × 0.05 m = 15 N。
-        if (config_.k_high * max_step >
+        // 300 N/m × 0.10 m = 30 N。
+        if (config_.spring_stiffness *
+                config_.target_displacement >
             config_.spring_force_limit + 1e-9)
         {
           config_ok = false;
@@ -9557,7 +9535,6 @@ namespace upperlimb_robot
             config_.move_speed <= 0.0 ||
             config_.ready_time < 0.0 ||
             config_.stiffness_ramp_time <= 1e-6 ||
-            config_.hold_time < 0.0 ||
             config_.dt_min <= 0.0 ||
             config_.dt_max < config_.dt_min)
         {
@@ -9587,7 +9564,7 @@ namespace upperlimb_robot
       // ===================== 第一帧初始化 =====================
       //
       // start() 后获得的第一帧有效状态作为：
-      // 1. 左臂 5 cm 轨迹零点；
+      // 1. 左臂单次 10 cm 运动零点；
       // 2. 右臂漂移观察零点；
       // 3. 虚拟弹簧自然相对位置；
       // 4. 左臂位置命令初值；
@@ -9617,7 +9594,6 @@ namespace upperlimb_robot
               kin.q(right_q_id_[i]);
         }
 
-        step_index_ = 0;
         debug_counter_ = 0;
         phase_ = TrajectoryPhase::Ready;
         phase_time_ = 0.0;
@@ -9668,8 +9644,8 @@ namespace upperlimb_robot
         {
           csv_ << "spring_level,"
                << "trajectory_phase,"
-               << "step_index,"
-               << "target_step_displacement,"
+               << "movement_index,"
+               << "target_displacement,"
                << "left_target_axis_displacement,"
                << "left_actual_axis_displacement,"
                << "right_actual_axis_displacement,"
@@ -9778,30 +9754,27 @@ namespace upperlimb_robot
       }
 
       // 手动 stop 后安全位置保持。
-      //
-      // Finished 是自动完成状态，仍保持右臂重力补偿，
-      // 直到用户退出模式或切换到其他模式。
-      if (!started_ &&
-          phase_ != TrajectoryPhase::Finished)
+      if (!started_)
       {
         write_safe_position_hold();
         return;
       }
 
-      // ===================== 左臂 0→5 cm→0 轨迹 =====================
+      // ===================== 左臂单次 10 cm 低速运动 =====================
       //
-      // Ready：
-      // 先保持 ready_time，再在 stiffness_ramp_time 内完成刚度渐入。
+      // 运动过程只有三个阶段：
       //
-      // 为了避免原版本在 step=0 又额外 Holding 很久，
-      // Ready 完成后直接从 step_index=1，也就是 1 cm 开始移动。
+      // 1. Ready：
+      //    左臂保持初始位置；前 ready_time 秒弹簧关闭，
+      //    随后在 stiffness_ramp_time 内把刚度渐入到 300 N/m。
       //
-      // Moving：
-      // 目标位置以 move_speed 逐周期向当前阶梯推进。
+      // 2. Moving：
+      //    目标位移从 0 线性增加到 0.10 m，
+      //    每周期只增加 move_speed × dt。
       //
-      // Holding：
-      // 只判断左臂位置误差，不再要求右臂静止。
-      // 右臂是自由端，它在弹簧作用下继续移动是正常现象。
+      // 3. Holding：
+      //    到达 0.10 m 后持续保持，不自动返回初始位置。
+      //    用户退出模式时再由控制节点切换到其他控制方式。
       target_left_velocity_.setZero();
 
       if (phase_ == TrajectoryPhase::Ready)
@@ -9818,135 +9791,70 @@ namespace upperlimb_robot
         if (phase_time_ >= ready_total_time)
         {
           phase_ = TrajectoryPhase::Moving;
-
-          // 跳过数组中的第0项 0 cm，
-          // 让左臂完成准备阶段后直接向 1 cm 运动。
-          step_index_ =
-              (config_.step_displacements.size() > 1)
-                  ? 1
-                  : 0;
-
           phase_time_ = 0.0;
         }
       }
       else if (phase_ == TrajectoryPhase::Moving)
       {
-        if (step_index_ >=
-            config_.step_displacements.size())
-        {
-          phase_ = TrajectoryPhase::Finished;
-          started_ = false;
-        }
-        else
-        {
-          const double step_displacement =
-              config_.step_displacements[step_index_];
+        const double old_displacement =
+            axis_world.dot(
+                target_left_position_ -
+                initial_left_position_);
 
-          const Eigen::Vector3d step_target =
-              initial_left_position_ +
-              step_displacement * axis_world;
+        const double new_displacement =
+            std::min(
+                old_displacement +
+                    config_.move_speed * dt,
+                config_.target_displacement);
 
-          const Eigen::Vector3d old_target =
-              target_left_position_;
+        const Eigen::Vector3d old_target =
+            target_left_position_;
 
-          const Eigen::Vector3d to_target =
-              step_target -
-              target_left_position_;
+        target_left_position_ =
+            initial_left_position_ +
+            new_displacement * axis_world;
 
-          const double distance =
-              to_target.norm();
-
-          const double max_move =
-              config_.move_speed * dt;
-
-          if (distance <= max_move ||
-              distance < 1e-8)
-          {
-            target_left_position_ =
-                step_target;
-
-            phase_ =
-                TrajectoryPhase::Holding;
-
-            phase_time_ = 0.0;
-          }
-          else
-          {
-            target_left_position_ +=
-                to_target *
-                (max_move / distance);
-          }
-
-          target_left_velocity_ =
-              (target_left_position_ -
-               old_target) /
-              dt;
-        }
-      }
-      else if (phase_ ==
-               TrajectoryPhase::Holding)
-      {
-        const double left_tracking_error =
+        target_left_velocity_ =
             (target_left_position_ -
-             kin.p_left)
-                .norm();
+             old_target) /
+            dt;
 
-        if (!std::isfinite(left_tracking_error))
+        if (new_displacement >=
+            config_.target_displacement - 1e-9)
         {
-          setSafeFault(
-              "[ExperimentControl] 左臂跟踪误差非法");
-        }
-        else if (left_tracking_error <=
-                 config_.left_position_tolerance)
-        {
-          phase_time_ += dt;
-        }
-        else
-        {
-          // 左臂尚未到位时重新累计保持时间。
-          // 不检查右臂速度，因为右臂应当能够自由跟随。
+          target_left_position_ =
+              initial_left_position_ +
+              config_.target_displacement *
+                  axis_world;
+
+          target_left_velocity_.setZero();
+          phase_ = TrajectoryPhase::Holding;
           phase_time_ = 0.0;
-        }
-
-        if (!fault_ &&
-            phase_time_ >= config_.hold_time)
-        {
-          phase_time_ = 0.0;
-          ++step_index_;
-
-          if (step_index_ >=
-              config_.step_displacements.size())
-          {
-            phase_ =
-                TrajectoryPhase::Finished;
-
-            started_ = false;
-          }
-          else
-          {
-            phase_ =
-                TrajectoryPhase::Moving;
-          }
         }
       }
-
-      if (fault_)
+      else
       {
-        write_safe_position_hold();
-        return;
+        // Holding：始终保持单次运动的终点。
+        target_left_position_ =
+            initial_left_position_ +
+            config_.target_displacement *
+                axis_world;
+
+        target_left_velocity_.setZero();
+        phase_time_ += dt;
       }
 
-      // ===================== 刚度渐入/渐出 =====================
+      // ===================== 刚度渐入 =====================
       //
       // Ready 的前 ready_time 秒保持 K=0；
-      // 随后线性渐入所选刚度；
-      // Finished 后线性回到0。
+      // 随后线性渐入到固定的 300 N/m；
+      // Moving 和 Holding 阶段持续保持该刚度。
       const double selected_stiffness =
           selectedStiffness();
 
       bool stiffness_enabled =
           !fault_ &&
-          phase_ != TrajectoryPhase::Finished;
+          spring_level_ != SpringLevel::Off;
 
       if (phase_ == TrajectoryPhase::Ready &&
           phase_time_ < config_.ready_time)
@@ -10011,8 +9919,8 @@ namespace upperlimb_robot
       //
       // 因为右臂可以被拖动，所以：
       //
-      // 左臂移动 5 cm
-      // 并不等于弹簧一定伸长 5 cm。
+      // 左臂移动 10 cm
+      // 并不等于弹簧一定伸长 10 cm。
       //
       // 如果右臂跟随左臂移动，实际 extension 会减小。
       const Eigen::Vector3d relative_change =
@@ -10517,17 +10425,12 @@ namespace upperlimb_robot
       if (csv_initialized_ &&
           csv_.is_open())
       {
-        const double target_step =
-            (step_index_ <
-             config_.step_displacements.size())
-                ? config_.step_displacements[
-                      step_index_]
-                : 0.0;
-
+        // 为兼容原 CSV 列结构：
+        // movement_index 固定写 1，target_displacement 固定写 0.10 m。
         csv_ << level_name()
              << "," << phase_name()
-             << "," << step_index_
-             << "," << target_step
+             << "," << 1
+             << "," << config_.target_displacement
              << "," << left_target_axis_displacement
              << "," << left_actual_axis_displacement
              << "," << right_actual_axis_displacement
@@ -10609,7 +10512,7 @@ namespace upperlimb_robot
       // ===================== 控制台低频调试 =====================
       //
       // 重点观察：
-      // 1. left_target / left_actual 是否增长到 0.05 m；
+      // 1. left_target / left_actual 是否增长到 0.10 m；
       // 2. extension 是否非零；
       // 3. F_right 是否随 extension 增大；
       // 4. F_sensor 是否主要落在右传感器局部 Z；
@@ -10623,8 +10526,6 @@ namespace upperlimb_robot
             << level_name()
             << " phase="
             << phase_name()
-            << " step="
-            << step_index_
             << " left_target_axis="
             << left_target_axis_displacement
             << " left_actual_axis="
