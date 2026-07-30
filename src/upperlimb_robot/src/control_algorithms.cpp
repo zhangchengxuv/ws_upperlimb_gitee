@@ -27,6 +27,21 @@
 namespace upperlimb_robot
 {
 
+  // ===================== 全局统一重力补偿参数 =====================
+  //
+  // 所有控制模式共用这两套参数。以后只需在这里调节一次，
+  // 不需要分别修改零力、主动、镜像、虚拟弹簧和实验控制算法。
+  //
+  // 左臂顺序：joint1~joint7
+  const GravityCompensationParameters LEFT_ARM_GRAVITY_COMPENSATION{
+      {1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00},
+      {0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00}};
+
+  // 右臂顺序：joint11~joint17
+  const GravityCompensationParameters RIGHT_ARM_GRAVITY_COMPENSATION{
+      {1.25, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00},
+      {0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00}};
+
   namespace
   {
 
@@ -190,6 +205,30 @@ namespace upperlimb_robot
       }
 
       return std::abs(pulse_per_ms2) / (p->per_angle * p->ratio) * 1000000.0;
+    }
+
+    // 单臂独立 URDF 中，7 个主动关节的 v 索引固定为 0~6。
+    constexpr std::array<int, 7> SINGLE_ARM_V_IDS = {0, 1, 2, 3, 4, 5, 6};
+
+    // 对 Pinocchio 原始重力向量进行逐关节比例和偏置修正。
+    // gravity 中未属于当前机械臂的其他关节保持不变。
+    inline void applyArmGravityCompensation(
+        Eigen::VectorXd &gravity,
+        const std::array<int, 7> &v_ids,
+        const GravityCompensationParameters &parameters)
+    {
+      for (std::size_t i = 0; i < 7; ++i)
+      {
+        const int v_id = v_ids[i];
+        if (v_id < 0 || v_id >= gravity.size())
+        {
+          continue;
+        }
+
+        gravity(v_id) =
+            parameters.gain[i] * gravity(v_id) +
+            parameters.bias_nm[i];
+      }
     }
 
   } // namespace
@@ -836,6 +875,8 @@ namespace upperlimb_robot
     // 2. 让导纳看到的交互更接近“患者真实意图”
     //
     Eigen::VectorXd g = pinocchio::computeGeneralizedGravity(model, *data, q);
+    applyArmGravityCompensation(
+        g, SINGLE_ARM_V_IDS, LEFT_ARM_GRAVITY_COMPENSATION);
 
     // ===================== 扭矩跟踪控制 =====================
     //
@@ -1322,8 +1363,10 @@ namespace upperlimb_robot
     right_active_dq_adm(5) = clamp_abs(right_active_dq_adm(5), dq_adm_limit_j4567);
     right_active_dq_adm(6) = clamp_abs(right_active_dq_adm(6), dq_adm_limit_j4567);
 
-    // ===================== 重力补偿与扭矩跟踪 =====================
+    // ===================== 统一重力补偿与扭矩跟踪 =====================
     Eigen::VectorXd g = pinocchio::computeGeneralizedGravity(model, *data, q);
+    applyArmGravityCompensation(
+        g, SINGLE_ARM_V_IDS, RIGHT_ARM_GRAVITY_COMPENSATION);
 
     if (!finite_vector(g))
     {
@@ -1672,6 +1715,8 @@ namespace upperlimb_robot
     //     q     → 当前关节角（rad）
     //     g(q)  → 每个关节的重力力矩
     Eigen::VectorXd g = pinocchio::computeGeneralizedGravity(model, *data, q);
+    applyArmGravityCompensation(
+        g, SINGLE_ARM_V_IDS, LEFT_ARM_GRAVITY_COMPENSATION);
 
     // ===================== 计算两个传感器 frame 的 Jacobian =====================
     //
@@ -2094,6 +2139,8 @@ namespace upperlimb_robot
     // g(q) 对应 joint11~joint17 的重力补偿力矩
     //
     Eigen::VectorXd g = pinocchio::computeGeneralizedGravity(model, *data, q);
+    applyArmGravityCompensation(
+        g, SINGLE_ARM_V_IDS, RIGHT_ARM_GRAVITY_COMPENSATION);
 
     // ===================== 计算两个传感器 frame 的 Jacobian =====================
     //
@@ -2590,6 +2637,10 @@ namespace upperlimb_robot
     // 这一步是和以前分开算 left_model/right_model 的本质区别。
     //
     Eigen::VectorXd g = pinocchio::computeGeneralizedGravity(model, *data, q);
+    applyArmGravityCompensation(
+        g, left_v_id, LEFT_ARM_GRAVITY_COMPENSATION);
+    applyArmGravityCompensation(
+        g, right_v_id, RIGHT_ARM_GRAVITY_COMPENSATION);
 
     Eigen::MatrixXd J_left_arm = Eigen::MatrixXd::Zero(6, model.nv);
     Eigen::MatrixXd J_left_hand = Eigen::MatrixXd::Zero(6, model.nv);
@@ -3749,6 +3800,8 @@ namespace upperlimb_robot
     // g(q) 为当前姿态下的重力力矩
     //
     Eigen::VectorXd g = pinocchio::computeGeneralizedGravity(model, *data, q);
+    applyArmGravityCompensation(
+        g, SINGLE_ARM_V_IDS, LEFT_ARM_GRAVITY_COMPENSATION);
 
     // ===================== 关节空间弹簧阻尼参数 =====================
     //
@@ -4204,8 +4257,10 @@ namespace upperlimb_robot
     dq_r_filt = alpha_dq_r * dq_r_filt + (1.0 - alpha_dq_r) * dq_r_raw;
 
     // ===================== 右臂重力补偿 =====================
-    const Eigen::VectorXd g =
+    Eigen::VectorXd g =
         pinocchio::computeGeneralizedGravity(model, *data, q_r);
+    applyArmGravityCompensation(
+        g, SINGLE_ARM_V_IDS, RIGHT_ARM_GRAVITY_COMPENSATION);
 
     // ===================== 第六步：关节空间 PD 扭矩跟踪 =====================
     //
@@ -4669,8 +4724,10 @@ namespace upperlimb_robot
     dq_r_filt = alpha_dq_r * dq_r_filt + (1.0 - alpha_dq_r) * dq_r_raw;
 
     // ===================== 右臂重力补偿 =====================
-    const Eigen::VectorXd g =
+    Eigen::VectorXd g =
         pinocchio::computeGeneralizedGravity(model, *data, q_r);
+    applyArmGravityCompensation(
+        g, SINGLE_ARM_V_IDS, RIGHT_ARM_GRAVITY_COMPENSATION);
 
     // ===================== 第六步：关节空间 PD 扭矩跟踪 =====================
     //
@@ -5627,6 +5684,10 @@ namespace upperlimb_robot
     // 最终输出只包含主动导纳扭矩，不叠加其他前馈项。
     Eigen::VectorXd g =
         pinocchio::computeGeneralizedGravity(model, *data, q);
+    applyArmGravityCompensation(
+        g, left_v_id, LEFT_ARM_GRAVITY_COMPENSATION);
+    applyArmGravityCompensation(
+        g, right_v_id, RIGHT_ARM_GRAVITY_COMPENSATION);
 
     if (!vector_finite(g))
     {
@@ -7045,6 +7106,10 @@ namespace upperlimb_robot
     // 最终输出只包含主动导纳扭矩，不叠加其他前馈项。
     Eigen::VectorXd g =
         pinocchio::computeGeneralizedGravity(model, *data, q);
+    applyArmGravityCompensation(
+        g, left_v_id, LEFT_ARM_GRAVITY_COMPENSATION);
+    applyArmGravityCompensation(
+        g, right_v_id, RIGHT_ARM_GRAVITY_COMPENSATION);
 
     if (!vector_finite(g))
     {
@@ -8386,6 +8451,10 @@ namespace upperlimb_robot
     // 最终输出只包含主动导纳扭矩，不叠加其他前馈项。
     Eigen::VectorXd g =
         pinocchio::computeGeneralizedGravity(model, *data, q);
+    applyArmGravityCompensation(
+        g, left_v_id, LEFT_ARM_GRAVITY_COMPENSATION);
+    applyArmGravityCompensation(
+        g, right_v_id, RIGHT_ARM_GRAVITY_COMPENSATION);
 
     if (!vector_finite(g))
     {
@@ -9442,18 +9511,18 @@ namespace upperlimb_robot
 
         // 检查右臂 joint11~joint17 的每轴独立参数。
         //
-        // right_gravity_gain：重力模型比例，限制在 (0, 2]；
-        // right_gravity_bias_nm：重力剩余偏置，保守限制在 ±5 Nm；
+        // RIGHT_ARM_GRAVITY_COMPENSATION.gain：统一右臂重力模型比例，限制在 (0, 2]；
+        // RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm：统一右臂重力剩余偏置，保守限制在 ±5 Nm；
         // right_joint_damping：每轴速度阻尼，不允许为负；
         // right_posture_kp：每轴弱姿态保持刚度，不允许为负；
         // right_posture_torque_limit：每轴姿态保持限幅，不允许为负。
         for (std::size_t i = 0; i < 7; ++i)
         {
           const double gravity_gain =
-              config_.right_gravity_gain[i];
+              RIGHT_ARM_GRAVITY_COMPENSATION.gain[i];
 
           const double gravity_bias =
-              config_.right_gravity_bias_nm[i];
+              RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm[i];
 
           const double joint_damping =
               config_.right_joint_damping[i];
@@ -10224,7 +10293,7 @@ namespace upperlimb_robot
           tau_gravity_model_log{};
 
       // 实际加入 tau_model 的每轴重力补偿：
-      // right_gravity_gain[i] * gravity_model[i] + right_gravity_bias_nm[i]。
+      // RIGHT_ARM_GRAVITY_COMPENSATION.gain[i] * gravity_model[i] + RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm[i]。
       // 为兼容原 CSV 分析脚本，最终仍使用列名 tau_gravity_r1~r7。
       std::array<double, 7>
           tau_gravity_log{};
@@ -10284,15 +10353,15 @@ namespace upperlimb_robot
         // 第二步：为 joint11~joint17 分别乘比例，并分别增加常值偏置。
         //
         // 如果某个关节持续下沉，只调整该关节对应的：
-        //   right_gravity_gain[i]
+        //   RIGHT_ARM_GRAVITY_COMPENSATION.gain[i]
         // 或在比例基本正确后小幅调整：
-        //   right_gravity_bias_nm[i]
+        //   RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm[i]
         //
         // 注意：这里仍是 Pinocchio 模型方向，后面发送前保留原右臂整体负号。
         const double tau_gravity =
-            config_.right_gravity_gain[i] *
+            RIGHT_ARM_GRAVITY_COMPENSATION.gain[i] *
                 tau_gravity_model +
-            config_.right_gravity_bias_nm[i];
+            RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm[i];
 
         const double tau_spring =
             tau_right_spring(right_v_id);
@@ -10462,14 +10531,14 @@ namespace upperlimb_robot
 
         // 本次运行实际使用的每轴重力比例。
         for (double value :
-             config_.right_gravity_gain)
+             RIGHT_ARM_GRAVITY_COMPENSATION.gain)
         {
           csv_ << "," << value;
         }
 
         // 本次运行实际使用的每轴重力偏置，单位 Nm。
         for (double value :
-             config_.right_gravity_bias_nm)
+             RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm)
         {
           csv_ << "," << value;
         }

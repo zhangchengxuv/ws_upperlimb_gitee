@@ -26,6 +26,29 @@ namespace upperlimb_robot
   // 传感器数组索引统一使用 0~3
   static constexpr std::size_t FORCE_SENSOR_NUM = 4;
 
+  // ===================== 统一重力补偿参数 =====================
+  //
+  // 所有使用 Pinocchio 重力力矩的控制算法都共用这里的参数。
+  // 左右臂分别配置，并且每条臂的 7 个主动关节分别配置。
+  //
+  // 修正公式：
+  //   tau_gravity[i] = gain[i] * tau_gravity_model[i] + bias_nm[i]
+  //
+  // 参数顺序：
+  //   左臂：joint1  ~ joint7
+  //   右臂：joint11 ~ joint17
+  //
+  // 注意：bias_nm 使用 Pinocchio 模型方向，右臂最终发送时的整体负号
+  // 仍由各控制算法原有的驱动方向映射负责。
+  struct GravityCompensationParameters
+  {
+    std::array<double, 7> gain{};
+    std::array<double, 7> bias_nm{};
+  };
+
+  extern const GravityCompensationParameters LEFT_ARM_GRAVITY_COMPENSATION;
+  extern const GravityCompensationParameters RIGHT_ARM_GRAVITY_COMPENSATION;
+
   // ===================== 控制模式定义 =====================
   //
   // 说明：
@@ -475,11 +498,16 @@ namespace upperlimb_robot
       //   下标 5 -> 右臂 joint16 -> 控制层索引 5
       //   下标 6 -> 右臂 joint17 -> 控制层索引 6
       //
+      // 右臂重力补偿不在本实验配置中重复保存。
+      // 所有模式统一使用：
+      //   RIGHT_ARM_GRAVITY_COMPENSATION.gain
+      //   RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm
+      //
       // 右臂每个关节的最终模型方向力矩为：
       //
       // tau_gravity_compensated[i]
-      //     = right_gravity_gain[i] * gravity_model[i]
-      //     + right_gravity_bias_nm[i]
+      //     = RIGHT_ARM_GRAVITY_COMPENSATION.gain[i] * gravity_model[i]
+      //     + RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm[i]
       //
       // tau_model[i]
       //     = tau_gravity_compensated[i]
@@ -487,54 +515,8 @@ namespace upperlimb_robot
       //     + tau_posture[i]
       //     - right_joint_damping[i] * dq[i]
       //
-      // 之后代码仍会按照当前右臂驱动方向约定发送：
-      //
+      // 之后代码仍按当前右臂驱动方向约定发送：
       //   tau_sent[i] = -tau_model[i]
-      //
-      // 因此调节下面参数时，只改数值，不要同时修改最终整体负号。
-
-      // --------------------- 每轴重力补偿比例 ---------------------
-      //
-      // Pinocchio 给出的理论重力力矩先乘以该比例。
-      //
-      // 若某个关节在弹簧关闭时持续沿重力方向下沉，
-      // 可只提高该关节对应的比例，例如：
-      //
-      //   1.00 -> 1.03 -> 1.05 -> 1.08
-      //
-      // 若提高后关节反向缓慢上升，说明比例过大，应回调。
-      // 初始测试建议每次只改 0.02~0.03。
-      std::array<double, 7> right_gravity_gain{
-          1.25, // joint11
-          1.00, // joint12
-          1.00, // joint13
-          1.00, // joint14
-          1.00, // joint15
-          1.00, // joint16
-          1.00  // joint17
-      };
-
-      // --------------------- 每轴重力剩余偏置 ---------------------
-      //
-      // 单位：Nm，表达在 Pinocchio 模型方向中。
-      //
-      // 只有在调好 right_gravity_gain 后，仍存在近似恒定的小幅漂移时，
-      // 才使用该项做细调。建议从 ±0.05 Nm 或 ±0.10 Nm 开始。
-      //
-      // 例如 joint14 仍缓慢下沉，可尝试：
-      //
-      //   right_gravity_bias_nm[3] = 0.10;
-      //
-      // 如果漂移更严重，则该轴偏置符号应反向。
-      std::array<double, 7> right_gravity_bias_nm{
-          0.0, // joint11
-          0.0, // joint12
-          0.0, // joint13
-          0.0, // joint14
-          0.0, // joint15
-          0.0, // joint16
-          0.0  // joint17
-      };
 
       // --------------------- 每轴关节阻尼 ---------------------
       //
