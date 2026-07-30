@@ -49,6 +49,33 @@ namespace upperlimb_robot
   extern const GravityCompensationParameters LEFT_ARM_GRAVITY_COMPENSATION;
   extern const GravityCompensationParameters RIGHT_ARM_GRAVITY_COMPENSATION;
 
+  // ===================== 统一关节摩擦补偿参数 =====================
+  //
+  // 所有扭矩控制算法共用这里的摩擦补偿参数。
+  // 左右臂分别配置，并且每条臂的 7 个主动关节分别配置。
+  //
+  // 补偿公式：
+  //   tau_friction[i]
+  //       = coulomb_nm[i] * tanh(dq[i] / velocity_smooth_rad_s[i])
+  //       + viscous_nm_per_rad_s[i] * dq[i]
+  //
+  // 参数含义：
+  //   coulomb_nm              -> 低速近似恒定的库仑摩擦补偿，单位 Nm；
+  //   viscous_nm_per_rad_s    -> 随速度增加的粘性摩擦补偿，单位 Nm/(rad/s)；
+  //   velocity_smooth_rad_s   -> 零速度附近的方向平滑范围，单位 rad/s。
+  //
+  // tau_friction 与实际关节速度方向相同，用于抵消机构摩擦。
+  // 右臂最终发送时的整体负号仍由各控制算法原有的驱动方向映射负责。
+  struct FrictionCompensationParameters
+  {
+    std::array<double, 7> coulomb_nm{};
+    std::array<double, 7> viscous_nm_per_rad_s{};
+    std::array<double, 7> velocity_smooth_rad_s{};
+  };
+
+  extern const FrictionCompensationParameters LEFT_ARM_FRICTION_COMPENSATION;
+  extern const FrictionCompensationParameters RIGHT_ARM_FRICTION_COMPENSATION;
+
   // ===================== 控制模式定义 =====================
   //
   // 说明：
@@ -509,8 +536,14 @@ namespace upperlimb_robot
       //     = RIGHT_ARM_GRAVITY_COMPENSATION.gain[i] * gravity_model[i]
       //     + RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm[i]
       //
+      // tau_friction[i]
+      //     = RIGHT_ARM_FRICTION_COMPENSATION.coulomb_nm[i]
+      //       * tanh(dq[i] / RIGHT_ARM_FRICTION_COMPENSATION.velocity_smooth_rad_s[i])
+      //     + RIGHT_ARM_FRICTION_COMPENSATION.viscous_nm_per_rad_s[i] * dq[i]
+      //
       // tau_model[i]
       //     = tau_gravity_compensated[i]
+      //     + tau_friction[i]
       //     + tau_spring[i]
       //     + tau_posture[i]
       //     - right_joint_damping[i] * dq[i]

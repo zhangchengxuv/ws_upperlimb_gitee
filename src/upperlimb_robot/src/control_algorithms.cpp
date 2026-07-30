@@ -42,6 +42,25 @@ namespace upperlimb_robot
       {1.25, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00},
       {0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00}};
 
+  // ===================== 全局统一关节摩擦补偿参数 =====================
+  //
+  // 所有扭矩模式共用这两套参数。
+  // coulomb_nm 初始为 0，待逐关节实机标定后再增加。
+  // viscous_nm_per_rad_s 初始沿用原双臂零力模式中的 +0.4*dq 助力效果。
+  // velocity_smooth_rad_s 用于避免速度在零附近换向时库仑项跳变。
+  //
+  // 左臂顺序：joint1~joint7
+  const FrictionCompensationParameters LEFT_ARM_FRICTION_COMPENSATION{
+      {0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00},
+      {0.40, 0.40, 0.40, 0.40, 0.40, 0.40, 0.40},
+      {0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05}};
+
+  // 右臂顺序：joint11~joint17
+  const FrictionCompensationParameters RIGHT_ARM_FRICTION_COMPENSATION{
+      {0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00},
+      {0.40, 0.40, 0.40, 0.40, 0.40, 0.40, 0.40},
+      {0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05}};
+
   namespace
   {
 
@@ -228,6 +247,64 @@ namespace upperlimb_robot
         gravity(v_id) =
             parameters.gain[i] * gravity(v_id) +
             parameters.bias_nm[i];
+      }
+    }
+
+    // 计算单个关节的摩擦补偿力矩。
+    // 返回值使用 Pinocchio 模型关节方向，且与 joint_velocity_rad_s 同方向。
+    inline double calculateJointFrictionCompensation(
+        double joint_velocity_rad_s,
+        std::size_t joint_index,
+        const FrictionCompensationParameters &parameters)
+    {
+      if (joint_index >= 7 || !std::isfinite(joint_velocity_rad_s))
+      {
+        return 0.0;
+      }
+
+      const double coulomb = parameters.coulomb_nm[joint_index];
+      const double viscous = parameters.viscous_nm_per_rad_s[joint_index];
+      const double smooth = parameters.velocity_smooth_rad_s[joint_index];
+
+      if (!std::isfinite(coulomb) ||
+          !std::isfinite(viscous) ||
+          !std::isfinite(smooth) ||
+          smooth <= 0.0)
+      {
+        return 0.0;
+      }
+
+      const double tau_coulomb =
+          coulomb * std::tanh(joint_velocity_rad_s / smooth);
+
+      const double tau_viscous =
+          viscous * joint_velocity_rad_s;
+
+      return tau_coulomb + tau_viscous;
+    }
+
+    // 将当前机械臂的逐关节摩擦补偿叠加到已有模型补偿力矩中。
+    // torque 可以是已完成重力修正的向量，也可以是单独创建的补偿向量。
+    inline void addArmFrictionCompensation(
+        Eigen::VectorXd &torque,
+        const Eigen::VectorXd &velocity,
+        const std::array<int, 7> &v_ids,
+        const FrictionCompensationParameters &parameters)
+    {
+      for (std::size_t i = 0; i < 7; ++i)
+      {
+        const int v_id = v_ids[i];
+
+        if (v_id < 0 ||
+            v_id >= torque.size() ||
+            v_id >= velocity.size())
+        {
+          continue;
+        }
+
+        torque(v_id) +=
+            calculateJointFrictionCompensation(
+                velocity(v_id), i, parameters);
       }
     }
 
@@ -877,6 +954,8 @@ namespace upperlimb_robot
     Eigen::VectorXd g = pinocchio::computeGeneralizedGravity(model, *data, q);
     applyArmGravityCompensation(
         g, SINGLE_ARM_V_IDS, LEFT_ARM_GRAVITY_COMPENSATION);
+    addArmFrictionCompensation(
+        g, v, SINGLE_ARM_V_IDS, LEFT_ARM_FRICTION_COMPENSATION);
 
     // ===================== 扭矩跟踪控制 =====================
     //
@@ -1367,6 +1446,8 @@ namespace upperlimb_robot
     Eigen::VectorXd g = pinocchio::computeGeneralizedGravity(model, *data, q);
     applyArmGravityCompensation(
         g, SINGLE_ARM_V_IDS, RIGHT_ARM_GRAVITY_COMPENSATION);
+    addArmFrictionCompensation(
+        g, v, SINGLE_ARM_V_IDS, RIGHT_ARM_FRICTION_COMPENSATION);
 
     if (!finite_vector(g))
     {
@@ -1717,6 +1798,8 @@ namespace upperlimb_robot
     Eigen::VectorXd g = pinocchio::computeGeneralizedGravity(model, *data, q);
     applyArmGravityCompensation(
         g, SINGLE_ARM_V_IDS, LEFT_ARM_GRAVITY_COMPENSATION);
+    addArmFrictionCompensation(
+        g, v, SINGLE_ARM_V_IDS, LEFT_ARM_FRICTION_COMPENSATION);
 
     // ===================== 计算两个传感器 frame 的 Jacobian =====================
     //
@@ -2141,6 +2224,8 @@ namespace upperlimb_robot
     Eigen::VectorXd g = pinocchio::computeGeneralizedGravity(model, *data, q);
     applyArmGravityCompensation(
         g, SINGLE_ARM_V_IDS, RIGHT_ARM_GRAVITY_COMPENSATION);
+    addArmFrictionCompensation(
+        g, v, SINGLE_ARM_V_IDS, RIGHT_ARM_FRICTION_COMPENSATION);
 
     // ===================== 计算两个传感器 frame 的 Jacobian =====================
     //
@@ -2641,6 +2726,10 @@ namespace upperlimb_robot
         g, left_v_id, LEFT_ARM_GRAVITY_COMPENSATION);
     applyArmGravityCompensation(
         g, right_v_id, RIGHT_ARM_GRAVITY_COMPENSATION);
+    addArmFrictionCompensation(
+        g, v, left_v_id, LEFT_ARM_FRICTION_COMPENSATION);
+    addArmFrictionCompensation(
+        g, v, right_v_id, RIGHT_ARM_FRICTION_COMPENSATION);
 
     Eigen::MatrixXd J_left_arm = Eigen::MatrixXd::Zero(6, model.nv);
     Eigen::MatrixXd J_left_hand = Eigen::MatrixXd::Zero(6, model.nv);
@@ -2671,28 +2760,34 @@ namespace upperlimb_robot
         J_right_arm.transpose() * f_right_arm.toVector() +
         J_right_hand.transpose() * f_right_hand.toVector();
 
-    // ===================== 关节阻尼项 =====================
+    // ===================== 稳定阻尼项 =====================
     //
-    // 阻尼仍按左右臂各 7 个主动关节设置，但写入同一个 14 维向量。
+    // 原来的 -0.4 阻尼通过双重负号形成 +0.4*dq，实际属于运动助力。
+    // 该运动助力现在已经迁移到统一的 viscous friction compensation 中。
+    // 这里仅保留真正与速度反向的稳定阻尼，初始设为 0，以保持原有净效果。
+    // 若实机出现振荡，可逐关节小幅增加为正数，例如 0.05、0.10。
     //
-    Eigen::VectorXd damping = Eigen::VectorXd::Zero(model.nv);
+    Eigen::VectorXd stabilizing_damping = Eigen::VectorXd::Zero(model.nv);
 
-    const std::array<double, 7> damping_value = {
-        -0.4, -0.4, -0.4, -0.4, -0.4, -0.4, -0.4};
+    const std::array<double, 7> stabilizing_damping_value = {
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     for (std::size_t i = 0; i < 7; ++i)
     {
-      damping(left_v_id[i]) = damping_value[i];
-      damping(right_v_id[i]) = damping_value[i];
+      stabilizing_damping(left_v_id[i]) = stabilizing_damping_value[i];
+      stabilizing_damping(right_v_id[i]) = stabilizing_damping_value[i];
     }
 
-    Eigen::VectorXd tau_damping = -(damping.asDiagonal() * v);
+    Eigen::VectorXd tau_stabilizing_damping =
+        -(stabilizing_damping.asDiagonal() * v);
 
     // ===================== 最终关节扭矩 =====================
     //
-    // tau 是双臂整体模型下的 14 维关节力矩。
+    // 此时 g 已包含：逐关节重力修正 + 逐关节摩擦补偿。
+    // tau_ext 为四个六维力传感器映射得到的交互力矩。
     //
-    Eigen::VectorXd tau = g + tau_ext + tau_damping;
+    Eigen::VectorXd tau =
+        g + tau_ext + tau_stabilizing_damping;
 
     const std::array<double, 7> torque_limit = {
         30.0, 30.0, 30.0, 30.0, 18.0, 18.0, 18.0};
@@ -3802,6 +3897,8 @@ namespace upperlimb_robot
     Eigen::VectorXd g = pinocchio::computeGeneralizedGravity(model, *data, q);
     applyArmGravityCompensation(
         g, SINGLE_ARM_V_IDS, LEFT_ARM_GRAVITY_COMPENSATION);
+    addArmFrictionCompensation(
+        g, v, SINGLE_ARM_V_IDS, LEFT_ARM_FRICTION_COMPENSATION);
 
     // ===================== 关节空间弹簧阻尼参数 =====================
     //
@@ -4261,6 +4358,8 @@ namespace upperlimb_robot
         pinocchio::computeGeneralizedGravity(model, *data, q_r);
     applyArmGravityCompensation(
         g, SINGLE_ARM_V_IDS, RIGHT_ARM_GRAVITY_COMPENSATION);
+    addArmFrictionCompensation(
+        g, dq_r_filt, SINGLE_ARM_V_IDS, RIGHT_ARM_FRICTION_COMPENSATION);
 
     // ===================== 第六步：关节空间 PD 扭矩跟踪 =====================
     //
@@ -4728,6 +4827,8 @@ namespace upperlimb_robot
         pinocchio::computeGeneralizedGravity(model, *data, q_r);
     applyArmGravityCompensation(
         g, SINGLE_ARM_V_IDS, RIGHT_ARM_GRAVITY_COMPENSATION);
+    addArmFrictionCompensation(
+        g, dq_r_filt, SINGLE_ARM_V_IDS, RIGHT_ARM_FRICTION_COMPENSATION);
 
     // ===================== 第六步：关节空间 PD 扭矩跟踪 =====================
     //
@@ -5688,6 +5789,10 @@ namespace upperlimb_robot
         g, left_v_id, LEFT_ARM_GRAVITY_COMPENSATION);
     applyArmGravityCompensation(
         g, right_v_id, RIGHT_ARM_GRAVITY_COMPENSATION);
+    addArmFrictionCompensation(
+        g, v, left_v_id, LEFT_ARM_FRICTION_COMPENSATION);
+    addArmFrictionCompensation(
+        g, v, right_v_id, RIGHT_ARM_FRICTION_COMPENSATION);
 
     if (!vector_finite(g))
     {
@@ -7110,6 +7215,10 @@ namespace upperlimb_robot
         g, left_v_id, LEFT_ARM_GRAVITY_COMPENSATION);
     applyArmGravityCompensation(
         g, right_v_id, RIGHT_ARM_GRAVITY_COMPENSATION);
+    addArmFrictionCompensation(
+        g, v, left_v_id, LEFT_ARM_FRICTION_COMPENSATION);
+    addArmFrictionCompensation(
+        g, v, right_v_id, RIGHT_ARM_FRICTION_COMPENSATION);
 
     if (!vector_finite(g))
     {
@@ -8455,6 +8564,10 @@ namespace upperlimb_robot
         g, left_v_id, LEFT_ARM_GRAVITY_COMPENSATION);
     applyArmGravityCompensation(
         g, right_v_id, RIGHT_ARM_GRAVITY_COMPENSATION);
+    addArmFrictionCompensation(
+        g, v, left_v_id, LEFT_ARM_FRICTION_COMPENSATION);
+    addArmFrictionCompensation(
+        g, v, right_v_id, RIGHT_ARM_FRICTION_COMPENSATION);
 
     if (!vector_finite(g))
     {
@@ -9513,6 +9626,7 @@ namespace upperlimb_robot
         //
         // RIGHT_ARM_GRAVITY_COMPENSATION.gain：统一右臂重力模型比例，限制在 (0, 2]；
         // RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm：统一右臂重力剩余偏置，保守限制在 ±5 Nm；
+        // RIGHT_ARM_FRICTION_COMPENSATION：统一右臂库仑/粘性摩擦补偿参数；
         // right_joint_damping：每轴速度阻尼，不允许为负；
         // right_posture_kp：每轴弱姿态保持刚度，不允许为负；
         // right_posture_torque_limit：每轴姿态保持限幅，不允许为负。
@@ -9523,6 +9637,15 @@ namespace upperlimb_robot
 
           const double gravity_bias =
               RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm[i];
+
+          const double friction_coulomb =
+              RIGHT_ARM_FRICTION_COMPENSATION.coulomb_nm[i];
+
+          const double friction_viscous =
+              RIGHT_ARM_FRICTION_COMPENSATION.viscous_nm_per_rad_s[i];
+
+          const double friction_smooth =
+              RIGHT_ARM_FRICTION_COMPENSATION.velocity_smooth_rad_s[i];
 
           const double joint_damping =
               config_.right_joint_damping[i];
@@ -9535,12 +9658,18 @@ namespace upperlimb_robot
 
           if (!std::isfinite(gravity_gain) ||
               !std::isfinite(gravity_bias) ||
+              !std::isfinite(friction_coulomb) ||
+              !std::isfinite(friction_viscous) ||
+              !std::isfinite(friction_smooth) ||
               !std::isfinite(joint_damping) ||
               !std::isfinite(posture_kp) ||
               !std::isfinite(posture_limit) ||
               gravity_gain <= 0.0 ||
               gravity_gain > 2.0 ||
               std::abs(gravity_bias) > 5.0 ||
+              friction_coulomb < 0.0 ||
+              friction_viscous < 0.0 ||
+              friction_smooth <= 0.0 ||
               joint_damping < 0.0 ||
               posture_kp < 0.0 ||
               posture_limit < 0.0)
@@ -9550,6 +9679,9 @@ namespace upperlimb_robot
                 << " axis=joint" << (11 + i)
                 << " gravity_gain=" << gravity_gain
                 << " gravity_bias_nm=" << gravity_bias
+                << " friction_coulomb_nm=" << friction_coulomb
+                << " friction_viscous=" << friction_viscous
+                << " friction_smooth=" << friction_smooth
                 << " damping=" << joint_damping
                 << " posture_kp=" << posture_kp
                 << " posture_limit=" << posture_limit
@@ -9765,6 +9897,13 @@ namespace upperlimb_robot
                << "tau_gravity_r5,"
                << "tau_gravity_r6,"
                << "tau_gravity_r7,"
+               << "tau_friction_r1,"
+               << "tau_friction_r2,"
+               << "tau_friction_r3,"
+               << "tau_friction_r4,"
+               << "tau_friction_r5,"
+               << "tau_friction_r6,"
+               << "tau_friction_r7,"
                << "tau_posture_r1,"
                << "tau_posture_r2,"
                << "tau_posture_r3,"
@@ -10294,9 +10433,14 @@ namespace upperlimb_robot
 
       // 实际加入 tau_model 的每轴重力补偿：
       // RIGHT_ARM_GRAVITY_COMPENSATION.gain[i] * gravity_model[i] + RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm[i]。
+      // 摩擦补偿由 RIGHT_ARM_FRICTION_COMPENSATION 统一计算并单独记录。
       // 为兼容原 CSV 分析脚本，最终仍使用列名 tau_gravity_r1~r7。
       std::array<double, 7>
           tau_gravity_log{};
+
+      // 实际加入 tau_model 的逐关节摩擦补偿力矩。
+      std::array<double, 7>
+          tau_friction_log{};
 
       std::array<double, 7>
           tau_posture_log{};
@@ -10363,16 +10507,28 @@ namespace upperlimb_robot
                 tau_gravity_model +
             RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm[i];
 
+        const double joint_velocity =
+            kin.v(right_v_id);
+
+        // 统一逐关节摩擦补偿：库仑摩擦 + 粘性摩擦。
+        // 该力矩与关节速度同方向，用于抵消机构运动阻力。
+        const double tau_friction =
+            calculateJointFrictionCompensation(
+                joint_velocity,
+                i,
+                RIGHT_ARM_FRICTION_COMPENSATION);
+
         const double tau_spring =
             tau_right_spring(right_v_id);
 
-        // 每个关节使用独立速度阻尼。
+        // 每个关节使用独立稳定阻尼，方向与速度相反。
         const double tau_joint_damping =
             -config_.right_joint_damping[i] *
-            kin.v(right_v_id);
+            joint_velocity;
 
         const double tau_model =
             tau_gravity +
+            tau_friction +
             tau_spring +
             tau_posture +
             tau_joint_damping;
@@ -10421,6 +10577,9 @@ namespace upperlimb_robot
 
         tau_gravity_log[i] =
             tau_gravity;
+
+        tau_friction_log[i] =
+            tau_friction;
 
         tau_posture_log[i] =
             tau_posture;
@@ -10546,6 +10705,13 @@ namespace upperlimb_robot
         // 经过每轴比例和偏置后的实际重力补偿力矩。
         for (double value :
              tau_gravity_log)
+        {
+          csv_ << "," << value;
+        }
+
+        // 实际逐关节摩擦补偿力矩。
+        for (double value :
+             tau_friction_log)
         {
           csv_ << "," << value;
         }
