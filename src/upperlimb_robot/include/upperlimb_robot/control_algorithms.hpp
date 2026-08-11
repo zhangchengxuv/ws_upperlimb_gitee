@@ -57,6 +57,11 @@ namespace upperlimb_robot
   // 补偿公式：
   //   tau_friction[i]
   //       = coulomb_nm[i] * tanh(dq[i] / velocity_smooth_rad_s[i])
+  //       = coulomb_nm[i] * tanh(dq[i] / velocity_smooth_rad_s[i])
+  //       + viscous_nm_per_rad_s[i] * dq[i]
+  //
+  // 参数含义：
+  //   coulomb_nm              -> 低速近似恒定的库仑摩擦补偿，单位 Nm；
   //       + viscous_nm_per_rad_s[i] * dq[i]
   //
   // 参数含义：
@@ -129,10 +134,10 @@ namespace upperlimb_robot
     MODE_BILATERAL_ACTIVE = 13,
 
     // 右臂主动导纳模式
-    MODE_RIGHT_ACTIVE = 14,
+    MODE_RIGHT_ACTIVE = 16,
 
     // 双手空间虚拟弹簧主动模式
-    MODE_ACTIVE_SPRING_3D = 16,
+    MODE_ACTIVE_SPRING_3D = 14,
 
     // 毕设虚拟弹簧刚度实验模式
     MODE_EXPERIMENT_SPRING_STIFFNESS = 15,
