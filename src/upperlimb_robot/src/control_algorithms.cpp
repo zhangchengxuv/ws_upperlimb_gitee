@@ -9982,7 +9982,9 @@ namespace upperlimb_robot
       //
       // 3. Holding：
       //    到达 0.10 m 后持续保持，不自动返回初始位置。
-      //    用户退出模式时再由控制节点切换到其他控制方式。
+      //    当左臂实际大臂 frame 进入目标位置容差后，CSV 自动写入最后一行并关闭。
+      //    这里只停止记录，不停止控制；虚拟弹簧和右臂扭矩输出继续运行，
+      //    直到用户退出模式。
       target_left_velocity_.setZero();
 
       if (phase_ == TrajectoryPhase::Ready)
@@ -10738,7 +10740,43 @@ namespace upperlimb_robot
 
         ++csv_row_count_;
 
-        if ((csv_row_count_ % 50) == 0)
+        // ===================== 左臂到位后自动停止 CSV 记录 =====================
+        //
+        // 不在“目标轨迹刚到 10 cm”的瞬间关闭 CSV，因为此时左臂实际位置
+        // 可能仍有少量跟踪滞后。只有同时满足：
+        //
+        // 1. 轨迹已经进入 Holding；
+        // 2. 左臂实际大臂 frame 与 10 cm 目标位置的三维误差
+        //    小于 left_position_tolerance；
+        //
+        // 才认为本次左臂运动真正完成。
+        //
+        // 当前默认 left_position_tolerance = 0.002 m，即 2 mm。
+        // 本周期数据已经先写入 CSV，因此关闭前会保留一行“到位完成”数据。
+        // 关闭 CSV 只停止数据记录，不改变任何控制状态：
+        // 左臂继续保持 10 cm，右臂继续执行重力补偿、摩擦补偿和虚拟弹簧。
+        const bool left_motion_completed =
+            phase_ == TrajectoryPhase::Holding &&
+            left_position_error.norm() <=
+                config_.left_position_tolerance;
+
+        if (left_motion_completed)
+        {
+          csv_.flush();
+          csv_.close();
+          csv_initialized_ = false;
+
+          std::cout
+              << "[ExperimentControl] 左臂已到达 10 cm 目标位置，"
+              << "CSV 自动停止记录。"
+              << " rows="
+              << csv_row_count_
+              << " final_error="
+              << left_position_error.norm()
+              << " m"
+              << std::endl;
+        }
+        else if ((csv_row_count_ % 50) == 0)
         {
           csv_.flush();
         }
