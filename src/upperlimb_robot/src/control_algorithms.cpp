@@ -8954,7 +8954,7 @@ namespace upperlimb_robot
     //
     // RobotControlNode 在每个控制周期调用一次本函数。
     // 这里不直接实现全部算法，而是根据 ExperimentMode 分发到对应实验：
-    // 1. SpringStiffness：自由运动 X 向虚拟弹簧可视化实验；
+    // 1. SpringStiffness：左臂固定、右臂人工移动的准静态虚拟弹簧刚度实验；
     // 2. ConstantTorque：单轴恒扭矩调试；
     // 3. Idle：不产生控制输出。
     //
@@ -8985,15 +8985,15 @@ namespace upperlimb_robot
     }
 
     // 设置实验类型。模式切换本身不自动初始化实验状态；
-    // RobotControlNode 进入实验模式时会先 reset()，再设置模式和刚度等级。
+    // RobotControlNode 进入实验模式时会先 reset()，再设置模式和弹簧开关。
     void ExperimentControl::setExperimentMode(ExperimentMode mode)
     {
       mode_ = mode;
     }
 
-    // 设置本次正式实验使用的刚度等级。
-    // 正式实验每次只选择 Low / Medium / High 中的一个等级，
-    // 不在一条轨迹中自动切换刚度。
+    // 为兼容现有 GUI / RobotControlNode 保留该接口。
+    // Off 表示关闭虚拟弹簧；Low / Medium / High 均只表示开启。
+    // 真正目标刚度唯一由 config_.spring_stiffness 决定。
     void ExperimentControl::setSpringLevel(SpringLevel level)
     {
       spring_level_ = level;
@@ -9033,7 +9033,6 @@ namespace upperlimb_robot
 
       debug_counter_ = 0;
       phase_time_ = 0.0;
-      current_stiffness_ = 0.0;
       config_validated_ = false;
 
       initial_left_position_.setZero();
@@ -9045,6 +9044,7 @@ namespace upperlimb_robot
       initial_left_joint_position_rad_.fill(0.0);
       left_joint_position_command_rad_.fill(0.0);
       initial_right_joint_position_rad_.fill(0.0);
+      initial_measured_right_axial_force_ = 0.0;
 
       torque_joint_index_ = 0;
       torque_nm_ = 0.0;
@@ -9086,10 +9086,9 @@ namespace upperlimb_robot
       constant_torque_enabled_ = true;
     }
 
-    // 本实验只有一个固定刚度：300 N/m。
-    //
-    // 为了保持与现有 GUI 和 RobotControlNode 的接口兼容，
-    // Low / Medium / High 三个非 Off 选项都返回同一个刚度。
+    // 本实验只有一个目标刚度入口：config_.spring_stiffness。
+    // 为保持与现有 GUI / RobotControlNode 的接口兼容，
+    // Low / Medium / High 三个非 Off 选项都返回这一同一个目标刚度。
     double ExperimentControl::selectedStiffness() const
     {
       if (spring_level_ == SpringLevel::Off)
@@ -9413,33 +9412,32 @@ namespace upperlimb_robot
       started_ = false;
     }
 
-    // ===================== 自由运动 X 向虚拟弹簧可视化实验 =====================
+    // ===================== 人工准静态 X 向虚拟弹簧刚度实验 =====================
     //
-    // 本函数把原来分散在多个实验子函数中的逻辑尽量集中到一起，
-    // 便于按控制顺序从上到下阅读。
+    // 完整实验链：
     //
-    // 完整控制链：
-    //
-    // 左臂位置轨迹
+    // 左臂 7 关节位置固定
     //      ↓
-    // 左右大臂 frame 实际相对位移
+    // 右臂在 K=0 下稳定并重新记录自然位置
     //      ↓
-    // F = -Kx - Bx_dot
+    // 直接启用唯一目标刚度 spring_stiffness
     //      ↓
-    // 计算右臂受到的世界坐标弹簧力
+    // 实验者缓慢移动右臂
+    //      ↓
+    // 左右大臂 frame 实际相对位移 -> extension
+    //      ↓
+    // F_right = K * extension + B * extension_rate
     //      ↓
     // 世界力转换到右大臂传感器 LOCAL 坐标
     //      ↓
-    // J_right_local^T F_right_local
+    // J_right_local^T * F_right_local
     //      ↓
-    // 右臂弹簧关节力矩
-    //      ↓
-    // 重力补偿 + 弹簧力矩 + 弱姿态保持 - 关节阻尼
+    // 重力补偿 + 摩擦补偿 + 弹簧力矩 - 关节阻尼
     //      ↓
     // 右臂扭矩模式输出
     //
-    // 该模式取消右侧固定端漂移故障：
-    // 右臂可以自由移动，并应在虚拟弹簧作用下被左臂拖动。
+    // 六维力传感器只用于记录实际交互力，不参与控制。
+    // CSV 从初始化开始持续记录，直到用户退出实验。
     void ExperimentControl::runSpringStiffnessExperiment(
         const MotorStateCache &state,
         const SensorStateCache &sensor_state,
@@ -9449,59 +9447,21 @@ namespace upperlimb_robot
       constexpr double RAD2DEG =
           180.0 / 3.14159265358979323846;
 
-      // 每个周期先清空全部输出标志。
-      //
-      // 这样右臂 7~9、左臂 17~19 会保持 use_position=false、
-      // use_torque=false，不会误用上一周期或上一模式的命令。
       output = ControlOutputCache{};
-
       const double dt = validDt(dt_s);
 
-      // ===================== 当前状态名称 =====================
-      //
-      // 只用于控制台和 CSV，不额外建立类成员函数。
       auto phase_name = [&]() -> const char *
       {
         switch (phase_)
         {
         case TrajectoryPhase::Ready:
           return "ready";
-        case TrajectoryPhase::Moving:
-          return "moving";
-        case TrajectoryPhase::Holding:
+        case TrajectoryPhase::Measuring:
         default:
-          return "holding";
+          return "measuring";
         }
       };
 
-      auto level_name = [&]() -> const char *
-      {
-        switch (spring_level_)
-        {
-        case SpringLevel::Low:
-          return "low";
-        case SpringLevel::Medium:
-          return "medium";
-        case SpringLevel::High:
-          return "high";
-        case SpringLevel::Off:
-        default:
-          return "off";
-        }
-      };
-
-      // ===================== 故障/未启动时的安全保持 =====================
-      //
-      // 左臂和右臂都切到位置模式，目标取当前可用位置：
-      //
-      // 左臂：
-      // 已初始化时保持当前内部位置目标；
-      // 未初始化时保持实际关节角。
-      //
-      // 右臂：
-      // 始终保持故障或停止发生时的实际关节角。
-      //
-      // 这样不会出现“右臂留在扭矩模式并发送 0 Nm 后直接下落”的问题。
       auto write_safe_position_hold = [&]()
       {
         output = ControlOutputCache{};
@@ -9511,47 +9471,30 @@ namespace upperlimb_robot
           const std::size_t left_index = left_ctrl_id_[i];
           const std::size_t right_index = right_ctrl_id_[i];
 
-          // 左臂位置保持。
           output.use_position[left_index] = true;
           output.use_torque[left_index] = false;
-
           output.target_position[left_index] =
               initialized_
-                  ? left_joint_position_command_rad_[i] * RAD2DEG
+                  ? initial_left_joint_position_rad_[i] * RAD2DEG
                   : state.position[left_index];
+          output.target_velocity[left_index] = config_.left_position_velocity;
+          output.target_acc[left_index] = config_.left_position_acc;
+          output.target_dec[left_index] = config_.left_position_dec;
+          output.target_smooth_time[left_index] = config_.left_position_smooth_time;
 
-          output.target_velocity[left_index] =
-              config_.left_position_velocity;
-          output.target_acc[left_index] =
-              config_.left_position_acc;
-          output.target_dec[left_index] =
-              config_.left_position_dec;
-          output.target_smooth_time[left_index] =
-              config_.left_position_smooth_time;
-
-          // 右臂锁住当前实际位置，避免故障后突然回拉到进入实验时的姿态。
+          // 故障或停止时锁住右臂当前实际位置，避免 0 Nm 下落。
           output.use_position[right_index] = true;
           output.use_torque[right_index] = false;
-
-          output.target_position[right_index] =
-              state.position[right_index];
-
-          output.target_velocity[right_index] =
-              config_.left_position_velocity;
-          output.target_acc[right_index] =
-              config_.left_position_acc;
-          output.target_dec[right_index] =
-              config_.left_position_dec;
-          output.target_smooth_time[right_index] =
-              config_.left_position_smooth_time;
+          output.target_position[right_index] = state.position[right_index];
+          output.target_velocity[right_index] = config_.left_position_velocity;
+          output.target_acc[right_index] = config_.left_position_acc;
+          output.target_dec[right_index] = config_.left_position_dec;
+          output.target_smooth_time[right_index] = config_.left_position_smooth_time;
         }
 
         output.valid = true;
       };
 
-      // 六维力传感器虽然不参与虚拟弹簧控制，
-      // 但仍用于记录右侧真实交互力。
-      // 数据无效时直接进入安全位置保持。
       if (!sensor_state.valid)
       {
         setSafeFault("[ExperimentControl] 六维力传感器数据无效");
@@ -9559,55 +9502,35 @@ namespace upperlimb_robot
         return;
       }
 
-      // ===================== Pinocchio 模型初始化 =====================
       if (!initPinocchioOnce())
       {
         write_safe_position_hold();
         return;
       }
 
-      // ===================== 实验方向 =====================
       Eigen::Vector3d axis_world;
-
       if (!normalizedAxis(axis_world))
       {
-        setSafeFault(
-            "[ExperimentControl] direction_world 非法或无法归一化");
+        setSafeFault("[ExperimentControl] direction_world 非法或无法归一化");
         write_safe_position_hold();
         return;
       }
 
       // ===================== 配置检查 =====================
-      //
-      // 配置只在 reset() 后第一次运行时检查一次。
-      // 这样既保持所有判断集中在主函数，又不必每个控制周期重复遍历参数。
       if (!config_validated_)
       {
         bool config_ok = true;
 
-        // 先检查所有标量配置。
-        // 每个右臂关节的独立参数在后面的循环中单独检查。
-        const std::array<double, 24> scalar_values = {
+        const std::array<double, 13> scalar_values = {
             config_.spring_stiffness,
             config_.spring_cartesian_damping,
             config_.spring_force_limit,
             config_.extension_limit,
             config_.extension_rate_limit,
-            config_.left_cartesian_kp,
-            config_.left_cartesian_speed_limit,
-            config_.left_ik_damping,
-            config_.left_joint_speed_limit,
-            config_.left_joint_range_limit,
-            config_.left_joint_lead_limit,
+            config_.ready_time,
             config_.left_position_velocity,
             config_.left_position_acc,
             config_.left_position_dec,
-            config_.left_tracking_error_limit,
-            config_.left_position_tolerance,
-            config_.target_displacement,
-            config_.move_speed,
-            config_.ready_time,
-            config_.stiffness_ramp_time,
             config_.dt_min,
             config_.dt_max,
             axis_world.norm(),
@@ -9622,39 +9545,36 @@ namespace upperlimb_robot
           }
         }
 
-        // 检查右臂 joint11~joint17 的每轴独立参数。
-        //
-        // RIGHT_ARM_GRAVITY_COMPENSATION.gain：统一右臂重力模型比例，限制在 (0, 2]；
-        // RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm：统一右臂重力剩余偏置，保守限制在 ±5 Nm；
-        // RIGHT_ARM_FRICTION_COMPENSATION：统一右臂库仑/粘性摩擦补偿参数；
-        // right_joint_damping：每轴速度阻尼，不允许为负；
-        // right_posture_kp：每轴弱姿态保持刚度，不允许为负；
-        // right_posture_torque_limit：每轴姿态保持限幅，不允许为负。
-        for (std::size_t i = 0; i < 7; ++i)
+        if (config_.spring_stiffness < 0.0 ||
+            config_.spring_cartesian_damping < 0.0 ||
+            config_.spring_force_limit <= 0.0 ||
+            config_.extension_limit <= 0.0 ||
+            config_.extension_rate_limit <= 0.0 ||
+            config_.ready_time < 0.0 ||
+            config_.left_position_velocity <= 0.0 ||
+            config_.left_position_acc <= 0.0 ||
+            config_.left_position_dec <= 0.0 ||
+            config_.left_position_smooth_time < 0 ||
+            config_.dt_min <= 0.0 ||
+            config_.dt_max < config_.dt_min)
+        {
+          config_ok = false;
+        }
+
+        for (std::size_t i = 0; i < 7 && config_ok; ++i)
         {
           const double gravity_gain =
               RIGHT_ARM_GRAVITY_COMPENSATION.gain[i];
-
           const double gravity_bias =
               RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm[i];
-
           const double friction_coulomb =
               RIGHT_ARM_FRICTION_COMPENSATION.coulomb_nm[i];
-
           const double friction_viscous =
               RIGHT_ARM_FRICTION_COMPENSATION.viscous_nm_per_rad_s[i];
-
           const double friction_smooth =
               RIGHT_ARM_FRICTION_COMPENSATION.velocity_smooth_rad_s[i];
-
           const double joint_damping =
               config_.right_joint_damping[i];
-
-          const double posture_kp =
-              config_.right_posture_kp[i];
-
-          const double posture_limit =
-              config_.right_posture_torque_limit[i];
 
           if (!std::isfinite(gravity_gain) ||
               !std::isfinite(gravity_bias) ||
@@ -9662,90 +9582,21 @@ namespace upperlimb_robot
               !std::isfinite(friction_viscous) ||
               !std::isfinite(friction_smooth) ||
               !std::isfinite(joint_damping) ||
-              !std::isfinite(posture_kp) ||
-              !std::isfinite(posture_limit) ||
               gravity_gain <= 0.0 ||
               gravity_gain > 2.0 ||
               std::abs(gravity_bias) > 5.0 ||
               friction_coulomb < 0.0 ||
               friction_viscous < 0.0 ||
               friction_smooth <= 0.0 ||
-              joint_damping < 0.0 ||
-              posture_kp < 0.0 ||
-              posture_limit < 0.0)
+              joint_damping < 0.0)
           {
-            std::cerr
-                << "[ExperimentControl] 右臂每轴参数非法。"
-                << " axis=joint" << (11 + i)
-                << " gravity_gain=" << gravity_gain
-                << " gravity_bias_nm=" << gravity_bias
-                << " friction_coulomb_nm=" << friction_coulomb
-                << " friction_viscous=" << friction_viscous
-                << " friction_smooth=" << friction_smooth
-                << " damping=" << joint_damping
-                << " posture_kp=" << posture_kp
-                << " posture_limit=" << posture_limit
-                << std::endl;
-
             config_ok = false;
-            break;
           }
-        }
-
-        // 本实验使用固定刚度和单个目标位移。
-        if (config_.spring_stiffness <= 0.0 ||
-            config_.target_displacement <= 0.0)
-        {
-          config_ok = false;
-        }
-
-        // 10 cm 目标位移必须在形变量软件限幅之内。
-        if (config_.target_displacement >
-            config_.extension_limit + 1e-9)
-        {
-          config_ok = false;
-        }
-
-        // 最大理论弹簧力不能超过弹簧力软件限幅。
-        //
-        // 当前默认：
-        // 300 N/m × 0.10 m = 30 N。
-        if (config_.spring_stiffness *
-                config_.target_displacement >
-            config_.spring_force_limit + 1e-9)
-        {
-          config_ok = false;
-        }
-
-        if (config_.spring_cartesian_damping < 0.0 ||
-            config_.spring_force_limit <= 0.0 ||
-            config_.extension_limit <= 0.0 ||
-            config_.extension_rate_limit <= 0.0 ||
-            config_.left_cartesian_kp < 0.0 ||
-            config_.left_cartesian_speed_limit <= 0.0 ||
-            config_.left_ik_damping <= 0.0 ||
-            config_.left_joint_speed_limit <= 0.0 ||
-            config_.left_joint_range_limit <= 0.0 ||
-            config_.left_joint_lead_limit <= 0.0 ||
-            config_.left_position_velocity <= 0.0 ||
-            config_.left_position_acc <= 0.0 ||
-            config_.left_position_dec <= 0.0 ||
-            config_.left_position_smooth_time < 0 ||
-            config_.left_tracking_error_limit <= 0.0 ||
-            config_.left_position_tolerance <= 0.0 ||
-            config_.move_speed <= 0.0 ||
-            config_.ready_time < 0.0 ||
-            config_.stiffness_ramp_time <= 1e-6 ||
-            config_.dt_min <= 0.0 ||
-            config_.dt_max < config_.dt_min)
-        {
-          config_ok = false;
         }
 
         if (!config_ok)
         {
-          setSafeFault(
-              "[ExperimentControl] 自由弹簧实验配置非法");
+          setSafeFault("[ExperimentControl] 人工刚度实验配置非法");
           write_safe_position_hold();
           return;
         }
@@ -9753,55 +9604,73 @@ namespace upperlimb_robot
         config_validated_ = true;
       }
 
-      // ===================== 读取机器人状态 =====================
+      // ===================== 当前机器人状态 =====================
       RobotKinematics kin;
-
       if (!readRobotState(state, kin))
       {
         write_safe_position_hold();
         return;
       }
 
+      // ===================== 右侧真实传感器力 =====================
+      // 这里只测量，不参与右臂控制。
+      const auto &right_raw =
+          sensor_state.sensor[SENSOR_RIGHT_ARM];
+      const auto &right_bias =
+          sensor_state.bias[SENSOR_RIGHT_ARM];
+
+      const Eigen::Vector3d right_force_sensor_measured(
+          right_raw.fx - right_bias.fx,
+          right_raw.fy - right_bias.fy,
+          right_raw.fz - right_bias.fz);
+
+      if (!finiteVec3(right_force_sensor_measured))
+      {
+        setSafeFault("[ExperimentControl] 右侧六维力传感器力数据非法");
+        write_safe_position_hold();
+        return;
+      }
+
+      const Eigen::Vector3d right_force_world_measured =
+          kin.right_rotation * right_force_sensor_measured;
+
+      if (!finiteVec3(right_force_world_measured))
+      {
+        setSafeFault("[ExperimentControl] 右侧实测力坐标转换非法");
+        write_safe_position_hold();
+        return;
+      }
+
+      const double measured_right_axial_force =
+          axis_world.dot(right_force_world_measured);
+
       // ===================== 第一帧初始化 =====================
-      //
-      // start() 后获得的第一帧有效状态作为：
-      // 1. 左臂单次 10 cm 运动零点；
-      // 2. 右臂漂移观察零点；
-      // 3. 虚拟弹簧自然相对位置；
-      // 4. 左臂位置命令初值；
-      // 5. 右臂弱姿态保持参考。
+      // 第一帧只负责接管控制和固定左臂。
+      // 真正的弹簧自然位置会在 Ready 结束时重新记录，
+      // 因而不会把“手扶/松手”的释放位移算进正式 extension。
       if (started_ && !initialized_)
       {
         initial_left_position_ = kin.p_left;
         initial_right_position_ = kin.p_right;
-        initial_relative_position_ =
-            kin.p_left - kin.p_right;
+        initial_relative_position_ = kin.p_left - kin.p_right;
+        initial_measured_right_axial_force_ = measured_right_axial_force;
 
         target_left_position_ = kin.p_left;
         target_left_velocity_.setZero();
 
         for (std::size_t i = 0; i < 7; ++i)
         {
-          const double left_q =
-              kin.q(left_q_id_[i]);
-
-          initial_left_joint_position_rad_[i] =
-              left_q;
-
-          left_joint_position_command_rad_[i] =
-              left_q;
-
-          initial_right_joint_position_rad_[i] =
-              kin.q(right_q_id_[i]);
+          const double left_q = kin.q(left_q_id_[i]);
+          initial_left_joint_position_rad_[i] = left_q;
+          left_joint_position_command_rad_[i] = left_q;
+          initial_right_joint_position_rad_[i] = kin.q(right_q_id_[i]);
         }
 
         debug_counter_ = 0;
         phase_ = TrajectoryPhase::Ready;
         phase_time_ = 0.0;
-        current_stiffness_ = 0.0;
-        initialized_ = true;
+          initialized_ = true;
 
-        // 每次实验创建独立 CSV。
         if (csv_.is_open())
         {
           csv_.flush();
@@ -9811,31 +9680,21 @@ namespace upperlimb_robot
         csv_initialized_ = false;
         csv_row_count_ = 0;
 
-        auto now_sys =
-            std::chrono::system_clock::now();
-
-        auto now_time_t =
-            std::chrono::system_clock::to_time_t(now_sys);
-
+        auto now_sys = std::chrono::system_clock::now();
+        auto now_time_t = std::chrono::system_clock::to_time_t(now_sys);
         char file_time[64];
-
         std::strftime(
             file_time,
             sizeof(file_time),
             "%Y%m%d_%H%M%S",
             std::localtime(&now_time_t));
 
-        const char *pwd =
-            std::getenv("PWD");
-
+        const char *pwd = std::getenv("PWD");
         const std::string csv_dir =
-            (pwd != nullptr)
-                ? std::string(pwd)
-                : std::string(".");
-
+            (pwd != nullptr) ? std::string(pwd) : std::string(".");
         const std::string csv_path =
             csv_dir +
-            "/free_spring_visual_experiment_" +
+            "/manual_spring_stiffness_experiment_" +
             file_time +
             ".csv";
 
@@ -9843,19 +9702,26 @@ namespace upperlimb_robot
 
         if (csv_.is_open())
         {
-          csv_ << "spring_level,"
-               << "trajectory_phase,"
-               << "movement_index,"
-               << "target_displacement,"
-               << "left_target_axis_displacement,"
-               << "left_actual_axis_displacement,"
-               << "right_actual_axis_displacement,"
-               << "right_drift_norm,"
+          csv_ << "trajectory_phase,"
+               << "spring_enabled,"
+               << "target_stiffness,"
+               << "left_axis_displacement,"
+               << "right_axis_displacement,"
+               << "right_displacement_norm,"
                << "extension,"
                << "extension_rate,"
-               << "current_stiffness,"
+               << "extension_limited,"
+               << "spring_force_right_unclamped,"
                << "right_spring_force_scalar,"
+               << "spring_force_saturated,"
                << "measured_right_axial_force,"
+               << "measured_right_axial_force_zeroed,"
+               << "measured_right_sensor_fx,"
+               << "measured_right_sensor_fy,"
+               << "measured_right_sensor_fz,"
+               << "measured_right_world_fx,"
+               << "measured_right_world_fy,"
+               << "measured_right_world_fz,"
                << "F_right_world_x,"
                << "F_right_world_y,"
                << "F_right_world_z,"
@@ -9904,13 +9770,13 @@ namespace upperlimb_robot
                << "tau_friction_r5,"
                << "tau_friction_r6,"
                << "tau_friction_r7,"
-               << "tau_posture_r1,"
-               << "tau_posture_r2,"
-               << "tau_posture_r3,"
-               << "tau_posture_r4,"
-               << "tau_posture_r5,"
-               << "tau_posture_r6,"
-               << "tau_posture_r7,"
+               << "tau_joint_damping_r1,"
+               << "tau_joint_damping_r2,"
+               << "tau_joint_damping_r3,"
+               << "tau_joint_damping_r4,"
+               << "tau_joint_damping_r5,"
+               << "tau_joint_damping_r6,"
+               << "tau_joint_damping_r7,"
                << "tau_sent_r1,"
                << "tau_sent_r2,"
                << "tau_sent_r3,"
@@ -9923,324 +9789,174 @@ namespace upperlimb_robot
                << "dt\n";
 
           csv_initialized_ = true;
-
           std::cout
-              << "[ExperimentControl] 自由弹簧实验 CSV: "
+              << "[ExperimentControl] 人工刚度实验 CSV: "
               << csv_path
               << std::endl;
         }
         else
         {
           std::cerr
-              << "[ExperimentControl] 无法创建自由弹簧实验 CSV"
+              << "[ExperimentControl] 无法创建人工刚度实验 CSV"
               << std::endl;
         }
 
         std::cout
-            << "[ExperimentControl] 自由运动虚拟弹簧初始化:"
-            << " p_left="
-            << initial_left_position_.transpose()
-            << " p_right="
-            << initial_right_position_.transpose()
-            << " direction="
-            << axis_world.transpose()
+            << "[ExperimentControl] 人工刚度实验初始化:"
+            << " left_hold=" << initial_left_position_.transpose()
+            << " right=" << initial_right_position_.transpose()
+            << " target_K=" << selectedStiffness()
+            << " direction=" << axis_world.transpose()
             << std::endl;
       }
 
-      // 尚未 start 或尚未取得有效初始状态时，保持当前位置。
       if (!initialized_)
       {
         write_safe_position_hold();
         return;
       }
 
-      // 数值故障后不再输出扭矩，直接位置保持。
       if (fault_)
       {
         write_safe_position_hold();
         return;
       }
 
-      // 手动 stop 后安全位置保持。
       if (!started_)
       {
         write_safe_position_hold();
         return;
       }
 
-      // ===================== 左臂单次 10 cm 低速运动 =====================
+      // ===================== Ready / Measuring =====================
       //
-      // 运动过程只有三个阶段：
+      // Ready：
+      //   关闭虚拟弹簧，等待右臂稳定。
       //
-      // 1. Ready：
-      //    左臂保持初始位置；前 ready_time 秒弹簧关闭，
-      //    随后在 stiffness_ramp_time 内把刚度渐入到 300 N/m。
+      // Ready 结束：
+      //   1. 重新记录左右大臂 frame，定义此刻 extension = 0；
+      //   2. 重新记录右侧轴向力零点；
+      //   3. 直接进入 Measuring，不做刚度渐入。
       //
-      // 2. Moving：
-      //    目标位移从 0 线性增加到 0.10 m，
-      //    每周期只增加 move_speed × dt。
-      //
-      // 3. Holding：
-      //    到达 0.10 m 后持续保持，不自动返回初始位置。
-      //    当左臂实际大臂 frame 进入目标位置容差后，CSV 自动写入最后一行并关闭。
-      //    这里只停止记录，不停止控制；虚拟弹簧和右臂扭矩输出继续运行，
-      //    直到用户退出模式。
-      target_left_velocity_.setZero();
+      // Measuring：
+      //   直接使用唯一目标刚度 spring_stiffness。
+      const double target_stiffness = selectedStiffness();
 
       if (phase_ == TrajectoryPhase::Ready)
       {
-        target_left_position_ =
-            initial_left_position_;
-
         phase_time_ += dt;
 
-        const double ready_total_time =
-            config_.ready_time +
-            config_.stiffness_ramp_time;
-
-        if (phase_time_ >= ready_total_time)
+        if (phase_time_ >= config_.ready_time)
         {
-          phase_ = TrajectoryPhase::Moving;
+          initial_left_position_ = kin.p_left;
+          initial_right_position_ = kin.p_right;
+          initial_relative_position_ = kin.p_left - kin.p_right;
+          initial_measured_right_axial_force_ = measured_right_axial_force;
+
+          phase_ = TrajectoryPhase::Measuring;
           phase_time_ = 0.0;
-        }
-      }
-      else if (phase_ == TrajectoryPhase::Moving)
-      {
-        const double old_displacement =
-            axis_world.dot(
-                target_left_position_ -
-                initial_left_position_);
 
-        const double new_displacement =
-            std::min(
-                old_displacement +
-                    config_.move_speed * dt,
-                config_.target_displacement);
-
-        const Eigen::Vector3d old_target =
-            target_left_position_;
-
-        target_left_position_ =
-            initial_left_position_ +
-            new_displacement * axis_world;
-
-        target_left_velocity_ =
-            (target_left_position_ -
-             old_target) /
-            dt;
-
-        if (new_displacement >=
-            config_.target_displacement - 1e-9)
-        {
-          target_left_position_ =
-              initial_left_position_ +
-              config_.target_displacement *
-                  axis_world;
-
-          target_left_velocity_.setZero();
-          phase_ = TrajectoryPhase::Holding;
-          phase_time_ = 0.0;
+          std::cout
+              << "[ExperimentControl] Ready 完成，已重新置零并直接启用目标刚度。"
+              << " target_K=" << target_stiffness
+              << " N/m"
+              << " p_left=" << initial_left_position_.transpose()
+              << " p_right=" << initial_right_position_.transpose()
+              << " force_zero=" << initial_measured_right_axial_force_
+              << " N"
+              << std::endl;
         }
       }
       else
       {
-        // Holding：始终保持单次运动的终点。
-        target_left_position_ =
-            initial_left_position_ +
-            config_.target_displacement *
-                axis_world;
-
-        target_left_velocity_.setZero();
         phase_time_ += dt;
       }
 
-      // ===================== 刚度渐入 =====================
-      //
-      // Ready 的前 ready_time 秒保持 K=0；
-      // 随后线性渐入到固定的 300 N/m；
-      // Moving 和 Holding 阶段持续保持该刚度。
-      const double selected_stiffness =
-          selectedStiffness();
-
-      bool stiffness_enabled =
-          !fault_ &&
-          spring_level_ != SpringLevel::Off;
-
-      if (phase_ == TrajectoryPhase::Ready &&
-          phase_time_ < config_.ready_time)
-      {
-        stiffness_enabled = false;
-      }
-
-      const double target_stiffness =
-          stiffness_enabled
-              ? selected_stiffness
+      // Ready 阶段 K=0；Measuring 阶段直接使用目标刚度。
+      const double active_stiffness =
+          (phase_ == TrajectoryPhase::Measuring)
+              ? target_stiffness
               : 0.0;
 
-      const double ramp_reference =
-          std::max(
-              selected_stiffness,
-              current_stiffness_);
-
-      if (ramp_reference <= 1e-9)
-      {
-        current_stiffness_ = 0.0;
-      }
-      else
-      {
-        const double max_k_rate =
-            ramp_reference /
-            std::max(
-                config_.stiffness_ramp_time,
-                1e-6);
-
-        const double max_k_change =
-            max_k_rate * dt;
-
-        if (current_stiffness_ <
-            target_stiffness)
-        {
-          current_stiffness_ =
-              std::min(
-                  current_stiffness_ +
-                      max_k_change,
-                  target_stiffness);
-        }
-        else
-        {
-          current_stiffness_ =
-              std::max(
-                  current_stiffness_ -
-                      max_k_change,
-                  target_stiffness);
-        }
-      }
-
-      // ===================== 实际弹簧形变量 =====================
-      //
-      // 使用左右大臂 frame 的实际相对位置，而不是直接使用左臂目标位移：
-      //
-      // extension =
-      // axis^T × [
-      //   (p_left - p_right)
-      //   -
-      //   (p_left_initial - p_right_initial)
-      // ]
-      //
-      // 因为右臂可以被拖动，所以：
-      //
-      // 左臂移动 10 cm
-      // 并不等于弹簧一定伸长 10 cm。
-      //
-      // 如果右臂跟随左臂移动，实际 extension 会减小。
+      // ===================== 实际形变量 =====================
+      // 左臂固定时，理想情况下：
+      // extension ~= -axis^T * (p_right - p_right_initial)。
       const Eigen::Vector3d relative_change =
           (kin.p_left - kin.p_right) -
           initial_relative_position_;
 
       if (!finiteVec3(relative_change))
       {
-        setSafeFault(
-            "[ExperimentControl] 左右臂相对位置变化非法");
+        setSafeFault("[ExperimentControl] 左右臂相对位置变化非法");
         write_safe_position_hold();
         return;
       }
 
-      double extension =
+      const double extension =
           axis_world.dot(relative_change);
 
-      extension =
-          clampAbs(
-              extension,
-              config_.extension_limit);
-
-      double extension_rate =
-          axis_world.dot(
-              kin.v_left -
-              kin.v_right);
-
-      extension_rate =
-          clampAbs(
-              extension_rate,
-              config_.extension_rate_limit);
+      const double extension_rate =
+          axis_world.dot(kin.v_left - kin.v_right);
 
       if (!std::isfinite(extension) ||
           !std::isfinite(extension_rate))
       {
-        setSafeFault(
-            "[ExperimentControl] 弹簧形变量或相对速度非法");
+        setSafeFault("[ExperimentControl] 弹簧形变量或相对速度非法");
         write_safe_position_hold();
         return;
       }
 
-      // ===================== X 向虚拟弹簧力 =====================
-      //
-      // 左侧恢复力：
-      //
-      // F_left =
-      //   -K × extension
-      //   -B × extension_rate
-      //
-      // 右侧力与左侧大小相等、方向相反。
-      //
-      // 当 Low/Medium/High 处于 Off 或 K 尚未渐入时，
-      // 阻尼项也关闭，保证 Off 模式确实没有虚拟耦合力。
+      const bool extension_limited =
+          std::abs(extension) > config_.extension_limit;
+
+      const double extension_for_control =
+          clampAbs(extension, config_.extension_limit);
+
+      const double extension_rate_for_control =
+          clampAbs(extension_rate, config_.extension_rate_limit);
+
+      // ===================== 虚拟弹簧力 =====================
+      // 右臂受到恢复力：
+      // F_right = K * extension + B * extension_rate。
+      // Ready 阶段 active_stiffness=0，同时关闭笛卡尔阻尼。
+      // Measuring 阶段直接使用唯一目标刚度。
       const double effective_cartesian_damping =
-          (current_stiffness_ > 1e-9)
+          (active_stiffness > 1e-9)
               ? config_.spring_cartesian_damping
               : 0.0;
 
-      double spring_force_left_scalar =
-          -current_stiffness_ *
-              extension -
-          effective_cartesian_damping *
-              extension_rate;
+      const double spring_force_right_unclamped =
+          active_stiffness * extension_for_control +
+          effective_cartesian_damping * extension_rate_for_control;
 
-      spring_force_left_scalar =
+      const bool spring_force_saturated =
+          std::abs(spring_force_right_unclamped) >
+          config_.spring_force_limit;
+
+      const double spring_force_right_scalar =
           clampAbs(
-              spring_force_left_scalar,
+              spring_force_right_unclamped,
               config_.spring_force_limit);
 
-      // 右侧受到相反方向的力。
-      const double spring_force_right_scalar =
-          -spring_force_left_scalar;
-
       const Eigen::Vector3d F_right_world =
-          spring_force_right_scalar *
-          axis_world;
+          spring_force_right_scalar * axis_world;
 
-      // 世界坐标力转换到右大臂传感器 LOCAL 坐标：
-      //
-      // F_sensor = R_world_sensor^T × F_world。
-      //
-      // 根据你提供的坐标图，右大臂传感器局部 +Z 大致对应世界 +X，
-      // 因此纯世界 X 向力转换后通常应主要落在局部 Z 分量。
       const Eigen::Vector3d F_right_sensor =
-          kin.right_rotation.transpose() *
-          F_right_world;
+          kin.right_rotation.transpose() * F_right_world;
 
       if (!finiteVec3(F_right_world) ||
           !finiteVec3(F_right_sensor))
       {
-        setSafeFault(
-            "[ExperimentControl] 右侧弹簧力坐标转换非法");
+        setSafeFault("[ExperimentControl] 右侧弹簧力坐标转换非法");
         write_safe_position_hold();
         return;
       }
 
       pinocchio::Force right_spring_wrench =
           pinocchio::Force::Zero();
-
-      right_spring_wrench.linear() =
-          F_right_sensor;
-
+      right_spring_wrench.linear() = F_right_sensor;
       right_spring_wrench.angular().setZero();
 
-      // ===================== 右侧 J^T F =====================
-      //
-      // 力和 Jacobian 都在右大臂传感器 LOCAL 坐标系下表达，
-      // 因而可以直接进行：
-      //
-      // tau_spring = J_right_local^T × wrench_right_local。
       Eigen::VectorXd tau_right_spring =
           kin.J_right_local.transpose() *
           right_spring_wrench.toVector();
@@ -10248,262 +9964,57 @@ namespace upperlimb_robot
       if (tau_right_spring.size() != model_.nv ||
           !tau_right_spring.allFinite())
       {
-        setSafeFault(
-            "[ExperimentControl] 右侧弹簧关节力矩非法");
+        setSafeFault("[ExperimentControl] 右侧弹簧关节力矩非法");
         write_safe_position_hold();
         return;
-      }
-
-      // ===================== 左臂差分逆运动学 =====================
-      //
-      // 左臂仍然使用位置模式，因此先计算大臂 frame 的笛卡尔速度命令：
-      //
-      // v_cmd =
-      // target_velocity
-      // + Kp × (target_position - actual_position)。
-      const Eigen::Vector3d left_position_error =
-          target_left_position_ -
-          kin.p_left;
-
-      if (!finiteVec3(left_position_error))
-      {
-        setSafeFault(
-            "[ExperimentControl] 左臂笛卡尔位置误差非法");
-        write_safe_position_hold();
-        return;
-      }
-
-      if (left_position_error.norm() >
-          config_.left_tracking_error_limit)
-      {
-        setSafeFault(
-            "[ExperimentControl] 左臂位置跟踪误差超限");
-        write_safe_position_hold();
-        return;
-      }
-
-      Eigen::Vector3d left_cartesian_velocity_command =
-          target_left_velocity_ +
-          config_.left_cartesian_kp *
-              left_position_error;
-
-      left_cartesian_velocity_command =
-          limitNorm(
-              left_cartesian_velocity_command,
-              config_.left_cartesian_speed_limit);
-
-      // 取左臂七个主动关节对应的线速度 Jacobian，形成 3×7 矩阵。
-      Eigen::Matrix<double, 3, 7>
-          J_left_linear;
-
-      J_left_linear.setZero();
-
-      for (std::size_t i = 0; i < 7; ++i)
-      {
-        J_left_linear.col(
-            static_cast<int>(i)) =
-            kin.J_left_lwa.block(
-                0,
-                left_v_id_[i],
-                3,
-                1);
-      }
-
-      const double lambda_squared =
-          config_.left_ik_damping *
-          config_.left_ik_damping;
-
-      const Eigen::Matrix3d damped_matrix =
-          J_left_linear *
-              J_left_linear.transpose() +
-          lambda_squared *
-              Eigen::Matrix3d::Identity();
-
-      Eigen::Matrix<double, 7, 1>
-          left_joint_velocity_command =
-              J_left_linear.transpose() *
-              damped_matrix.ldlt().solve(
-                  left_cartesian_velocity_command);
-
-      if (!J_left_linear.allFinite() ||
-          !left_joint_velocity_command.allFinite())
-      {
-        setSafeFault(
-            "[ExperimentControl] 左臂差分逆运动学非法");
-        write_safe_position_hold();
-        return;
-      }
-
-      // 积分得到左臂关节位置目标，并进行三层保护：
-      // 1. 单关节速度限幅；
-      // 2. 相对初始姿态的总变化限幅；
-      // 3. 相对实际关节角的领先量限幅。
-      for (std::size_t i = 0; i < 7; ++i)
-      {
-        const double dq_command =
-            clampAbs(
-                left_joint_velocity_command(
-                    static_cast<int>(i)),
-                config_.left_joint_speed_limit);
-
-        left_joint_position_command_rad_[i] +=
-            dq_command * dt;
-
-        const double initial_q =
-            initial_left_joint_position_rad_[i];
-
-        const double actual_q =
-            kin.q(left_q_id_[i]);
-
-        left_joint_position_command_rad_[i] =
-            clampBetween(
-                left_joint_position_command_rad_[i],
-                initial_q -
-                    config_.left_joint_range_limit,
-                initial_q +
-                    config_.left_joint_range_limit);
-
-        left_joint_position_command_rad_[i] =
-            clampBetween(
-                left_joint_position_command_rad_[i],
-                actual_q -
-                    config_.left_joint_lead_limit,
-                actual_q +
-                    config_.left_joint_lead_limit);
-
-        if (!std::isfinite(
-                left_joint_position_command_rad_[i]))
-        {
-          setSafeFault(
-              "[ExperimentControl] 左臂关节位置命令非法");
-          write_safe_position_hold();
-          return;
-        }
       }
 
       // ===================== 混合控制输出 =====================
-      //
-      // 左臂：位置模式。
-      // 右臂：扭矩模式。
       output = ControlOutputCache{};
 
+      // 左臂固定：始终发送进入实验时记录的 7 个关节位置。
       for (std::size_t i = 0; i < 7; ++i)
       {
-        const std::size_t left_index =
-            left_ctrl_id_[i];
+        const std::size_t left_index = left_ctrl_id_[i];
 
-        output.use_position[left_index] =
-            true;
-
-        output.use_torque[left_index] =
-            false;
-
+        output.use_position[left_index] = true;
+        output.use_torque[left_index] = false;
         output.target_position[left_index] =
-            left_joint_position_command_rad_[i] *
-            RAD2DEG;
-
-        output.target_velocity[left_index] =
-            config_.left_position_velocity;
-
-        output.target_acc[left_index] =
-            config_.left_position_acc;
-
-        output.target_dec[left_index] =
-            config_.left_position_dec;
-
-        output.target_smooth_time[left_index] =
-            config_.left_position_smooth_time;
+            initial_left_joint_position_rad_[i] * RAD2DEG;
+        output.target_velocity[left_index] = config_.left_position_velocity;
+        output.target_acc[left_index] = config_.left_position_acc;
+        output.target_dec[left_index] = config_.left_position_dec;
+        output.target_smooth_time[left_index] = config_.left_position_smooth_time;
       }
 
-      // 右臂各关节总输出限幅。
-      const std::array<double, 7>
-          right_torque_limit = {
-              24.0,
-              20.0,
-              16.0,
-              12.0,
-              12.0,
-              12.0,
-              8.0};
+      // 与正常右臂零力模式保持相同量级的总扭矩限幅。
+      const std::array<double, 7> right_torque_limit = {
+          30.0,
+          20.0,
+          16.0,
+          12.0,
+          12.0,
+          12.0,
+          8.0};
 
-      std::array<double, 7>
-          tau_spring_log{};
-
-      // Pinocchio 原始重力模型输出，尚未乘每轴比例、尚未加偏置。
-      std::array<double, 7>
-          tau_gravity_model_log{};
-
-      // 实际加入 tau_model 的每轴重力补偿：
-      // RIGHT_ARM_GRAVITY_COMPENSATION.gain[i] * gravity_model[i] + RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm[i]。
-      // 摩擦补偿由 RIGHT_ARM_FRICTION_COMPENSATION 统一计算并单独记录。
-      // 为兼容原 CSV 分析脚本，最终仍使用列名 tau_gravity_r1~r7。
-      std::array<double, 7>
-          tau_gravity_log{};
-
-      // 实际加入 tau_model 的逐关节摩擦补偿力矩。
-      std::array<double, 7>
-          tau_friction_log{};
-
-      std::array<double, 7>
-          tau_posture_log{};
-
-      std::array<double, 7>
-          tau_sent_log{};
+      std::array<double, 7> tau_spring_log{};
+      std::array<double, 7> tau_gravity_model_log{};
+      std::array<double, 7> tau_gravity_log{};
+      std::array<double, 7> tau_friction_log{};
+      std::array<double, 7> tau_joint_damping_log{};
+      std::array<double, 7> tau_sent_log{};
 
       bool torque_saturated = false;
 
-      // ===================== 右臂基础重力补偿和自由拖动 =====================
-      //
-      // 右臂不是位置锁定。
-      //
-      // 弱姿态保持：
-      // tau_posture =
-      // right_posture_kp × (q_initial - q_actual)
-      //
-      // 该项只补偿模型误差引起的慢漂移，并且单关节限幅很小。
-      // 真正拖动右臂的主要量仍然是 tau_right_spring。
+      // 右臂人工移动：不加入姿态保持项，避免额外等效刚度。
       for (std::size_t i = 0; i < 7; ++i)
       {
-        const std::size_t right_index =
-            right_ctrl_id_[i];
+        const std::size_t right_index = right_ctrl_id_[i];
+        const int right_v_id = right_v_id_[i];
 
-        const int right_q_id =
-            right_q_id_[i];
-
-        const int right_v_id =
-            right_v_id_[i];
-
-        const double actual_right_q =
-            kin.q(right_q_id);
-
-        // --------------------- 每轴弱姿态保持 ---------------------
-        //
-        // 右臂偏离进入实验时的关节角后，产生很弱的回拉力矩。
-        // 每个关节使用各自的 Kp 和力矩限幅。
-        double tau_posture =
-            config_.right_posture_kp[i] *
-            (initial_right_joint_position_rad_[i] -
-             actual_right_q);
-
-        tau_posture =
-            clampAbs(
-                tau_posture,
-                config_.right_posture_torque_limit[i]);
-
-        // --------------------- 每轴重力补偿 ---------------------
-        //
-        // 第一步：读取 Pinocchio 在当前姿态下计算的理论重力力矩。
         const double tau_gravity_model =
             kin.gravity(right_v_id);
 
-        // 第二步：为 joint11~joint17 分别乘比例，并分别增加常值偏置。
-        //
-        // 如果某个关节持续下沉，只调整该关节对应的：
-        //   RIGHT_ARM_GRAVITY_COMPENSATION.gain[i]
-        // 或在比例基本正确后小幅调整：
-        //   RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm[i]
-        //
-        // 注意：这里仍是 Pinocchio 模型方向，后面发送前保留原右臂整体负号。
         const double tau_gravity =
             RIGHT_ARM_GRAVITY_COMPENSATION.gain[i] *
                 tau_gravity_model +
@@ -10512,8 +10023,6 @@ namespace upperlimb_robot
         const double joint_velocity =
             kin.v(right_v_id);
 
-        // 统一逐关节摩擦补偿：库仑摩擦 + 粘性摩擦。
-        // 该力矩与关节速度同方向，用于抵消机构运动阻力。
         const double tau_friction =
             calculateJointFrictionCompensation(
                 joint_velocity,
@@ -10523,7 +10032,6 @@ namespace upperlimb_robot
         const double tau_spring =
             tau_right_spring(right_v_id);
 
-        // 每个关节使用独立稳定阻尼，方向与速度相反。
         const double tau_joint_damping =
             -config_.right_joint_damping[i] *
             joint_velocity;
@@ -10532,144 +10040,83 @@ namespace upperlimb_robot
             tau_gravity +
             tau_friction +
             tau_spring +
-            tau_posture +
             tau_joint_damping;
 
         if (!std::isfinite(tau_model))
         {
-          setSafeFault(
-              "[ExperimentControl] 右臂最终模型力矩非法");
+          setSafeFault("[ExperimentControl] 右臂最终模型力矩非法");
           write_safe_position_hold();
           return;
         }
 
-        if (std::abs(tau_model) >
-            right_torque_limit[i])
+        if (std::abs(tau_model) > right_torque_limit[i])
         {
           torque_saturated = true;
         }
 
-        output.use_position[right_index] =
-            false;
+        output.use_position[right_index] = false;
+        output.use_torque[right_index] = true;
 
-        output.use_torque[right_index] =
-            true;
-
-        // 当前执行层沿用了原双臂控制中的右臂整体 -1 方向修正。
-        //
-        // 因此日志同时记录：
-        // tau_model：Pinocchio 模型方向；
-        // tau_sent ：实际写入 ControlOutputCache 的方向。
-        //
-        // 如果实机观察到弹簧方向完全相反，
-        // 优先检查这里的整体负号是否已在更底层重复处理。
         const double tau_sent =
-            clampAbs(
-                -tau_model,
-                right_torque_limit[i]);
+            clampAbs(-tau_model, right_torque_limit[i]);
 
-        output.target_torque[right_index] =
-            tau_sent;
+        output.target_torque[right_index] = tau_sent;
 
-        tau_spring_log[i] =
-            tau_spring;
-
-        tau_gravity_model_log[i] =
-            tau_gravity_model;
-
-        tau_gravity_log[i] =
-            tau_gravity;
-
-        tau_friction_log[i] =
-            tau_friction;
-
-        tau_posture_log[i] =
-            tau_posture;
-
-        tau_sent_log[i] =
-            tau_sent;
+        tau_spring_log[i] = tau_spring;
+        tau_gravity_model_log[i] = tau_gravity_model;
+        tau_gravity_log[i] = tau_gravity;
+        tau_friction_log[i] = tau_friction;
+        tau_joint_damping_log[i] = tau_joint_damping;
+        tau_sent_log[i] = tau_sent;
       }
 
       output.valid = true;
 
-      // ===================== 右侧真实传感器轴向力 =====================
-      //
-      // 该测量值只记录，不参与控制。
-      const auto &right_raw =
-          sensor_state.sensor[SENSOR_RIGHT_ARM];
-
-      const auto &right_bias =
-          sensor_state.bias[SENSOR_RIGHT_ARM];
-
-      const Eigen::Vector3d
-          right_force_sensor_measured(
-              right_raw.fx - right_bias.fx,
-              right_raw.fy - right_bias.fy,
-              right_raw.fz - right_bias.fz);
-
-      double measured_right_axial_force =
-          0.0;
-
-      if (finiteVec3(
-              right_force_sensor_measured))
-      {
-        const Eigen::Vector3d
-            right_force_world_measured =
-                kin.right_rotation *
-                right_force_sensor_measured;
-
-        if (finiteVec3(
-                right_force_world_measured))
-        {
-          measured_right_axial_force =
-              axis_world.dot(
-                  right_force_world_measured);
-        }
-      }
-
       // ===================== 观察量 =====================
-      const double left_target_axis_displacement =
+      const double left_axis_displacement =
           axis_world.dot(
-              target_left_position_ -
-              initial_left_position_);
+              kin.p_left - initial_left_position_);
 
-      const double left_actual_axis_displacement =
+      const double right_axis_displacement =
           axis_world.dot(
-              kin.p_left -
-              initial_left_position_);
+              kin.p_right - initial_right_position_);
 
-      const double right_actual_axis_displacement =
-          axis_world.dot(
-              kin.p_right -
-              initial_right_position_);
+      const double right_displacement_norm =
+          (kin.p_right - initial_right_position_).norm();
 
-      const double right_drift_norm =
-          (kin.p_right -
-           initial_right_position_)
-              .norm();
+      const double measured_right_axial_force_zeroed =
+          measured_right_axial_force -
+          initial_measured_right_axial_force_;
 
       // ===================== CSV =====================
-      //
-      // CSV 完整记录“形变量 → 世界力 → 局部力 → J^T F → 最终扭矩”链路，
-      // 用于判断弹簧没有效果时问题出在哪一层。
-      if (csv_initialized_ &&
-          csv_.is_open())
+      // 记录 Ready 和 Measuring 全过程。
+      // 正式拟合刚度时只使用 trajectory_phase == measuring 的数据。
+      if (csv_initialized_ && csv_.is_open())
       {
-        // 为兼容原 CSV 列结构：
-        // movement_index 固定写 1，target_displacement 固定写 0.10 m。
-        csv_ << level_name()
-             << "," << phase_name()
-             << "," << 1
-             << "," << config_.target_displacement
-             << "," << left_target_axis_displacement
-             << "," << left_actual_axis_displacement
-             << "," << right_actual_axis_displacement
-             << "," << right_drift_norm
+        const bool spring_enabled =
+            phase_ == TrajectoryPhase::Measuring &&
+            target_stiffness > 1e-9;
+
+        csv_ << phase_name()
+             << "," << (spring_enabled ? 1 : 0)
+             << "," << target_stiffness
+             << "," << left_axis_displacement
+             << "," << right_axis_displacement
+             << "," << right_displacement_norm
              << "," << extension
              << "," << extension_rate
-             << "," << current_stiffness_
+             << "," << (extension_limited ? 1 : 0)
+             << "," << spring_force_right_unclamped
              << "," << spring_force_right_scalar
+             << "," << (spring_force_saturated ? 1 : 0)
              << "," << measured_right_axial_force
+             << "," << measured_right_axial_force_zeroed
+             << "," << right_force_sensor_measured.x()
+             << "," << right_force_sensor_measured.y()
+             << "," << right_force_sensor_measured.z()
+             << "," << right_force_world_measured.x()
+             << "," << right_force_world_measured.y()
+             << "," << right_force_world_measured.z()
              << "," << F_right_world.x()
              << "," << F_right_world.y()
              << "," << F_right_world.z()
@@ -10677,188 +10124,91 @@ namespace upperlimb_robot
              << "," << F_right_sensor.y()
              << "," << F_right_sensor.z();
 
-        for (double value :
-             tau_spring_log)
+        for (double value : tau_spring_log)
         {
           csv_ << "," << value;
         }
 
-        // 原始 Pinocchio 重力模型值。
-        for (double value :
-             tau_gravity_model_log)
+        for (double value : tau_gravity_model_log)
         {
           csv_ << "," << value;
         }
 
-        // 本次运行实际使用的每轴重力比例。
-        for (double value :
-             RIGHT_ARM_GRAVITY_COMPENSATION.gain)
+        for (double value : RIGHT_ARM_GRAVITY_COMPENSATION.gain)
         {
           csv_ << "," << value;
         }
 
-        // 本次运行实际使用的每轴重力偏置，单位 Nm。
-        for (double value :
-             RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm)
+        for (double value : RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm)
         {
           csv_ << "," << value;
         }
 
-        // 经过每轴比例和偏置后的实际重力补偿力矩。
-        for (double value :
-             tau_gravity_log)
+        for (double value : tau_gravity_log)
         {
           csv_ << "," << value;
         }
 
-        // 实际逐关节摩擦补偿力矩。
-        for (double value :
-             tau_friction_log)
+        for (double value : tau_friction_log)
         {
           csv_ << "," << value;
         }
 
-        for (double value :
-             tau_posture_log)
+        for (double value : tau_joint_damping_log)
         {
           csv_ << "," << value;
         }
 
-        for (double value :
-             tau_sent_log)
+        for (double value : tau_sent_log)
         {
           csv_ << "," << value;
         }
 
-        csv_ << ","
-             << (torque_saturated ? 1 : 0)
-             << ","
-             << (fault_ ? 1 : 0)
-             << ","
-             << dt
+        csv_ << "," << (torque_saturated ? 1 : 0)
+             << "," << (fault_ ? 1 : 0)
+             << "," << dt
              << "\n";
 
         ++csv_row_count_;
 
-        // ===================== 左臂到位后自动停止 CSV 记录 =====================
-        //
-        // 不在“目标轨迹刚到 10 cm”的瞬间关闭 CSV，因为此时左臂实际位置
-        // 可能仍有少量跟踪滞后。只有同时满足：
-        //
-        // 1. 轨迹已经进入 Holding；
-        // 2. 左臂实际大臂 frame 与 10 cm 目标位置的三维误差
-        //    小于 left_position_tolerance；
-        //
-        // 才认为本次左臂运动真正完成。
-        //
-        // 当前默认 left_position_tolerance = 0.002 m，即 2 mm。
-        // 本周期数据已经先写入 CSV，因此关闭前会保留一行“到位完成”数据。
-        // 关闭 CSV 只停止数据记录，不改变任何控制状态：
-        // 左臂继续保持 10 cm，右臂继续执行重力补偿、摩擦补偿和虚拟弹簧。
-        const bool left_motion_completed =
-            phase_ == TrajectoryPhase::Holding &&
-            left_position_error.norm() <=
-                config_.left_position_tolerance;
-
-        if (left_motion_completed)
-        {
-          csv_.flush();
-          csv_.close();
-          csv_initialized_ = false;
-
-          std::cout
-              << "[ExperimentControl] 左臂已到达 10 cm 目标位置，"
-              << "CSV 自动停止记录。"
-              << " rows="
-              << csv_row_count_
-              << " final_error="
-              << left_position_error.norm()
-              << " m"
-              << std::endl;
-        }
-        else if ((csv_row_count_ % 50) == 0)
+        if ((csv_row_count_ % 50) == 0)
         {
           csv_.flush();
         }
       }
 
       // ===================== 控制台低频调试 =====================
-      //
-      // 重点观察：
-      // 1. left_target / left_actual 是否增长到 0.10 m；
-      // 2. extension 是否非零；
-      // 3. F_right 是否随 extension 增大；
-      // 4. F_sensor 是否主要落在右传感器局部 Z；
-      // 5. tau_spring_norm 是否非零；
-      // 6. right_axis 是否说明右臂被拖动。
       if ((debug_counter_++ % 20) == 0)
       {
         std::cout
-            << "[ExperimentControl][free_spring]"
-            << " level="
-            << level_name()
-            << " phase="
-            << phase_name()
-            << " left_target_axis="
-            << left_target_axis_displacement
-            << " left_actual_axis="
-            << left_actual_axis_displacement
-            << " right_axis="
-            << right_actual_axis_displacement
-            << " extension="
-            << extension
-            << " extension_rate="
-            << extension_rate
-            << " K="
-            << current_stiffness_
-            << " F_right="
-            << spring_force_right_scalar
-            << " F_right_world="
-            << F_right_world.transpose()
-            << " F_right_sensor="
-            << F_right_sensor.transpose()
-            << " tau_spring_norm="
-            << tau_right_spring.norm()
-            << " right_drift_norm="
-            << right_drift_norm
+            << "[ExperimentControl][manual_stiffness]"
+            << " phase=" << phase_name()
+            << " target_K=" << target_stiffness
+            << " active_K=" << active_stiffness
+            << " left_axis=" << left_axis_displacement
+            << " right_axis=" << right_axis_displacement
+            << " extension=" << extension
+            << " extension_rate=" << extension_rate
+            << " F_virtual=" << spring_force_right_scalar
+            << " F_measured_zeroed=" << measured_right_axial_force_zeroed
+            << " tau_spring_norm=" << tau_right_spring.norm()
+            << " torque_sat=" << (torque_saturated ? 1 : 0)
             << std::endl;
       }
 
       // ===================== GUI 调试量 =====================
-      //
-      // 这里显示的是作用在右臂上的世界坐标弹簧力。
-      output.spring_debug_valid =
-          initialized_ &&
-          !fault_;
-
+      output.spring_debug_valid = initialized_ && !fault_;
       output.spring_debug_mode = 1;
 
-      output.spring_e_x =
-          extension *
-          axis_world.x();
+      output.spring_e_x = extension * axis_world.x();
+      output.spring_e_y = extension * axis_world.y();
+      output.spring_e_z = extension * axis_world.z();
+      output.spring_e_norm = std::abs(extension);
 
-      output.spring_e_y =
-          extension *
-          axis_world.y();
-
-      output.spring_e_z =
-          extension *
-          axis_world.z();
-
-      output.spring_e_norm =
-          std::abs(extension);
-
-      output.spring_f_x =
-          F_right_world.x();
-
-      output.spring_f_y =
-          F_right_world.y();
-
-      output.spring_f_z =
-          F_right_world.z();
-
-      output.spring_f_norm =
-          F_right_world.norm();
+      output.spring_f_x = F_right_world.x();
+      output.spring_f_y = F_right_world.y();
+      output.spring_f_z = F_right_world.z();
+      output.spring_f_norm = F_right_world.norm();
     }
 
     // ===================== 单轴恒扭矩调试 =====================

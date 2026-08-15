@@ -378,19 +378,19 @@ namespace upperlimb_robot
   namespace experiment
   {
 
-    // ===================== 自由运动虚拟弹簧可视化实验 =====================
+    // ===================== 人工准静态虚拟弹簧刚度实验 =====================
     //
-    // 该实验继续沿用原来的 MODE_EXPERIMENT_SPRING_STIFFNESS 模式编号，
-    // 但实验目的已经从“右侧固定端刚度标定”改为“自由运动直观验证”：
+    // 该实验继续沿用 MODE_EXPERIMENT_SPRING_STIFFNESS 模式编号，实验方式改为：
     //
-    // 1. 左臂 joint1~joint7 使用位置模式，沿世界坐标 X 方向低速单次移动 10 cm；
-    // 2. 右臂 joint11~joint17 使用扭矩模式，不再要求外部支架固定；
-    // 3. 右臂基础输出包含重力补偿、关节阻尼和很弱的初始姿态保持；
-    // 4. 虚拟弹簧根据左右大臂传感器 frame 的实际相对位移计算；
-    // 5. 弹簧力通过右大臂 LOCAL Jacobian 做 J^T F，形成右臂关节弹簧力矩；
-    // 6. 取消“右侧漂移超限退出”，右臂允许被左臂通过虚拟弹簧拖动；
-    // 7. 右侧漂移仍然记录到 CSV，只作为观察量，不作为故障条件；
-    // 8. 该模式用于验证方向、Jacobian 映射和拖动效果，不用于正式固定端刚度标定。
+    // 1. 左臂 joint1~joint7 使用位置模式，固定在进入实验时的关节位置；
+    // 2. 右臂 joint11~joint17 使用扭矩模式，由实验者沿世界坐标 X 方向缓慢移动；
+    // 3. 进入实验后先在 K=0 条件下等待右臂稳定，然后重新记录弹簧自然位置；
+    // 4. Ready 结束后直接启用唯一目标刚度 spring_stiffness；
+    // 5. 虚拟弹簧根据左右大臂传感器 frame 的实际相对位移计算；
+    // 6. 弹簧力通过右大臂 LOCAL Jacobian 做 J^T F，形成右臂关节弹簧力矩；
+    // 7. 右臂不再加入弱姿态保持项，避免额外关节刚度污染力-位移关系；
+    // 8. 六维力传感器只用于记录实际交互力，不反馈到控制器；
+    // 9. CSV 持续记录到用户退出实验，便于完成加载/卸载全过程。
     //
     // 主动关节映射：
     // 右臂：控制层索引 0~6；
@@ -406,6 +406,9 @@ namespace upperlimb_robot
       SpringStiffness
     };
 
+    // 为兼容现有 GUI / RobotControlNode 接口保留 SpringLevel。
+    // Off 表示关闭虚拟弹簧；Low / Medium / High 均只表示“开启”，
+    // 实际目标刚度唯一由 SpringExperimentConfig::spring_stiffness 决定。
     enum class SpringLevel
     {
       Off,
@@ -416,148 +419,63 @@ namespace upperlimb_robot
 
     enum class TrajectoryPhase
     {
-      // 进入模式后先保持初始姿态，完成重力补偿接管和刚度渐入。
+      // 左臂已经固定，虚拟弹簧关闭，等待右臂稳定。
       Ready,
 
-      // 左臂笛卡尔目标从初始位置低速移动到 10 cm 目标位置。
-      Moving,
-
-      // 左臂到达 10 cm 目标位置后持续保持，直到用户手动退出模式。
-      // 当左臂实际大臂 frame 进入目标位置容差后，CSV 自动写入最后一行并关闭；
-      // 控制仍继续运行，虚拟弹簧和右臂扭矩输出不会因为停止记录而停止。
-      Holding
+      // Ready 结束时重新置零，然后直接启用目标刚度。
+      // 实验者在该阶段缓慢移动右臂并记录力-位移数据。
+      Measuring
     };
 
     struct SpringExperimentConfig
     {
-      // ===================== X 向虚拟弹簧参数 =====================
+      // ===================== 唯一目标刚度 =====================
       //
-      // 本实验只使用一个固定刚度。
-      //
-      // 左臂目标位移为 0.10 m 时，最大理论弹簧力为：
-      //
-      //   F = K × x = 300 N/m × 0.10 m = 30 N
-      //
-      // SpringLevel::Low / Medium / High 都使用该数值；
-      // SpringLevel::Off 仍表示关闭虚拟弹簧。
+      // 实验时只需要修改这一处，例如：100 / 200 / 300 N/m。
+      // CSV 中的 target_stiffness 就记录该数值。
       double spring_stiffness{300.0};
 
       // 笛卡尔相对速度阻尼，单位 N/(m/s)。
-      // 它只抑制左右大臂沿实验轴的快速相对运动，
-      // 在本次低速运动中影响很小，在快速抖动时提高稳定性。
+      // 准静态移动时影响很小，主要用于快速运动时增加稳定性。
       double spring_cartesian_damping{8.0};
 
       // 虚拟弹簧力绝对值上限，单位 N。
-      // 300 N/m × 0.10 m = 30 N，因此设置为 30 N。
       double spring_force_limit{30.0};
 
       // 实际相对形变量的软件限幅，单位 m。
-      // 左臂目标为 0.10 m，这里留出 0.02 m 余量。
+      // 超过该范围时，控制计算使用限幅后的形变量，但 CSV 仍记录真实形变量。
       double extension_limit{0.12};
 
       // 相对速度的软件限幅，单位 m/s。
       double extension_rate_limit{0.50};
 
-      // ===================== 左臂位置模式参数 =====================
-      //
-      // 左臂通过三维差分逆运动学跟踪大臂传感器 frame 的笛卡尔位置。
-      //
-      // v_cmd = target_velocity + left_cartesian_kp × position_error
-      double left_cartesian_kp{2.0};
+      // ===================== 实验方向 =====================
+      // 世界坐标 +X 当前定义为机器人左侧。
+      // 左臂固定时，右臂沿 -X 移动会得到正 extension；沿 +X 移动得到负 extension。
+      Eigen::Vector3d direction_world{1.0, 0.0, 0.0};
 
-      // 笛卡尔速度命令合成限幅，单位 m/s。
-      double left_cartesian_speed_limit{0.015};
+      // ===================== 实验时序 =====================
+      // 进入实验后，先关闭虚拟弹簧并等待右臂稳定。
+      // ready_time 结束时重新记录左右 frame 相对位置作为 extension=0，
+      // 随后直接进入 Measuring 并启用 spring_stiffness。
+      double ready_time{1.0};
 
-      // 阻尼最小二乘逆运动学阻尼。
-      double left_ik_damping{0.03};
-
-      // 单关节差分逆运动学速度限幅，单位 rad/s。
-      double left_joint_speed_limit{0.25};
-
-      // 单关节相对进入实验时姿态的最大变化，单位 rad。
-      // 0.60 rad 约为 34.4°。
-      double left_joint_range_limit{0.60};
-
-      // 关节位置目标最多领先实际关节位置的距离，单位 rad。
-      // 0.05236 rad 约为 3°。
-      double left_joint_lead_limit{0.0523598776};
-
-      // 发送给执行层 Trap 位置规划器的参数。
-      // 速度单位 deg/s，加速度和减速度单位 deg/s²。
+      // ===================== 左臂固定位置模式参数 =====================
+      // 左臂 7 个主动关节始终保持进入实验时的关节位置。
       double left_position_velocity{12.0};
       double left_position_acc{30.0};
       double left_position_dec{30.0};
       short left_position_smooth_time{25};
 
-      // 左臂目标与实际大臂 frame 的最大允许误差，单位 m。
-      double left_tracking_error_limit{0.03};
-
-      // Holding 阶段允许的左臂位置误差，单位 m。
-      double left_position_tolerance{0.002};
-
-      // ===================== 左臂单次 10 cm 低速运动 =====================
+      // ===================== 右臂人工移动扭矩控制 =====================
+      // 右臂最终模型方向力矩：
       //
-      // 世界坐标 direction_world 默认为 +X。
-      // 当前世界坐标定义：+X 向机器人左侧。
-      Eigen::Vector3d direction_world{1.0, 0.0, 0.0};
-
-      // 左臂从进入模式时的位置出发，只向指定方向移动一次。
-      // 单位：m。0.10 m = 10 cm。
-      double target_displacement{0.10};
-
-      // 左臂笛卡尔目标移动速度，单位 m/s。
-      // 0.005 m/s = 5 mm/s，移动 10 cm 大约需要 20 s。
-      double move_speed{0.005};
-
-      // 进入模式后先保持初始姿态，单位 s。
-      double ready_time{1.0};
-
-      // 虚拟弹簧刚度从 0 线性增加到 300 N/m 的时间，单位 s。
-      double stiffness_ramp_time{1.5};
-
-      // ===================== 右臂自由扭矩控制 =====================
+      // tau_model = tau_gravity
+      //           + tau_friction
+      //           + tau_spring
+      //           - right_joint_damping * dq
       //
-      // 数组顺序始终对应：
-      //
-      //   下标 0 -> 右臂 joint11 -> 控制层索引 0
-      //   下标 1 -> 右臂 joint12 -> 控制层索引 1
-      //   下标 2 -> 右臂 joint13 -> 控制层索引 2
-      //   下标 3 -> 右臂 joint14 -> 控制层索引 3
-      //   下标 4 -> 右臂 joint15 -> 控制层索引 4
-      //   下标 5 -> 右臂 joint16 -> 控制层索引 5
-      //   下标 6 -> 右臂 joint17 -> 控制层索引 6
-      //
-      // 右臂重力补偿不在本实验配置中重复保存。
-      // 所有模式统一使用：
-      //   RIGHT_ARM_GRAVITY_COMPENSATION.gain
-      //   RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm
-      //
-      // 右臂每个关节的最终模型方向力矩为：
-      //
-      // tau_gravity_compensated[i]
-      //     = RIGHT_ARM_GRAVITY_COMPENSATION.gain[i] * gravity_model[i]
-      //     + RIGHT_ARM_GRAVITY_COMPENSATION.bias_nm[i]
-      //
-      // tau_friction[i]
-      //     = RIGHT_ARM_FRICTION_COMPENSATION.coulomb_nm[i]
-      //       * tanh(dq[i] / RIGHT_ARM_FRICTION_COMPENSATION.velocity_smooth_rad_s[i])
-      //     + RIGHT_ARM_FRICTION_COMPENSATION.viscous_nm_per_rad_s[i] * dq[i]
-      //
-      // tau_model[i]
-      //     = tau_gravity_compensated[i]
-      //     + tau_friction[i]
-      //     + tau_spring[i]
-      //     + tau_posture[i]
-      //     - right_joint_damping[i] * dq[i]
-      //
-      // 之后代码仍按当前右臂驱动方向约定发送：
-      //   tau_sent[i] = -tau_model[i]
-
-      // --------------------- 每轴关节阻尼 ---------------------
-      //
-      // 单位：Nm/(rad/s)。
-      // 该项只抑制运动速度和振荡，不能在静止时提供持续支撑力矩。
-      // 若某轴下沉速度很快但重力比例已基本正确，可适度提高该轴阻尼。
+      // 不加入关节姿态保持项，避免产生额外等效刚度。
       std::array<double, 7> right_joint_damping{
           0.80, // joint11
           0.80, // joint12
@@ -566,38 +484,6 @@ namespace upperlimb_robot
           0.80, // joint15
           0.80, // joint16
           0.80  // joint17
-      };
-
-      // --------------------- 每轴弱姿态保持刚度 ---------------------
-      //
-      // 单位：Nm/rad。
-      //
-      // tau_posture[i] = right_posture_kp[i] * (q_initial[i] - q_actual[i])
-      //
-      // 该项只用于抑制重力模型误差导致的慢漂移。
-      // 数值过大会使右臂变硬，降低被虚拟弹簧拖动的直观效果。
-      std::array<double, 7> right_posture_kp{
-          1.0, // joint11
-          1.0, // joint12
-          1.0, // joint13
-          1.0, // joint14
-          1.0, // joint15
-          1.0, // joint16
-          1.0  // joint17
-      };
-
-      // --------------------- 每轴姿态保持力矩限幅 ---------------------
-      //
-      // 单位：Nm。
-      // 限制弱姿态保持项，避免右臂偏离较大时产生过强回拉。
-      std::array<double, 7> right_posture_torque_limit{
-          1.5, // joint11
-          1.5, // joint12
-          1.5, // joint13
-          1.5, // joint14
-          1.5, // joint15
-          1.5, // joint16
-          1.5  // joint17
       };
 
       // ===================== 控制周期保护 =====================
@@ -668,9 +554,9 @@ namespace upperlimb_robot
 
       void setSafeFault(const char *message);
 
-      // 新的自由运动可视化实验绝大部分逻辑集中在本函数中：
-      // 配置检查、初始化、单次低速轨迹、刚度渐入、弹簧力、J^T F、
-      // 左臂逆运动学、右臂重力补偿、输出、CSV 和调试打印。
+      // 人工准静态刚度实验主体：
+      // 左臂固定、右臂人工移动、稳定后重新置零并直接启用目标刚度、
+      // 弹簧力、J^T F、右臂重力/摩擦/阻尼、CSV 和调试打印。
       void runSpringStiffnessExperiment(const MotorStateCache &state,
                                         const SensorStateCache &sensor_state,
                                         double dt_s,
@@ -692,7 +578,6 @@ namespace upperlimb_robot
       std::size_t debug_counter_{0};
 
       double phase_time_{0.0};
-      double current_stiffness_{0.0};
 
       // 进入实验时记录的左右大臂 frame 位置。
       Eigen::Vector3d initial_left_position_{Eigen::Vector3d::Zero()};
@@ -702,7 +587,7 @@ namespace upperlimb_robot
       // initial_relative_position = initial_left_position - initial_right_position。
       Eigen::Vector3d initial_relative_position_{Eigen::Vector3d::Zero()};
 
-      // 左臂当前笛卡尔目标及目标速度。
+      // 保留原有成员以兼容安全保持逻辑；本实验不再生成左臂笛卡尔运动轨迹。
       Eigen::Vector3d target_left_position_{Eigen::Vector3d::Zero()};
       Eigen::Vector3d target_left_velocity_{Eigen::Vector3d::Zero()};
 
@@ -710,9 +595,12 @@ namespace upperlimb_robot
       std::array<double, 7> initial_left_joint_position_rad_{};
       std::array<double, 7> left_joint_position_command_rad_{};
 
-      // 右臂进入实验时的关节角。
-      // 仅用于很弱的防慢漂姿态保持，不是刚性位置锁定。
+      // 保留右臂初始关节角用于调试/兼容，不参与姿态保持控制。
       std::array<double, 7> initial_right_joint_position_rad_{};
+
+      // Ready 结束重新置零时记录的右侧轴向力。
+      // CSV 同时保存原始去偏轴向力和相对此参考值的增量力。
+      double initial_measured_right_axial_force_{0.0};
 
       // 单轴恒扭矩调试参数。
       std::size_t torque_joint_index_{0};
