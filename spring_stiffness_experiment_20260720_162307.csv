@@ -1,4 +1,0 @@
-spring_level,trajectory_phase,step_index,target_step_displacement,left_target_x,left_actual_x,right_actual_x,current_stiffness,extension,theoretical_right_axial_force,measured_right_axial_force,right_drift,torque_saturated,fault,dt
-low,ready,0,0,0.334889,0.334889,-0.331505,0,0,0,0.0771194,0,0,0,0.020058
-low,ready,0,0,0.334889,0.334888,-0.33056,0,-0.000946078,-0,-0.0529956,0.00167731,0,0,0.05
-low,ready,0,0,0.334889,0.334889,-0.329562,0,-0.00194343,-0,0.170195,0.0034905,0,1,0.0201319

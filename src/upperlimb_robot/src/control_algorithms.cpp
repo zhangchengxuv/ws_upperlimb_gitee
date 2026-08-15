@@ -34,12 +34,12 @@ namespace upperlimb_robot
   //
   // 左臂顺序：joint1~joint7
   const GravityCompensationParameters LEFT_ARM_GRAVITY_COMPENSATION{
-      {1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00},
+      {1.25, 1.05, 1.00, 1.00, 1.00, 1.00, 1.00},
       {0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00}};
 
   // 右臂顺序：joint11~joint17
   const GravityCompensationParameters RIGHT_ARM_GRAVITY_COMPENSATION{
-      {1.25, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00},
+      {1.25, 1.05, 1.00, 1.00, 1.00, 1.00, 1.00},
       {0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00}};
 
   // ===================== 全局统一关节摩擦补偿参数 =====================
