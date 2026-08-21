@@ -24,6 +24,11 @@
 
   <!-- 4. 执行依赖 -->
   <exec_depend>rosidl_default_runtime</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
 
   <!-- 5. 测试依赖（必须在 member_of_group 之前！） -->
   <test_depend>ament_lint_auto</test_depend>
