@@ -349,7 +349,8 @@ private:
   {
     (void)new_mode;
 
-    if (old_mode == upperlimb_robot::MODE_EXPERIMENT_SPRING_STIFFNESS)
+    if (old_mode == upperlimb_robot::MODE_EXPERIMENT_SPRING_STIFFNESS ||
+        old_mode == upperlimb_robot::MODE_EXPERIMENT_SPATIAL_SPRING)
     {
       experiment_control_.stop();
       experiment_control_.reset();
@@ -370,6 +371,7 @@ private:
     case upperlimb_robot::MODE_ACTIVE_SPRING:
     case upperlimb_robot::MODE_ACTIVE_SPRING_3D:
     case upperlimb_robot::MODE_EXPERIMENT_SPRING_STIFFNESS:
+    case upperlimb_robot::MODE_EXPERIMENT_SPATIAL_SPRING:
       clearAllTorqueCommands();
       stopAllAxesMotionOnly();
       restoreAllAxesToPositionMode();
@@ -617,6 +619,47 @@ private:
       break;
     }
 
+    case upperlimb_robot::MODE_EXPERIMENT_SPATIAL_SPRING:
+    {
+      const bool bias_ok = captureForceSensorBias();
+
+      experiment_control_.reset();
+      experiment_control_.setExperimentMode(
+          upperlimb_robot::experiment::ExperimentMode::SpatialSpring);
+      experiment_control_.setSpringLevel(experiment_spring_level_);
+
+      // 17号与16号共用同一套混合轴模式进入策略：
+      // 左臂保持位置模式；右臂进入阶段也先保持当前位置。
+      // 第一帧有效重力/弹簧合成扭矩生成后，再由执行层在同一周期
+      // 完成“右臂切到扭矩模式 + 发送有效扭矩”，避免先发送0 Nm。
+      const bool mixed_mode_ok = enterSpringExperimentMixedModeOnce();
+
+      if (bias_ok && mixed_mode_ok)
+      {
+        experiment_control_.start();
+
+        RCLCPP_INFO(
+            this->get_logger(),
+            "进入17号空间弹簧实验模式：左右臂先保持当前位置，首帧有效输出后左臂位置控制、右臂扭矩控制");
+      }
+      else
+      {
+        RCLCPP_WARN(
+            this->get_logger(),
+            "进入17号空间弹簧实验模式失败：bias_ok=%d, mixed_mode_ok=%d；退回 Idle",
+            static_cast<int>(bias_ok),
+            static_cast<int>(mixed_mode_ok));
+
+        experiment_control_.stop();
+        experiment_control_.reset();
+        clearRightArmTorqueCommandsNoModeSwitch();
+        stopAllAxesMotionOnly();
+        restoreAllAxesToPositionMode();
+        requestModeEnterFallback(upperlimb_robot::MODE_IDLE);
+      }
+      break;
+    }
+
     case upperlimb_robot::MODE_ACTIVE_MIRROR:
     {
       const bool ok = captureForceSensorBias();
@@ -727,11 +770,12 @@ private:
            mode == upperlimb_robot::MODE_ACTIVE_SPRING_3D;
   }
 
-  // 弹簧刚度实验是独立的混合输出模式：
+  // 16号 X 向刚度实验和17号空间弹簧实验共用混合输出模式：
   // 左臂索引10~16使用位置模式，右臂索引0~6使用扭矩模式。
   bool isSpringExperimentMixedMode(int mode) const
   {
-    return mode == upperlimb_robot::MODE_EXPERIMENT_SPRING_STIFFNESS;
+    return mode == upperlimb_robot::MODE_EXPERIMENT_SPRING_STIFFNESS ||
+           mode == upperlimb_robot::MODE_EXPERIMENT_SPATIAL_SPRING;
   }
 
   std::array<std::size_t, 14> dualArmActiveTorqueIndices() const
@@ -769,12 +813,13 @@ private:
     return all_ok;
   }
 
-  // ===================== 刚度实验混合轴模式初始化 =====================
+  // ===================== 16/17号弹簧实验混合轴模式初始化 =====================
   //
   // 只在进入模式时执行一次：
   // 1. 左臂 joint1~joint7（索引10~16）切到位置模式并同步当前位置；
-  // 2. 右臂 joint11~joint17（索引0~6）切到扭矩模式；
-  // 3. 最后六个不可控关节不做任何模式切换。
+  // 2. 右臂 joint11~joint17（索引0~6）进入阶段先保持位置模式；
+  // 3. 首帧有效扭矩产生后，由 applyTorqueOutput() 在同周期切换右臂扭矩模式并发送；
+  // 4. 最后六个不可控关节不做任何模式切换。
   bool enterSpringExperimentMixedModeOnce()
   {
     bool all_ok = true;
@@ -827,7 +872,7 @@ private:
       {
         RCLCPP_ERROR_THROTTLE(
             this->get_logger(), *this->get_clock(), 2000,
-            "刚度实验清零右臂 PT 失败，轴%d，错误码=%d", axis, rtn);
+            "弹簧实验清零右臂 PT 失败，轴%d，错误码=%d", axis, rtn);
       }
 
       last_target_torque_[i] = 0.0;
@@ -1536,8 +1581,10 @@ private:
     case upperlimb_robot::MODE_ACTIVE_SPRING_3D:
       upperlimb_robot::runActiveSpring3DMode(state, sensor_state, output);
       break;
-      // 毕设弹簧刚度实验：左臂位置模式，右臂扭矩模式。
+      // 毕设16/17号弹簧实验：左臂位置模式，右臂扭矩模式。
+      // ExperimentControl 内部再根据 ExperimentMode 分发到 X 向或三维空间弹簧算法。
     case upperlimb_robot::MODE_EXPERIMENT_SPRING_STIFFNESS:
+    case upperlimb_robot::MODE_EXPERIMENT_SPATIAL_SPRING:
       experiment_control_.run(state, sensor_state, actual_dt_s, output);
       break;
     case upperlimb_robot::MODE_IDLE:
@@ -1579,7 +1626,7 @@ private:
   // ===================== 执行控制输出 =====================
   //
   // 普通模式仍沿用原来的位置输出和扭矩输出函数。
-  // 弹簧刚度实验进入独立混合输出分支：左臂位置、右臂扭矩。
+  // 16/17号弹簧实验进入独立混合输出分支：左臂位置、右臂扭矩。
   void applyControlOutput(const upperlimb_robot::ControlOutputCache &output)
   {
     if (isSpringExperimentMixedMode(applied_mode_))
