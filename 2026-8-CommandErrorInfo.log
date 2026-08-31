@@ -22,3 +22,6 @@
 //---------------------------//
 2026-8-1 19:28:2:221  The g_pSlaveListExV1 is 0
 2026-8-1 19:28:2:221  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2
+//---------------------------//
+2026-8-1 19:35:55:522  The g_pSlaveListExV1 is 0
+2026-8-1 19:35:55:522  GT_IN_GetEcatSlaveInfo(-1,&slaveinfo) = 2

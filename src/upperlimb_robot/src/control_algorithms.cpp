@@ -51,9 +51,9 @@ namespace upperlimb_robot
   //
   // 左臂顺序：joint1~joint7
   const FrictionCompensationParameters LEFT_ARM_FRICTION_COMPENSATION{
-      {0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00},
+      {0.20, 0.20, 0.15, 0.15, 0.10, 0.10, 0.08},
       {0.40, 0.40, 0.40, 0.40, 0.40, 0.40, 0.40},
-      {0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05}};
+      {0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03}};
 
   // 右臂顺序：joint11~joint17
   //
@@ -1513,7 +1513,6 @@ namespace upperlimb_robot
     output.target_torque[IDX_J16] = tau_cmd(5);
     output.target_torque[IDX_J17] = tau_cmd(6);
 
-
     static int debug_counter = 0;
     debug_counter++;
     if (debug_counter % 90 == 0)
@@ -2382,8 +2381,6 @@ namespace upperlimb_robot
           << tau(5) << ","
           << tau(6) << "\n";
     }
-
-  
 
     // ===================== 输出有效 =====================
     output.valid = true;
@@ -6205,7 +6202,6 @@ namespace upperlimb_robot
     std::cout << "[resetActiveSpringMode] 主动弹簧模式状态已重置" << std::endl;
   }
 
-
   // ===================== 空间主动弹簧模式状态 =====================
   namespace
   {
@@ -7606,8 +7602,8 @@ namespace upperlimb_robot
   }
 
   void runActiveSpring3DMode(const MotorStateCache &state,
-                           const SensorStateCache &sensor_state,
-                           ControlOutputCache &output)
+                             const SensorStateCache &sensor_state,
+                             ControlOutputCache &output)
   {
     // ===================== 输出初始化 =====================
     output = ControlOutputCache{};
@@ -9684,7 +9680,7 @@ namespace upperlimb_robot
         debug_counter_ = 0;
         phase_ = TrajectoryPhase::Ready;
         phase_time_ = 0.0;
-          initialized_ = true;
+        initialized_ = true;
 
         if (csv_.is_open())
         {
