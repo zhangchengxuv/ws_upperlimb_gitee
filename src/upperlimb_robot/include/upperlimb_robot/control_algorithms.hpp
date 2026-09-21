@@ -439,7 +439,7 @@ namespace upperlimb_robot
       // 16号 X 向实验和 17号空间弹簧实验共用这一组参数。
       // 17号采用各向同性空间弹簧：Kx = Ky = Kz = spring_stiffness。
       // 实验时只需要修改这一处，例如：100 / 200 / 300 N/m。
-      double spring_stiffness{300.0};
+      double spring_stiffness{150.0};
 
       // 笛卡尔相对速度阻尼，单位 N/(m/s)。
       // 17号同样采用 Bx = By = Bz = spring_cartesian_damping。
