@@ -140,6 +140,10 @@ namespace upperlimb_robot
     // 毕设空间三维虚拟弹簧实验模式
     MODE_EXPERIMENT_SPATIAL_SPRING = 17,
 
+    // 毕设空间弹簧 + K=0 背景力前馈补偿实验模式
+    // 在17号纯空间弹簧基础上叠加任务空间背景阻力前馈。
+    MODE_EXPERIMENT_SPATIAL_SPRING_FEEDFORWARD = 18,
+
   };
 
   // ===================== 电机状态缓存 =====================
@@ -287,6 +291,7 @@ namespace upperlimb_robot
     // 1 -> X 向一维虚拟弹簧 / 16号 X 向刚度实验
     // 2 -> 空间三维虚拟弹簧 MODE_ACTIVE_SPRING_3D
     // 3 -> 17号各向同性空间弹簧实验
+    // 4 -> 18号空间弹簧 + K=0 背景力前馈补偿实验
     bool spring_debug_valid{false};
     int spring_debug_mode{0};
 
@@ -408,7 +413,8 @@ namespace upperlimb_robot
       Idle,
       ConstantTorque,
       SpringStiffness,
-      SpatialSpring
+      SpatialSpring,
+      SpatialSpringFeedforward
     };
 
     // 为兼容现有 GUI / RobotControlNode 接口保留 SpringLevel。
@@ -436,13 +442,13 @@ namespace upperlimb_robot
     {
       // ===================== 唯一目标刚度 =====================
       //
-      // 16号 X 向实验和 17号空间弹簧实验共用这一组参数。
-      // 17号采用各向同性空间弹簧：Kx = Ky = Kz = spring_stiffness。
+      // 16号 X 向、17号空间弹簧和18号前馈实验共用这一组目标刚度参数。
+      // 17号和18号都采用各向同性空间弹簧：Kx = Ky = Kz = spring_stiffness。
       // 实验时只需要修改这一处，例如：100 / 200 / 300 N/m。
       double spring_stiffness{150.0};
 
       // 笛卡尔相对速度阻尼，单位 N/(m/s)。
-      // 17号同样采用 Bx = By = Bz = spring_cartesian_damping。
+      // 17号和18号都采用 Bx = By = Bz = spring_cartesian_damping。
       // 准静态移动时影响很小，主要用于快速运动时增加稳定性。
       double spring_cartesian_damping{8.0};
 
@@ -452,7 +458,7 @@ namespace upperlimb_robot
 
       // 相对速度的软件限幅，单位 m/s。
       // 16号：限制轴向 extension_rate；
-      // 17号：限制三维相对速度向量的模长。
+      // 17号/18号：限制三维相对速度向量的模长。
       // 只用于抑制速度毛刺对 B*velocity 的放大，不限制弹簧位移或弹簧力。
       double extension_rate_limit{0.50};
 
@@ -466,6 +472,54 @@ namespace upperlimb_robot
       // ready_time 结束时重新记录左右 frame 相对位置作为 extension=0，
       // 随后直接进入 Measuring 并启用 spring_stiffness。
       double ready_time{1.0};
+
+      // ===================== 18号背景力前馈补偿参数 =====================
+      //
+      // 18号实验在17号各向同性空间弹簧基础上增加任务空间前馈：
+      //
+      //   F_command = F_spring + F_feedforward
+      //
+      // 其中 F_feedforward 用 K=0 基线实验得到的背景径向阻力模型估计，
+      // 方向与弹簧恢复方向 e_hat 相反，用于帮助抵消机构自身阻力。
+      //
+      // 当前第一版只在“加载 / 拉开”阶段启用前馈。
+      // 由于目前只有可靠的 K=0 加载基线，没有回程基线，
+      // Holding / Return 阶段前馈保持为 0，避免错误补偿。
+      //
+      // 当前 K=0 加载基线（20~120 mm）：
+      //   F0(e) = background_force_bias
+      //         + background_force_slope * e
+      //
+      // e 单位为 m，F0 单位为 N。
+      // 该模型来自 2026-09-21 的 K=0 加载实验初步标定结果：
+      //   F0(e) ≈ 18.40 + 24.60 * e  [N]
+      //
+      // 注意：这些只是当前实验姿态/方向下的经验基线参数，
+      // 后续重新做多次 K=0 标定后应继续更新，不应视为通用机器人参数。
+      double background_force_bias{18.40};        // N
+      double background_force_slope{24.60};       // N/m
+      double background_model_min_displacement{0.020}; // m
+      double background_model_max_displacement{0.120}; // m
+
+      // 前馈补偿比例。第一版先只补偿 25%，用于验证补偿方向和稳定性。
+      // 稳定后再按 0.25 -> 0.50 -> 0.75 -> 1.00 逐级增加。
+      double background_ff_gain{0.375};
+
+      // 前馈力最终模长上限。第一版限制在 5 N，
+      // 防止基线模型、方向判断或实验状态异常时产生过大的任务空间助力。
+      double background_ff_force_limit{7.5};      // N
+
+      // 位移渐入：e_norm <= 5 mm 时不启用前馈；
+      // 5~20 mm 之间线性增加；>=20 mm 后达到完整位移增益。
+      double background_ff_displacement_start{0.005}; // m
+      double background_ff_displacement_full{0.020};  // m
+
+      // 加载速度渐入：
+      // radial_velocity <= 2 mm/s 时认为 Holding，不启用前馈；
+      // 2~10 mm/s 之间线性增加；>=10 mm/s 时速度增益为 1。
+      // radial_velocity = e_hat dot e_dot，即空间形变量模长的变化率。
+      double background_ff_velocity_start{0.002}; // m/s
+      double background_ff_velocity_full{0.010};  // m/s
 
       // ===================== 左臂固定位置模式参数 =====================
       // 左臂 7 个主动关节始终保持进入实验时的关节位置。
@@ -503,7 +557,7 @@ namespace upperlimb_robot
 
       // ===================== 右臂最终关节扭矩限幅 =====================
       //
-      // 16号 X 向刚度实验和 17号空间弹簧实验共用这一组软件安全上限。
+      // 16号 X 向、17号空间弹簧和18号前馈实验共用这一组软件安全上限。
       // 数组顺序严格对应：joint11、joint12、joint13、joint14、joint15、joint16、joint17。
       // 单位统一为 Nm。
       //
@@ -613,6 +667,17 @@ namespace upperlimb_robot
                                       const SensorStateCache &sensor_state,
                                       double dt_s,
                                       ControlOutputCache &output);
+
+      // 18号空间弹簧 + 背景力前馈补偿实验：
+      // 1. 继承17号各向同性空间弹簧；
+      // 2. 根据 K=0 加载基线估计背景径向阻力；
+      // 3. 仅在加载阶段沿 -e_hat 方向施加保守前馈助力；
+      // 4. 前馈力同样通过右臂 LOCAL Jacobian 做 J^T F。
+      void runSpatialSpringFeedforwardExperiment(
+          const MotorStateCache &state,
+          const SensorStateCache &sensor_state,
+          double dt_s,
+          ControlOutputCache &output);
 
       void runConstantTorqueExperiment(ControlOutputCache &output);
       void runIdleExperiment(ControlOutputCache &output);
